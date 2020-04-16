@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# script to rename files recursively, given a pattern.
+# script to mass-rename files recursively, given a regex pattern.
 #
 # By Kordian Witek <code@kordian.com>, December 2000.
 #

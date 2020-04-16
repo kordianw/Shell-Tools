@@ -1,6 +1,9 @@
 #!/bin/sh
-# toggle trackpad on/off via `xinput'
-# * By Kordian Witek <code@kordian.com>, 2020
+# toggle a laptop trackpad on/off via `xinput'
+# - useful for when typing for long periods of time
+#
+# * By Kordian Witek <code@kordian.com>, Apr 2020
+#
 
 # check we have xinput
 [ -x /usr/bin/xinput ] || { echo "No \`xinput' binary on `hostname` - nothing to do!" >&2; exit 1; }
