@@ -1,6 +1,7 @@
 #!/bin/bash
-#
 # Simple script for creation of a template for a new shell/perl script
+# - supports both Perl and Shell
+# - sets-up a basic template for a new script
 #
 # By Kordian Witek <code@kordian.com>, January 2005
 #
