@@ -1,7 +1,7 @@
 #!/bin/sh
 # tests CPU speed using `sysbench', taking into account number of threads
 #
-# * By Kordian Witek <code@kordian.com>, Jan 2020
+# * By Kordian Witek <code [at] kordy.com>, Jan 2020
 #
 
 # maximum number prime to calculate - this usually takes around 1-2mins so is a perfect test

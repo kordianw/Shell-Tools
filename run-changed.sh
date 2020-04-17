@@ -2,7 +2,7 @@
 # run a script (with params), if files have changed
 # - useful for code development, where it will re-run a script once you make a change in an editor session
 #
-# * By Kordian Witek <code@kordian.com>, Oct 2007
+# * By Kordian Witek <code [at] kordy.com>, Oct 2007
 #
 
 # what file extensions do we care about?

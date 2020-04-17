@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # script to mass-rename files recursively, given a regex pattern.
 #
-# By Kordian Witek <code@kordian.com>, December 2000.
+# By Kordian Witek <code [at] kordy.com>, Dec 2000.
 #
 use Cwd;
 use File::Basename;

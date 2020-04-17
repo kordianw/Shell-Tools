@@ -1,8 +1,9 @@
 #!/bin/bash
 #
 # Script to fix Cygwin Permissions
+# - useful when permissions are screwed up on a Windows system
 #
-# * By Kordian Witek <code@kordian.com>, March 2011
+# * By Kordian Witek <code [at] kordian.com>, March 2011
 #
 
 ####################
@@ -47,11 +48,11 @@ else
   chmod -c -R 755 *.pl *.sh *.py *.vbs *.cgi 2>/dev/null
   chmod -c -R 755 */*.pl */*.sh */*.py */*.cgi 2>/dev/null
 
-  echo "* wider scale removal of exe bit..."
+  echo "* recursive: wider scale removal of exe bit (slow, pls wait)..."
   chmod -c -R a-x *.txt *.xml *.yaml *.html *.htm *.db *.bkup *.old *.ini *.conf *.db *.tmp *.swp *.c *.h *.cpp *.java README* TODO* 2>/dev/null
 
   # dirs/files - make sure the owner can read/write
-  echo "* make sure the owner can access (slow, pls wait)..."
+  echo "* recursive: make sure the owner can access (slow, pls wait)..."
   find -type d -exec chmod -c u+rwx {} \;
   find -type f -exec chmod -c u+rw {} \;
 fi

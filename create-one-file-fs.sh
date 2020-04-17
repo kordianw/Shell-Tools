@@ -1,12 +1,11 @@
 #!/bin/bash
 #
 # Script to create a one-file FS (vfat/ext4) - useful for Live Linux USBs
+# - takes care of creation of the FS
+# - mounting/umounting
 #
-# * By Kordian Witek <code@kordian.com>, April 2020
-# $Id$
+# * By Kordian Witek <code [at] kordy.com>, April 2020
 #
-# * Change Log:
-# $Log$
 
 # what FS do we use?
 # - vfat: if using on FAT32

@@ -1,9 +1,9 @@
 #!/bin/bash
 #
 # Script to install additional packages on a Linux machine
-# - works RHEL, Debian (incl. Mint) and Raspbian
+# - works on RHEL, Debian (incl. Mint) and Raspbian
 #
-# * By Kordian Witek <code@kordian.com>, November 2017
+# * By Kordian Witek <code [at] kordy.com>, Nov 2017
 #
 
 ####################

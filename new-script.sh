@@ -3,11 +3,11 @@
 # - supports both Perl and Shell
 # - sets-up a basic template for a new script
 #
-# By Kordian Witek <code@kordian.com>, January 2005
+# By Kordian Witek <code [at] kordy.com>, Jan 2005
 #
 
 # Configuration
-HEADER="Kordian Witek <code@kordian.com>"
+HEADER="Kordian Witek <code [at] kordy.com>"
 PERL="/usr/bin/perl"
 
 
@@ -94,7 +94,7 @@ my \$CMD = "/bin/ls";
 
 # what is the script description, contact details and VERSION?
 our \$DESC    = "@(#)KW Processing Tool";
-our \$CONTACT = 'Kordian Witek <code@kordian.com>';
+our \$CONTACT = 'Kordian Witek <code [at] kordy.com>';
 our \$VERSION = '\$Revision: 1.1 $';                        # this gets automatically set by CVS
 
 

@@ -2,7 +2,7 @@
 # toggle a laptop trackpad on/off via `xinput'
 # - useful for when typing for long periods of time
 #
-# * By Kordian Witek <code@kordian.com>, Apr 2020
+# * By Kordian Witek <code [at] kordy.com>, Apr 2020
 #
 
 # check we have xinput

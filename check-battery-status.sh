@@ -1,5 +1,8 @@
 #!/bin/bash
 # check battery & AC status (Linux)
+#
+# * By Kordian Witek <code [at] kordy.com>
+#
 
 # check that we have the right utils
 which acpi >&/dev/null || { echo "$0: no \`ACPI' utility installed!" >&2; exit 1; }
