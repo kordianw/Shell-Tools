@@ -1,3 +1,94 @@
+# Specific ignores (to be reviewed)
+*.csv
+*.db
+test.*
+test?.??
+test?.???
+
+# My Common ignores
+/Build/*
+*.lnk
+*.swp
+*.bak
+*.tmp
+*~
+.vstags
+_gsdata_
+
+# Compiled source
+*.pyc
+*.pyo
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Packages
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Eclipse / IntelliJ
+.classpath
+.project
+.settings
+.idea
+.metadata
+*.iml
+*.ipr
+
+# Images
+*.jpg
+*.gif
+*.png
+*.svg
+*.ico
+
+# Video
+*.wmv
+*.mpg
+*.mpeg
+*.mp4
+*.mov
+*.flv
+*.avi
+*.ogv
+*.ogg
+*.webm
+
+# Audio
+*.wav
+*.mp3
+*.wma
+
+# Fonts
+*.eot
+*.ttf
+*.woff
+
+# Standard Perl ignores
 !Build/
 .last_cover_stats
 /META.yml
@@ -33,3 +124,4 @@ inc/
 /MANIFEST.bak
 /pm_to_blib
 /*.zip
+
