@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # tests CPU speed using `sysbench', taking into account number of threads
 #
 # * By Kordian Witek <code [at] kordy.com>, Jan 2020
@@ -6,6 +6,12 @@
 
 # maximum number prime to calculate - this usually takes around 1-2mins so is a perfect test
 MAX_PRIME=20000
+
+##################
+if ! which sysbench >&/dev/null; then
+  echo "$0: you don't have \`sysbench' installed; can't do any CPU testing!" >&2
+  exit 1
+fi
 
 # work out how many CPUs (threads) we have?
 THREADS=`lscpu |awk '/^CPU\(s\):/{print $NF}'`
