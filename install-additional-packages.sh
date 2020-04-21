@@ -134,19 +134,19 @@ elif [ "$1" = "-UB" ]; then
   # major packages
   $INSTALL_CMD vim           # VIM: improved vi (VI iMproved)
   $INSTALL_CMD zsh           # the Z Shell (more powerful than bash)
-  $INSTALL_CMD chromium-browser
+  #$INSTALL_CMD chromium-browser
   #$INSTALL_CMD vlc
   #$INSTALL_CMD remmina
   #$INSTALL_CMD remmina-plugin-rdp
   #$INSTALL_CMD remmina-plugin-vnc
 
   # Laptop specific tools (can comment out)
-  $INSTALL_CMD acpi          # view battery/ACPI information (LAPTOPS)
-  $INSTALL_CMD acpitool      # view battery/ACPI information (LAPTOPS)
-  $INSTALL_CMD wavemon       # wireless Device Monitoring Application (LAPTOPS)
-  $INSTALL_CMD powertop      # diagnose issues with power consumption and management (LAPTOPS)
-  $INSTALL_CMD cpufrequtils  # utilities to deal with the cpufreq Linux kernel feature
-  $INSTALL_CMD caffeine      # prevent the desktop becoming idle in full-screen mode
+  #$INSTALL_CMD acpi          # view battery/ACPI information (LAPTOPS)
+  #$INSTALL_CMD acpitool      # view battery/ACPI information (LAPTOPS)
+  #$INSTALL_CMD wavemon       # wireless Device Monitoring Application (LAPTOPS)
+  #$INSTALL_CMD powertop      # diagnose issues with power consumption and management (LAPTOPS)
+  #$INSTALL_CMD cpufrequtils  # utilities to deal with the cpufreq Linux kernel feature
+  #$INSTALL_CMD caffeine      # prevent the desktop becoming idle in full-screen mode
 
   # terminal multipliers
   $INSTALL_CMD screen        # GNU screen
@@ -175,7 +175,7 @@ elif [ "$1" = "-UB" ]; then
 
   # system utils (may require cron-entries)
   $INSTALL_CMD apt-file      # search for files within Debian packages (CLI)
-  $INSTALL_CMD sysstat       # install stat utils such as sar, iostat, etc
+  #$INSTALL_CMD sysstat       # install stat utils such as sar, iostat, etc
   #$INSTALL_CMD mlocate       # quickly find files on the filesystem based on their name
 
   # system utils (do not require cron)
