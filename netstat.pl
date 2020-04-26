@@ -39,11 +39,19 @@ while(<NS>)
   }
   map { s/^::f+://g; } $local_con, $remote_con;
 
-  my ($local_ip, $local_port) = split(/:/, $local_con);
+  my ($local_ip, $local_port, $remote_ip, $remote_port);
+  if ($^O =~ m/darwin/)
+  {
+    ($local_ip, $local_port) = split(/\.(\d+)$/, $local_con);
+    ($remote_ip, $remote_port) = split(/\.(\d+)$/, $remote_con);
+  }
+  else
+  {
+    ($local_ip, $local_port) = split(/:/, $local_con);
+    ($remote_ip, $remote_port) = split(/:/, $remote_con);
+  }
   die "can't get Local IP from <$local_con>, LINE: <$_>\n" unless $local_ip;
   die "can't get Local Port from <$local_con>, LINE: <$_>\n" unless $local_port;
-
-  my ($remote_ip, $remote_port) = split(/:/, $remote_con);
   die "can't get Remote IP from <$remote_con>, LINE: <$_>\n" unless $remote_ip;
   die "can't get Remote Port from <$remote_con>, LINE: <$_>\n" unless $remote_port;
 
