@@ -4,7 +4,7 @@
 # - it works out the screen width
 # - by default it wraps and displays text in 2 columns
 #
-# By Kordian Witek <code@kordy.com>, April 2001.
+# By Kordian Witek <code [at] kordy.com>, April 2001.
 #
 
 use strict;

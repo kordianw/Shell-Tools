@@ -9,7 +9,7 @@ MAX_PRIME=20000
 
 ##################
 if ! which sysbench >&/dev/null; then
-  echo "$0: you don't have \`sysbench' installed; can't do any CPU testing!" >&2
+  echo "$0: you don't have \`sysbench' installed; can't do any CPU performance testing!" >&2
   exit 1
 fi
 

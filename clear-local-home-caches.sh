@@ -1,4 +1,5 @@
 #!/bin/bash
+# clears local cache dirs on Linux - saves space
 
 #
 # FUNCTIONS
