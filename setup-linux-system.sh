@@ -1,81 +1,37 @@
 #!/bin/bash
 #
-# Script to install additional packages on a Linux machine
-# - works on RHEL, Debian (incl. Mint) and Raspbian
+# Script to setup a Linux system, eg: install additional packages on a Linux machine
+# - works on RHEL, Ubuntu, Debian (incl. Mint) and Raspbian
 #
 # * By Kordian Witek <code [at] kordy.com>, Nov 2017
 #
 
-####################
-PROG=`basename $0`
-if [ $# -eq 0 -o "$1" = "-h" ]; then
-  cat <<! >&2
-$PROG: Script to install packages on a new Linux machine via \`yum/apt'
-       * install the most important PKGs, for convenience, dev, etc
-
-Usage: $PROG <options> [param]
-        -UB     General Ubuntu Linux (uses yum)
-
-        -SSH1   install/enable SSH server (for SSH-ing in)
-        -SSH0   disable/remove SSH server
-
-        -RH     Red Hat Linux (uses yum)
-        -PI     Raspbian PI Linux (uses apt)
-
-        -h      this screen
-!
-elif [ "$1" = "-SSH1" ]; then
-  [ "$OSTYPE" != "linux-gnu" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
-  [ ! -r /etc/os-release ] && { echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2; exit 3; }
-  [ ! -x /usr/bin/apt ] && { echo "$PROG: can't find/exec APT!" >&2; exit 4; }
-
-  # do we need to install it? maybe it's already installed...
-  if [ -e /usr/sbin/sshd -a -e /etc/init.d/ssh ]; then
-    echo "* SSHD already installed: not installing openssh-server"
+#
+# FUNCTIONS
+#
+function setup()
+{
+  # what is the package manager to choose?
+  if [ -x /usr/bin/apt -a -x /usr/bin/yum ]; then
+    echo "$PROG: both \`apt' and \`get' are installed! can't choose the package manager!" >&2; exit 99
+  elif [ -x /usr/bin/apt ]; then
+    PKG=apt
+  elif [ -x /usr/bin/yum ]; then
+    PKG=yum
   else
-    echo "* installing: openssh-server"
-    sudo apt install -qq -y openssh-server
+    echo "$PROG: neither \`apt' and \`get' are installed! can't choose the package manager!" >&2; exit 99
   fi
 
-  echo "* disabling: ssh from auto-restarting (OPTIONAL)"
-  sudo systemctl disable ssh.service
+  # do we need sudo?
+  SUDO="sudo"
 
-  echo "* starting ssh service"
-  sudo systemctl start ssh.service
+  # where is my SRC dir located?
+  KW_SRC_DIR="$HOME/src"
+  [ -d "$HOME/playground" ] && KW_SRC_DIR="$HOME/playground"
+}
 
-  echo "* check-status: systemctl status ssh"
-  sudo systemctl status ssh
-
-  echo && echo "* NOTE: in Mint Linux, default user \`mint' has no password, therefore need to add to \`/etc/ssh/sshd_config':"
-  echo "PermitEmptyPasswords yes"
-  echo && echo "# sudo vi /etc/ssh/sshd_config"
-  echo "# systemctl restart ssh.service"
-
-elif [ "$1" = "-SSH0" ]; then
-  [ "$OSTYPE" != "linux-gnu" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
-  [ ! -r /etc/os-release ] && { echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2; exit 3; }
-  [ ! -x /usr/bin/apt ] && { echo "$PROG: can't find/exec APT!" >&2; exit 4; }
-
-  echo "* disabling: ssh from auto-restarting"
-  sudo systemctl disable ssh.service
-
-  echo "* shutdown-server systemctl stop ssh"
-  sudo systemctl stop ssh.service
-
-  echo "* killing off ssh sessions"
-  sudo killall sshd
-
-  echo "* remove pkg: openssh-server"
-  sudo apt remove -qq -y openssh-server
-
-  echo "* remove pkg: openssh-sftp-server"
-  sudo apt remove -qq -y openssh-sftp-server
-
-elif [ "$1" = "-UB" ]; then
-  [ "$OSTYPE" != "linux-gnu" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
-  [ ! -r /etc/os-release ] && { echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2; exit 3; }
-  [ ! -x /usr/bin/apt ] && { echo "$PROG: can't find/exec APT!" >&2; exit 4; }
-
+function install_general_packages
+{
   #
   # TODO Mint Linux
   #
@@ -121,17 +77,35 @@ elif [ "$1" = "-UB" ]; then
   # - copy from backup, eg: Chrome/Firefox, Remmina settings
   #
 
+  [ "$OSTYPE" != "linux-gnu" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
+  [ ! -r /etc/os-release ] && { echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2; exit 3; }
+
+  # setup program & vars
+  setup
+
   # -y=yes, -q=quiet
-  INSTALL_CMD="sudo apt install -qq -y"
+  if [ "$PKG" = "apt" ]; then
+    INSTALL_CMD="$SUDO apt install -qq -y"
+  elif [ "$PKG" = "yum" ]; then
+    INSTALL_CMD="$SUDO yum -y install"
+  else
+    echo "can't select package manager!"
+    exit 1
+  fi
 
   # update the local database to make sure it matches remote sources
-  echo "* updating the apt local database..."
-  sudo apt update
+  if [ "$PKG" = "apt" ]; then
+    echo "* updating the apt local database..."
+    $SUDO apt update
+  elif [ "$PKG" = "yum" ]; then
+    echo "* refreshing the package index..."
+    $SUDO yum check-update
+  fi
 
   # apps
   echo && echo "* installing packages..."
 
-  # major packages
+  # major packages - CLI & GUI
   $INSTALL_CMD vim           # VIM: improved vi (VI iMproved)
   $INSTALL_CMD zsh           # the Z Shell (more powerful than bash)
   #$INSTALL_CMD chromium-browser
@@ -174,9 +148,9 @@ elif [ "$1" = "-UB" ]; then
   $INSTALL_CMD libdate-manip-perl  # DateManip.pm
 
   # system utils (may require cron-entries)
-  $INSTALL_CMD apt-file      # search for files within Debian packages (CLI)
   #$INSTALL_CMD sysstat       # install stat utils such as sar, iostat, etc
   #$INSTALL_CMD mlocate       # quickly find files on the filesystem based on their name
+  [ -x /usr/bin/apt ] && $INSTALL_CMD apt-file      # search for files within Debian packages (CLI)
 
   # system utils (do not require cron)
   $INSTALL_CMD inxi          # full featured system information script
@@ -207,14 +181,16 @@ elif [ "$1" = "-UB" ]; then
   $INSTALL_CMD pydf          # colourised df(1)-clone
   $INSTALL_CMD htop          # improved `top'
 
-  # update the apt-file utility
-  echo && echo "* updating the apt-file cache..."
-  sudo apt-file update
+  if [ "$PKG" = "apt" ]; then
+    # update the apt-file utility
+    echo && echo "* updating the apt-file cache..."
+    $SUDO apt-file update
 
-  # store a backup of currently installed packages
-  echo && echo "* storing a backup of all installed packages..."
-  DIR=`dirname "$0"`
-  dpkg -l > $DIR/pkg-installed-list.txt
+    # store a backup of currently installed packages
+    echo && echo "* storing a backup of all installed packages..."
+    DIR=`dirname "$0"`
+    dpkg -l > $DIR/pkg-installed-list.txt
+  fi
 
   # ==== Useful APT commands:
   # LIST & SEARCH:
@@ -263,8 +239,86 @@ elif [ "$1" = "-UB" ]; then
   # Note: apt is a front-end for apt-get, apt-cache and dpkg
   #
   # apt history is in /var/log/apt/history.log
+}
 
-elif [ "$1" = "-PI" ]; then
+function enable_zsh()
+{
+  # setup program & vars
+  setup
+
+  # check for ZSH
+  ZSH=`chsh -l | grep zsh`
+
+  # is ZSH available?
+  if [ -z "$ZSH" ]; then
+    echo -e "$PROG: The zsh SHELL is not available/installed: run\n# $PKG install zsh" >&2; exit 4
+  fi
+
+  # make sure we have ZSHRC installed
+  if [ ! -r $HOME/.zshrc ]; then
+    echo "$PROG: create a $HOME/.zshrc file before changing the shell!" >&2; exit 5
+  fi
+
+  #
+  # EXEC
+  #
+  set -x
+  $SUDO chsh -s $ZSH $USER
+}
+
+function enable_ssh()
+{
+  [ "$OSTYPE" != "linux-gnu" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
+  [ ! -r /etc/os-release ] && { echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2; exit 3; }
+  [ ! -x /usr/bin/apt ] && { echo "$PROG: can't find/exec APT!" >&2; exit 4; }
+
+  # do we need to install it? maybe it's already installed...
+  if [ -e /usr/sbin/sshd -a -e /etc/init.d/ssh ]; then
+    echo "* SSHD already installed: not installing openssh-server"
+  else
+    echo "* installing: openssh-server"
+    $SUDO apt install -qq -y openssh-server
+  fi
+
+  echo "* disabling: ssh from auto-restarting (OPTIONAL)"
+  $SUDO systemctl disable ssh.service
+
+  echo "* starting ssh service"
+  $SUDO systemctl start ssh.service
+
+  echo "* check-status: systemctl status ssh"
+  $SUDO systemctl status ssh
+
+  echo && echo "* NOTE: in Mint Linux, default user \`mint' has no password, therefore need to add to \`/etc/ssh/sshd_config':"
+  echo "PermitEmptyPasswords yes"
+  echo && echo "# sudo vi /etc/ssh/sshd_config"
+  echo "# systemctl restart ssh.service"
+}
+
+function disable_ssh()
+{
+  [ "$OSTYPE" != "linux-gnu" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
+  [ ! -r /etc/os-release ] && { echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2; exit 3; }
+  [ ! -x /usr/bin/apt ] && { echo "$PROG: can't find/exec APT!" >&2; exit 4; }
+
+  echo "* disabling: ssh from auto-restarting"
+  $SUDO systemctl disable ssh.service
+
+  echo "* shutdown-server systemctl stop ssh"
+  $SUDO systemctl stop ssh.service
+
+  echo "* killing off ssh sessions"
+  $SUDO killall sshd
+
+  echo "* remove pkg: openssh-server"
+  $SUDO apt remove -qq -y openssh-server
+
+  echo "* remove pkg: openssh-sftp-server"
+  $SUDO apt remove -qq -y openssh-sftp-server
+}
+
+function install_pi()
+{
   # RASPBIAN PI
   [ "$OSTYPE" != "linux-gnueabihf" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnueabihf >>!" >&2; exit 2; }
   [ ! -r /etc/os-release ] && { echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2; exit 3; }
@@ -335,19 +389,21 @@ elif [ "$1" = "-PI" ]; then
 
   # update the apt-file utility
   echo && echo "* updating the apt-file cache..."
-  sudo apt-file update
+  $SUDO apt-file update
 
   # store a backup of currently installed packages
   echo && echo "* storing a backup of all installed packages..."
   DIR=`dirname "$0"`
   dpkg -l > $DIR/pkg-installed-list.txt
+}
 
-elif [ "$1" = "-RH" ]; then
+function install_rhel()
+{
   # RED HAT LINUX
 
   [ "$OSTYPE" != "linux-gnu" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
   [ ! -r /etc/redhat-release ] && { echo "$PROG: no /etc/redhat-release file, is this really RHEL ?" >&2; exit 3; }
-  [ ! -x /usr/bin/yum ] && { echo "$PROG: can't find/exec YUM!" >&2; exit 4; }
+  [ ! -x /usr/bin/yum ] && { echo "$PROG: can't find/exec YUM, eg for: yum install!" >&2; exit 4; }
 
   # MAJOR packages
   sudo yum -y install ansible                # Ansible
@@ -427,12 +483,53 @@ elif [ "$1" = "-RH" ]; then
   sudo yum -y install perl-DateTime
   sudo yum -y install perl-Date-Calc
   sudo yum -y install perl-Mozilla-CA        # for SSL handling
+}
+
+#
+# MAIN
+#
+
+####################
+PROG=`basename $0`
+if [ $# -eq 0 -o "$1" = "-h" ]; then
+  cat <<! >&2
+$PROG: Script to setup a new Linux system, eg: install packages via \`yum/apt'
+       * install the most important PKGs, for convenience, dev, etc
+
+Usage: $PROG <options> [param]
+        -GENPKG general install apt/ym pkgs: on Linux (Ubuntu, Mint, Debian etc) [apt/yum]
+        -ZSH    enable the \`zsh' shell via \`chsh'
+
+        -SSH1   install/enable SSH server via apt (for SSH-ing in) * useful on Mint Linux
+        -SSH0   disable & completely remove SSH server (via apt)
+
+        -RH     install yum pkgs: RHEL Red Hat Linux (uses yum)
+        -PI     install apt pkgs: Raspbian PI Linux (uses apt)
+
+        -h      this screen
+!
+elif [ "$1" = "-GENPKG" ]; then
+  install_general_packages;
+
+elif [ "$1" = "-ZSH" ]; then
+  enable_zsh;
+
+elif [ "$1" = "-SSH1" ]; then
+  enable_ssh;
+
+elif [ "$1" = "-SSH0" ]; then
+  disable_ssh;
+
+elif [ "$1" = "-PI" ]; then
+  install_pi;
+
+elif [ "$1" = "-RH" ]; then
+  install_rhel;
 
 else
 
-  echo "UNKNOWN distribution << $OSTYPE >> - no rules to install packages!" 2>&1
+  echo "$PROG: see usage via \`$PROG --help' ..." 2>&1
   exit 1
-
 fi
 
 # EOF
