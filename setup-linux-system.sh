@@ -18,8 +18,10 @@ function setup()
     PKG=apt
   elif [ -x /usr/bin/yum ]; then
     PKG=yum
+  elif [ -x /usr/bin/zypper ]; then
+    PKG=zypper
   else
-    echo "$PROG: neither \`apt' and \`get' are installed! can't choose the package manager!" >&2; exit 99
+    echo "$PROG: neither \`apt' or \`get' or \`zypper' are installed! can't choose the package manager!" >&2; exit 99
   fi
 
   # do we need sudo?
@@ -246,17 +248,38 @@ function enable_zsh()
   # setup program & vars
   setup
 
+  # make sure we have USER defined
+  if [ -z "$USER" ]; then
+    echo "$PROG: can't work out the current USER via USER shell var!" >&2; exit 1
+  fi
+
   # check for ZSH
-  ZSH=`chsh -l | grep zsh`
+  ZSH=`chsh -l 2>/dev/null | grep zsh`
+  [ -z "$ZSH" ] && ZSH=`which zsh 2>/dev/null`
+  [ "$ZSH" = "/usr/bin/zsh" -a -x "/bin/zsh" ] && ZSH="/bin/zsh"
 
   # is ZSH available?
   if [ -z "$ZSH" ]; then
-    echo -e "$PROG: The zsh SHELL is not available/installed: run\n# $PKG install zsh" >&2; exit 4
+    echo -e "$PROG: The zsh SHELL is not available/installed: run\n# $SUDO $PKG install zsh" >&2; exit 4
+  else
+    echo "$PROG: Found the ZSH as \`$ZSH' ..." >&2
+  fi
+
+  # do we already have it set?
+  if getent passwd $USER | grep -q ":$ZSH"; then
+    echo "$PROG: your user's < $USER > shell is already: $ZSH - nothing to do!" >&2; exit 5
+  fi
+
+  # make sure it's in /etc/shells
+  if ! grep -q "^$ZSH$" /etc/shells; then
+    echo "$PROG: the shell \`$ZSH' - is not in /etc/shells - this means can't change!" >&2; exit 6
   fi
 
   # make sure we have ZSHRC installed
   if [ ! -r $HOME/.zshrc ]; then
-    echo "$PROG: create a $HOME/.zshrc file before changing the shell!" >&2; exit 5
+    echo "$PROG: create a \`$HOME/.zshrc' file before changing the shell!" >&2; exit 7
+  else
+    echo "$PROG: found \`$HOME/.zshrc', proceeding to change shell to: $ZSH..." >&2;
   fi
 
   #
