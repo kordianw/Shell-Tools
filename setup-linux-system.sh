@@ -160,6 +160,7 @@ function install_general_packages
   [ -x /usr/bin/apt ] && $INSTALL_CMD apt-file      # search for files within Debian packages (CLI)
 
   # system utils (do not require cron)
+  $INSTALL_CMD neofetch      # Shows Linux System Information with Distribution Logo
   $INSTALL_CMD inxi          # full featured system information script
   $INSTALL_CMD lshw          # information about hardware configuration, incl. lspci
   $INSTALL_CMD hwinfo        # Hardware identification system
@@ -492,6 +493,7 @@ function install_pi()
   $INSTALL_CMD mlocate       # quickly find files on the filesystem based on their name
 
   # system utils (do not require cron)
+  $INSTALL_CMD neofetch      # Shows Linux System Information with Distribution Logo
   $INSTALL_CMD inxi          # full featured system information script
   $INSTALL_CMD lshw          # information about hardware configuration, incl. lspci
   $INSTALL_CMD hwinfo        # Hardware identification system
@@ -594,6 +596,7 @@ function install_rhel()
   sudo yum -y install hwinfo                 # HW list + monitor
   sudo yum -y install cpuid                  # HW list + monitor
   sudo yum -y install inxi                   # HW list + monitor
+  sudo yum -y install neofetch
 
   # get the EPEL repository
   sudo yum -y install epel-release
