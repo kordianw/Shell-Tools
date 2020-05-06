@@ -6,6 +6,9 @@
 # * By Kordian Witek <code [at] kordy.com>, Nov 2017
 #
 
+# default timezone (find using `tzselect' or `timedatectl list-timezones')
+TZ="America/New_York"
+
 #
 # FUNCTIONS
 #
@@ -38,7 +41,9 @@ function install_general_packages
   # TODO Mint Linux
   #
   # - boot Lenovo ThinkPad T480s from USB via "Enter,F12"
-  # - change timezone (Start: Clock)
+  # - change timezone
+  #   * this script: -TZ param
+  #   * /or/ alternatively, Start->Clock
   # - add percentage to battery panel (right click, properties)
   # - reverse the scroll direction (Start,Mouse/TouchPad)
   # - connect WIFI & Disable Bluetooth
@@ -158,6 +163,7 @@ function install_general_packages
   $INSTALL_CMD inxi          # full featured system information script
   $INSTALL_CMD lshw          # information about hardware configuration, incl. lspci
   $INSTALL_CMD hwinfo        # Hardware identification system
+  $INSTALL_CMD cpuid         # tool to dump x86 CPUID information about the CPU(s)
   $INSTALL_CMD dmidecode     # active/passive network address scanner using ARP requests
   $INSTALL_CMD hdparm        # tune hard disk parameters for high performance
   $INSTALL_CMD sysbench      # multi-threaded benchmark tool
@@ -241,6 +247,110 @@ function install_general_packages
   # Note: apt is a front-end for apt-get, apt-cache and dpkg
   #
   # apt history is in /var/log/apt/history.log
+}
+
+function change_timezone()
+{
+  # setup program & vars
+  setup
+
+  # check we know what TZ we're going to
+  [ -z "$TZ" ] && { echo "$PROG: no TZ variable set!" >&2; exit 1; }
+
+  # check that TZ selected exists
+  if ! ls -l /usr/share/zoneinfo/$TZ; then
+    echo "$PROG: the TZ \'$TZ' doesn't seem to exist?" >&2; exit 3
+  fi
+
+  # this system has no /etc/timezone - not sure if this process would work
+  if [ ! -e /etc/timezone ]; then
+    echo "$PROG: this system has no \'/etc/timezone' - not sure that this process would work?" >&2; exit 2
+  fi
+
+  # not supporting certain set-ups
+  [ -L /etc/timezone ] && { echo "$PROG: not supporting linked /etc/timezone!" >&2; exit 1; }
+  [ ! -e /etc/localtime ] && { echo "$PROG: not supporting absense of /etc/localtime!" >&2; exit 1; }
+  [ -L /etc/localtime ] || { echo "$PROG: not supporting non-linked /etc/localtime!" >&2; exit 1; }
+
+  echo "* viewing contents of current /etc/timezone and /etc/localtime link:"
+  cat /etc/timezone || exit 1
+  ls -l /etc/localtime || exit 2
+
+  # do we need to do anything???
+  if ls -l /etc/localtime | grep -q "$TZ"; then
+    echo -e "\n$PROG: according to /etc/localtime, this system TZ is already set to $TZ - nothing to do:" >&2
+    ls -l /etc/localtime || exit 1
+
+    if grep -q "$TZ" /etc/timezone; then
+      echo -e "\n$PROG: according to /etc/timezone, this system TZ is already set to $TZ - nothing to do:" >&2
+      cat /etc/timezone || exit 2
+    fi
+
+    echo && echo "* running \`timedatectl status' - check for sync:"
+    timedatectl status || exit 3
+
+    exit 4
+  fi
+
+  # fall-back
+  if grep -q "$TZ" /etc/timezone; then
+    echo -e "\n$PROG: according to /etc/timezone, this system TZ is already set to $TZ - nothing to do:" >&2
+    cat /etc/timezone || exit 1
+    ls -l /etc/localtime || exit 2
+
+    exit 5
+  fi
+
+  # additional checks using timedatectl
+  if which timedatectl >&/dev/null; then
+    # check that valid
+    if [ `timedatectl list-timezones |grep -c $TZ` -ne 1 ]; then
+      echo "$PROG: the TZ \'$TZ' doesn't seem to be valid?" >&2; exit 3
+    fi
+
+    # check whether we're already there...
+    CURRENT_TZ=`timedatectl status | awk '/Time zone/{print $3}'`
+    [ -z "$CURRENT_TZ" ] && { echo "$PROG: can't get current system's TZ via timedatectl status!" >&2; exit 1; }
+
+    if [ "$CURRENT_TZ" = "$TZ" ]; then
+      echo "$PROG: according to \`timedatectl -status', this system TZ is already set to $TZ - nothing to do." >&2; exit 4
+    fi
+  fi
+
+  # which method of change?
+  if which dpkg-reconfigure >&/dev/null; then
+    #
+    # CHANGE
+    #
+    echo -e "\n*** changing system's timezone to: $TZ\n- before: `date`"
+    #set -x
+    #echo "$TZ" | $SUDO tee /etc/timezone || exit 1
+    #sudo dpkg-reconfigure --frontend noninteractive tzdata
+    #set +x
+    $SUDO dpkg-reconfigure tzdata
+
+    # confirm
+    echo "- now:   `date`"
+
+  elif which timedatectl >&/dev/null; then
+    #
+    # CHANGE
+    # - experimental
+    #
+    echo -e "\nWARN: would execute as fall-back due to dpkg-reconfigure not there:"
+    echo $SUDO timedatectl set-timezone $TZ
+
+  else
+    echo "$PROG: no \`timedatectl' and no \`dpkg-reconfigure' binary on the current system - can't change timezone" >&2; exit 1
+  fi
+
+  # confirm
+  echo && echo "* viewing contents of updated /etc/timezone and /etc/localtime link:"
+  cat /etc/timezone || exit 1
+  ls -l /etc/localtime || exit 2
+
+  echo && echo "* running \`timedatectl status' - check for sync:"
+  timedatectl status
 }
 
 function enable_zsh()
@@ -385,6 +495,7 @@ function install_pi()
   $INSTALL_CMD inxi          # full featured system information script
   $INSTALL_CMD lshw          # information about hardware configuration, incl. lspci
   $INSTALL_CMD hwinfo        # Hardware identification system
+  $INSTALL_CMD cpuid         # tool to dump x86 CPUID information about the CPU(s)
   $INSTALL_CMD dmidecode     # active/passive network address scanner using ARP requests
   $INSTALL_CMD hdparm        # tune hard disk parameters for high performance
   $INSTALL_CMD sysbench      # multi-threaded benchmark tool
@@ -481,6 +592,7 @@ function install_rhel()
   sudo yum -y install mlocate                # locate DB (fast `find')
   sudo yum -y install lshw                   # HW list + monitor
   sudo yum -y install hwinfo                 # HW list + monitor
+  sudo yum -y install cpuid                  # HW list + monitor
   sudo yum -y install inxi                   # HW list + monitor
 
   # get the EPEL repository
@@ -520,6 +632,7 @@ $PROG: Script to setup a new Linux system, eg: install packages via \`yum/apt'
        * install the most important PKGs, for convenience, dev, etc
 
 Usage: $PROG <options> [param]
+        -TZ     set the system's timezone (apt-based systems)
         -GENPKG general install apt/ym pkgs: on Linux (Ubuntu, Mint, Debian etc) [apt/yum]
         -ZSH    enable the \`zsh' shell via \`chsh'
 
@@ -533,6 +646,9 @@ Usage: $PROG <options> [param]
 !
 elif [ "$1" = "-GENPKG" ]; then
   install_general_packages;
+
+elif [ "$1" = "-TZ" ]; then
+  change_timezone;
 
 elif [ "$1" = "-ZSH" ]; then
   enable_zsh;
