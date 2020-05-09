@@ -8,67 +8,113 @@
 # maximum number prime to calculate - this usually takes around 1-2mins so is a perfect test
 MAX_PRIME=20000
 
+# what is the file size we test IO with?
+SIZE_TO_TEST="2G"
+SIZE_TO_TEST_COUNT="2048"
+
+# what is the minimum disk space we require in MB?
+MIN_SPACE_NEEDED=2500
+
 
 ##################
-if ! which sysbench >&/dev/null; then
-  echo "$0: you don't have \`sysbench' installed; can't do any CPU performance testing!" >&2
+PROG=`basename $0`
+if [ ! -w . ]; then
+  echo "$PROG: you don't have permission to test in the current dir!" >&2
   exit 1
 fi
 
-# CPU
-if [ "$1" = "-cpu" -o -z "$1" ]; then
-  # work out how many CPUs (threads) we have?
-  THREADS=`lscpu |awk '/^CPU\(s\):/{print $NF}'`
-  [ -z "$THREADS" ] && { echo "$0: weren't able to work out number of threads via \`lscpu'!" >&2; exit 1; }
-
-  echo "* [`hostname`] CPU Benchmark: running sysbench, --cpu-max-prime=$MAX_PRIME, --threads=$THREADS"
-  sysbench cpu --cpu-max-prime=$MAX_PRIME --threads=$THREADS run | egrep "total time|events per second"
-  #sysbench --test=cpu --cpu-max-prime=$MAX_PRIME --num-threads=$THREADS run | egrep "total time|events per second"
+if ! which sysbench >&/dev/null; then
+  echo "$PROG: you don't have \`sysbench' installed; can't do any CPU performance testing!" >&2
+  exit 2
 fi
 
-# MEMORY
-if [ "$1" = "-memory" -o -z "$1" ]; then
-  echo && echo "* [`hostname`] Memory Benchmark: 2GB (read & write)"
-  sysbench memory --memory-total-size=2G --memory-oper=read run | egrep "total time|transferred"
-  sysbench memory --memory-total-size=2G run | egrep "total time|transferred"
-  #sysbench --test=memory --memory-total-size=2G --memory-oper=read run | egrep "total time|transferred"
-  #sysbench --test=memory --memory-total-size=2G run | egrep "total time|transferred"
+# allow working with less capacity
+if [ "$1" = "-1GB" ]; then
+  shift
+
+  MIN_SPACE_NEEDED=1500
+  SIZE_TO_TEST="1G"
+  SIZE_TO_TEST_COUNT="1024"
 fi
 
 # check for space
 SPACE_LEFT=`df -m . | awk '/^\//{print $4}'`
 if [ -z "$SPACE_LEFT" ]; then
-  echo "$0: can't calculate space left in current dir - via: df -m ." >&2
+  echo "$PROG: can't calculate space left in current dir - via: df -m ." >&2
   exit 98
-elif [ $SPACE_LEFT -lt 2500 ]; then
-  echo -e "\n$0: FATAL: not enough space left in current dir - seeing $SPACE_LEFT MB, needs at least 2.5GB - see below:" >&2
+elif [ $SPACE_LEFT -lt $MIN_SPACE_NEEDED ]; then
+  echo -e "$PROG: FATAL: not enough space left in current dir - seeing $SPACE_LEFT MB, needs at least $MIN_SPACE_NEEDED MB - see below:" >&2
   df -h .
+  echo -e "\nNOTE: can use \"-1GB\" param to reduce the requirements..." >&2
   exit 99
-else
-  df -h . |tail -1
 fi
 
-# IO
+##################
+
+
+#
+# CPU TEST
+#
+if [ "$1" = "-cpu" -o -z "$1" ]; then
+  # work out how many CPUs (threads) we have?
+  THREADS=`lscpu |awk '/^CPU\(s\):/{print $NF}'`
+  [ -z "$THREADS" ] && { echo "$PROG: weren't able to work out number of threads via \`lscpu'!" >&2; exit 1; }
+
+  echo "* [`hostname`] CPU Benchmark: running sysbench, --cpu-max-prime=$MAX_PRIME, --threads=1+$THREADS"
+  sysbench cpu --cpu-max-prime=$MAX_PRIME --threads=1 run | egrep "total time|events per second" | sed "s/$/\t\t--> single core CPU test/"
+  if [ "$THREADS" -gt 1 ]; then
+    sysbench cpu --cpu-max-prime=$MAX_PRIME --threads=$THREADS run | egrep "total time|events per second" | sed "s/$/\t\t--> $THREADS cores CPU test/"
+  fi
+  #sysbench --test=cpu --cpu-max-prime=$MAX_PRIME --num-threads=$THREADS run | egrep "total time|events per second"
+fi
+
+#
+# MEMORY TEST
+#
+if [ "$1" = "-memory" -o -z "$1" ]; then
+  echo && echo "* [`hostname`] Memory Benchmark: 2GB (read & write)"
+  sleep 2
+
+  #sysbench memory --memory-total-size=2G --memory-oper=read run | egrep "total time|transferred"                 # read test
+  sysbench memory --memory-total-size=2G run | egrep "total time|transferred" | sed "s/$/\t\t--> RAM write (2GB-data) speed/"  # write test
+  #sysbench --test=memory --memory-total-size=2G --memory-oper=read run | egrep "total time|transferred"
+  #sysbench --test=memory --memory-total-size=2G run | egrep "total time|transferred"
+fi
+
+#
+# IO TEST
+#
 if [ "$1" = "-io" -o -z "$1" ]; then
-  echo && echo "* [`hostname`] IO Benchmark: 2GB"
+  echo && echo "* [`hostname`] IO Benchmark: $SIZE_TO_TEST"
+  sleep 2
 
   # drop caches to accurately measure disk speeds
-  echo "  - flushing & clearing cached memory/the disk cache:"
+  echo "  - flushing & clearing cached memory/the disk cache (Press Ctrl-C to cancel):"
   sudo /sbin/sysctl vm.drop_caches=3
 
-  sysbench fileio --file-total-size=2G prepare --verbosity=2
-  sysbench fileio --file-total-size=2G --file-test-mode=rndrw run |egrep 'read, MiB|written, MiB|Operations performed:|Total transferred'
-  sysbench fileio --file-total-size=2G cleanup --verbosity=2
+  # seqwr: sequential write
+  # seqrewr: sequential read+write
+  # seqrd: sequential read
+  # rndrd: random read
+  # rndwr: random write
+  # rndrw: random read write
 
-  echo "  - dd: 2GB write test:"
-  dd if=/dev/zero of=./tempfile bs=1M count=2048 conv=fdatasync,notrunc status=progress 2>&1 |egrep -v 'records in|records out'
+  echo "  - running sysbench fileio suite with $SIZE_TO_TEST of test files:"
+  sysbench fileio --file-total-size=$SIZE_TO_TEST prepare --verbosity=2
+  sysbench fileio --file-total-size=$SIZE_TO_TEST --file-test-mode=rndrw run |egrep 'read, MiB|written, MiB|Operations performed:|Total transferred' | sed "s/$/\t\t--> disk $SIZE_TO_TEST random read+write speed/"
+  sysbench fileio --file-total-size=$SIZE_TO_TEST cleanup --verbosity=2
+
+  echo "  - dd: $SIZE_TO_TEST_COUNT x 1M write test:"
+  dd if=/dev/zero of=./tempfile bs=1M count=$SIZE_TO_TEST_COUNT conv=fdatasync,notrunc 2>&1 |egrep -v 'records in|records out' | sed "s/$/\t\t--> dd disk $SIZE_TO_TEST write speed/"
   rm -f ./tempfile
-
 fi
 
-# HDPARM
+#
+# HDPARM TEST
+#
 if [ "$1" = "-hdparm" ]; then
   echo && echo "* hdparm: sequential overall-drive read test on << /dev/$DEV >>:"
+  sleep 2
 
   # drop caches to accurately measure disk speeds
   echo "  - flushing & clearing cached memory/the disk cache:"
