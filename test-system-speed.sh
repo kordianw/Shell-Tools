@@ -57,13 +57,19 @@ fi
 #
 if [ "$1" = "-cpu" -o -z "$1" ]; then
   # work out how many CPUs (threads) we have?
-  THREADS=`lscpu |awk '/^CPU\(s\):/{print $NF}'`
-  [ -z "$THREADS" ] && { echo "$PROG: weren't able to work out number of threads via \`lscpu'!" >&2; exit 1; }
+  THREADS=`lscpu 2>/dev/null |awk '/^CPU\(s\):/{print $NF}'`
+  if [ -z "$THREADS" ]; then
+    THREADS=`sysctl hw.ncpu 2>/dev/null | awk '{print $NF}'`
+    if [ -z "$THREADS" ]; then
+      echo "$PROG: --warn: weren't able to work out number of threads via \`lscpu' or \`sysctl hw.ncpu', setting to single-core test only..." >&2
+      THREADS=1
+    fi
+  fi
 
   echo "* [`hostname`] CPU Benchmark: running sysbench, --cpu-max-prime=$MAX_PRIME, --threads=1+$THREADS"
-  sysbench cpu --cpu-max-prime=$MAX_PRIME --threads=1 run | egrep "total time|events per second" | sed "s/$/\t\t--> single core CPU test/"
+  sysbench cpu --cpu-max-prime=$MAX_PRIME --threads=1 run | egrep "total time|events per second" | sed "s/$/		--> single core CPU test/"
   if [ "$THREADS" -gt 1 ]; then
-    sysbench cpu --cpu-max-prime=$MAX_PRIME --threads=$THREADS run | egrep "total time|events per second" | sed "s/$/\t\t--> $THREADS cores CPU test/"
+    sysbench cpu --cpu-max-prime=$MAX_PRIME --threads=$THREADS run | egrep "total time|events per second" | sed "s/$/		--> $THREADS threads CPU test/"
   fi
   #sysbench --test=cpu --cpu-max-prime=$MAX_PRIME --num-threads=$THREADS run | egrep "total time|events per second"
 fi
@@ -76,7 +82,7 @@ if [ "$1" = "-memory" -o -z "$1" ]; then
   sleep 2
 
   #sysbench memory --memory-total-size=2G --memory-oper=read run | egrep "total time|transferred"                 # read test
-  sysbench memory --memory-total-size=2G run | egrep "total time|transferred" | sed "s/$/\t\t--> RAM write (2GB-data) speed/"  # write test
+  sysbench memory --memory-total-size=2G run | egrep "total time|transferred" | sed "s/$/		--> RAM write (2GB-data) speed/"  # write test
   #sysbench --test=memory --memory-total-size=2G --memory-oper=read run | egrep "total time|transferred"
   #sysbench --test=memory --memory-total-size=2G run | egrep "total time|transferred"
 fi
@@ -101,11 +107,17 @@ if [ "$1" = "-io" -o -z "$1" ]; then
 
   echo "  - running sysbench fileio suite with $SIZE_TO_TEST of test files:"
   sysbench fileio --file-total-size=$SIZE_TO_TEST prepare --verbosity=2
-  sysbench fileio --file-total-size=$SIZE_TO_TEST --file-test-mode=rndrw run |egrep 'read, MiB|written, MiB|Operations performed:|Total transferred' | sed "s/$/\t\t--> disk $SIZE_TO_TEST random read+write speed/"
+  sysbench fileio --file-total-size=$SIZE_TO_TEST --file-test-mode=rndrw run |egrep 'read, MiB|written, MiB|Operations performed:|Total transferred' | sed "s/$/		--> disk $SIZE_TO_TEST random read+write speed/"
   sysbench fileio --file-total-size=$SIZE_TO_TEST cleanup --verbosity=2
 
   echo "  - dd: $SIZE_TO_TEST_COUNT x 1M write test:"
-  dd if=/dev/zero of=./tempfile bs=1M count=$SIZE_TO_TEST_COUNT conv=fdatasync,notrunc 2>&1 |egrep -v 'records in|records out' | sed "s/$/\t\t--> dd disk $SIZE_TO_TEST write speed/"
+  if [[ "$OSTYPE" == darwin* ]]; then
+    dd if=/dev/zero of=./tempfile bs=1048576 count=$SIZE_TO_TEST_COUNT conv=notrunc 2>&1 |egrep -v 'records in|records out' | sed "s/$/		--> dd disk $SIZE_TO_TEST write speed/"
+  else
+    dd if=/dev/zero of=./tempfile bs=1M count=$SIZE_TO_TEST_COUNT conv=fdatasync,notrunc 2>&1 |egrep -v 'records in|records out' | sed "s/$/		--> dd disk $SIZE_TO_TEST write speed/"
+  fi
+
+  # clean-up
   rm -f ./tempfile
 fi
 
