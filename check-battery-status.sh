@@ -8,15 +8,15 @@
 which acpi >&/dev/null || { echo "$0: no \`ACPI' utility installed!" >&2; exit 1; }
 which upower >&/dev/null || { echo "$0: no \`upower' utility installed!" >&2; exit 1; }
 
-echo "* Battery:"
+echo "* Battery (`date "+%H:%M"`):"
 acpi -bi
 upower -i $(upower -e | grep BAT) | egrep 'vendor|state|time to empty|energy-rate|energy-full|energy:|percentage|capacity|technology'
 
-echo -e "\n* AC Power:"
+echo -e "\n* AC Power (`date "+%H:%M"`):"
 acpi -ai
 upower -i $(upower -e | grep AC) |egrep 'updated|online'
 
-echo -e "\n* Misc:"
+echo -e "\n* Misc (`date "+%H:%M"`):"
 acpi -t
 
 echo -en "\n* Available CPU Freq Power Schemes:\t\t"
