@@ -140,6 +140,7 @@ function install_general_packages
 
   # development
   $INSTALL_CMD git           # github/git
+  $INSTALL_CMD jq            # lightweight and flexible command-line JSON processor
   
   # compiling / gcc
   $INSTALL_CMD build-essential
@@ -451,6 +452,60 @@ function disable_ssh()
   $SUDO apt remove -qq -y openssh-sftp-server
 }
 
+function install_brew()
+{
+  if [[ "$OSTYPE" != darwin* ]]; then
+    echo "$PROG: invalid arch << $OSTYPE >>, expecting << darwin* >>! >&2"
+    exit 2
+  fi
+
+  # install if necessary
+  if ! which brew >&/dev/null; then
+    echo "$PROG: installing \`brew.sh' - enter sudo password:"
+    sleep 1
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+  fi
+
+  INSTALL_CMD="brew install"
+
+  # update the local database to make sure it matches remote sources
+  echo "* updating the brew database..."
+  brew update
+
+  # apps
+  echo && echo "* installing packages..."
+
+  # packages
+  $INSTALL_CMD coreutils
+  $INSTALL_CMD wget
+  $INSTALL_CMD tmux
+  $INSTALL_CMD links
+  $INSTALL_CMD jq
+  $INSTALL_CMD nmap
+  #$INSTALL_CMD cask    # allow install via: brew cask install google-chrome
+
+  # utils
+  $INSTALL_CMD watch
+  $INSTALL_CMD ncdu
+  $INSTALL_CMD htop
+  $INSTALL_CMD sysbench
+  $INSTALL_CMD inxi
+  $INSTALL_CMD mackup
+
+  # compiler & tools
+  $INSTALL_CMD gcc
+  $INSTALL_CMD autoconf
+  $INSTALL_CMD automake
+  $INSTALL_CMD make
+  $INSTALL_CMD cmake
+  $INSTALL_CMD glib
+  $INSTALL_CMD pkg-config
+
+  # list outdated packages and what would be the cleanup
+  $INSTALL_CMD cleanup -n
+  $INSTALL_CMD outdated
+}
+
 function install_pi()
 {
   # RASPBIAN PI
@@ -483,6 +538,7 @@ function install_pi()
 
   # development
   $INSTALL_CMD git           # github/git
+  $INSTALL_CMD jq            # lightweight and flexible command-line JSON processor
 
   # additional modules
   $INSTALL_CMD libjson-perl  # JSON.pm
@@ -562,6 +618,7 @@ function install_rhel()
   sudo yum -y install perl
   sudo yum -y install python
   sudo yum -y install git                    # GIT/GITHUB access
+  sudo yum -y install jq                     # lightweight and flexible command-line JSON processor
   sudo yum -y install strace                 # debug running processes
 
   # COMPILING
@@ -642,8 +699,9 @@ Usage: $PROG <options> [param]
         -SSH1   install/enable SSH server via apt (for SSH-ing in) * useful on Mint Linux
         -SSH0   disable & completely remove SSH server (via apt)
 
-        -RH     install yum pkgs: RHEL Red Hat Linux (uses yum)
-        -PI     install apt pkgs: Raspbian PI Linux (uses apt)
+        -BREW   install brew pkgs: MacOS/Darwin (uses brew)
+        -RH     install yum  pkgs: RHEL Red Hat Linux (uses yum)
+        -PI     install apt  pkgs: Raspbian PI Linux (uses apt)
 
         -h      this screen
 !
@@ -661,6 +719,9 @@ elif [ "$1" = "-SSH1" ]; then
 
 elif [ "$1" = "-SSH0" ]; then
   disable_ssh;
+
+elif [ "$1" = "-BREW" ]; then
+  install_brew;
 
 elif [ "$1" = "-PI" ]; then
   install_pi;
