@@ -51,6 +51,10 @@ fi
 
 ##################
 
+# show HW information if available
+if which hw-info.sh >&/dev/null; then
+  hw-info.sh
+fi
 
 #
 # CPU TEST
