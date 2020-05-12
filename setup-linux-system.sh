@@ -501,6 +501,10 @@ function install_brew()
   $INSTALL_CMD glib
   $INSTALL_CMD pkg-config
 
+  # install `sshpass'
+  #brew install http://git.io/sshpass.rb
+  brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb
+
   # list outdated packages and what would be the cleanup
   $INSTALL_CMD cleanup -n
   $INSTALL_CMD outdated
