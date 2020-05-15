@@ -131,7 +131,7 @@ function install_general_packages
   fi
 
   # Laptop specific tools
-  if [ -f /sys/module/battery/initstate -o -d /proc/acpi/battery/BAT0 ]; then
+  if [ -f /sys/module/battery/initstate -o -d /proc/acpi/battery/BAT0 -o -L /sys/class/power_supply/BAT0 ]; then
     echo -e "\n***\n*** INSTALLING LAPTOP PKGS\n***\n"
     $INSTALL_CMD acpi          # view battery/ACPI information (LAPTOPS)
     $INSTALL_CMD acpitool      # view battery/ACPI information (LAPTOPS)
