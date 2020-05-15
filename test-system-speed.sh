@@ -96,6 +96,8 @@ fi
 #
 if [ "$1" = "-io" -o -z "$1" ]; then
   echo && echo "* [`hostname`] IO Benchmark: $SIZE_TO_TEST"
+  echo -n "  - NB: using following disk: "
+  df -Th . | tail -1
   sleep 2
 
   # drop caches to accurately measure disk speeds
@@ -110,8 +112,13 @@ if [ "$1" = "-io" -o -z "$1" ]; then
   # rndrw: random read write
 
   echo "  - running sysbench fileio suite with $SIZE_TO_TEST of test files:"
+
   sysbench fileio --file-total-size=$SIZE_TO_TEST prepare --verbosity=2
-  sysbench fileio --file-total-size=$SIZE_TO_TEST --file-test-mode=rndrw run |egrep 'read, MiB|written, MiB|Operations performed:|Total transferred' | sed "s/$/		--> disk $SIZE_TO_TEST random read+write speed/"
+  sysbench fileio --file-total-size=$SIZE_TO_TEST --file-test-mode=rndrw run |egrep 'read, MiB|written, MiB|Operations performed:|Total transferred' | sed "s/$/		--> disk $SIZE_TO_TEST << random >> read+write speed/"
+  sysbench fileio --file-total-size=$SIZE_TO_TEST cleanup --verbosity=2
+
+  sysbench fileio --file-total-size=$SIZE_TO_TEST prepare --verbosity=2
+  sysbench fileio --file-total-size=$SIZE_TO_TEST --file-test-mode=seqrewr run |egrep 'read, MiB|written, MiB|Operations performed:|Total transferred' | sed "s/$/		--> disk $SIZE_TO_TEST << sequential >> read+write speed/"
   sysbench fileio --file-total-size=$SIZE_TO_TEST cleanup --verbosity=2
 
   echo "  - dd: $SIZE_TO_TEST_COUNT x 1M write test:"
@@ -137,7 +144,7 @@ if [ "$1" = "-hdparm" ]; then
   sudo /sbin/sysctl vm.drop_caches=3
 
   # work out the primary disk device
-  DEV=`lsblk 2>/dev/null |awk '/ \/$/{print $1}' | sed 's/[^a-z]//g'`
+  DEV=`lsblk 2>/dev/null |awk '/ \/$/{print $1}' | sed 's/[abcdp][0-9]$//g; s/[^a-z0-9]//g'`
   [ -z "$DEV" ] && { echo "can't work out dev to test..." >&2; exit 1; }
  
   sudo hdparm -tT /dev/$DEV |tail -1
