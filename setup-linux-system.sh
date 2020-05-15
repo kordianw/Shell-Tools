@@ -47,6 +47,10 @@ function install_general_packages
   # - add percentage to battery panel (right click, properties)
   # - reverse the scroll direction (Start,Mouse/TouchPad)
   # - connect WIFI & Disable Bluetooth
+  # - Start,Session Login & Startup - DISABLE:
+  #   * blueberry, Bluetooth, mintwelcome
+  #   * screen locker, system reports, update manager
+  # - configure Start,Software Sources to choose fastest mirrors
   # - disable screensaver (Start: Display, then Power)
   #   * this allows proper suspend on lid close
   #   * NB: test that Suspend works properly on lid close
@@ -115,19 +119,27 @@ function install_general_packages
   # major packages - CLI & GUI
   $INSTALL_CMD vim           # VIM: improved vi (VI iMproved)
   $INSTALL_CMD zsh           # the Z Shell (more powerful than bash)
-  #$INSTALL_CMD chromium-browser
-  #$INSTALL_CMD vlc
-  #$INSTALL_CMD remmina
-  #$INSTALL_CMD remmina-plugin-rdp
-  #$INSTALL_CMD remmina-plugin-vnc
 
-  # Laptop specific tools (can comment out)
-  #$INSTALL_CMD acpi          # view battery/ACPI information (LAPTOPS)
-  #$INSTALL_CMD acpitool      # view battery/ACPI information (LAPTOPS)
-  #$INSTALL_CMD wavemon       # wireless Device Monitoring Application (LAPTOPS)
-  #$INSTALL_CMD powertop      # diagnose issues with power consumption and management (LAPTOPS)
-  #$INSTALL_CMD cpufrequtils  # utilities to deal with the cpufreq Linux kernel feature
-  #$INSTALL_CMD caffeine      # prevent the desktop becoming idle in full-screen mode
+  # GUI Packages
+  if who | grep $USER |grep tty | grep -q ":0"; then
+    echo -e "\n***\n*** INSTALLING GUI PKGS\n***\n"
+    $INSTALL_CMD chromium-browser
+    $INSTALL_CMD vlc
+    $INSTALL_CMD remmina
+    $INSTALL_CMD remmina-plugin-rdp
+    $INSTALL_CMD remmina-plugin-vnc
+  fi
+
+  # Laptop specific tools
+  if [ -f /sys/module/battery/initstate -o -d /proc/acpi/battery/BAT0 ]; then
+    echo -e "\n***\n*** INSTALLING LAPTOP PKGS\n***\n"
+    $INSTALL_CMD acpi          # view battery/ACPI information (LAPTOPS)
+    $INSTALL_CMD acpitool      # view battery/ACPI information (LAPTOPS)
+    $INSTALL_CMD wavemon       # wireless Device Monitoring Application (LAPTOPS)
+    $INSTALL_CMD powertop      # diagnose issues with power consumption and management (LAPTOPS)
+    $INSTALL_CMD cpufrequtils  # utilities to deal with the cpufreq Linux kernel feature
+    $INSTALL_CMD caffeine      # prevent the desktop becoming idle in full-screen mode
+  fi
 
   # terminal multipliers
   $INSTALL_CMD screen        # GNU screen
@@ -415,8 +427,10 @@ function enable_ssh()
     $SUDO apt install -qq -y openssh-server
   fi
 
-  echo "* disabling: ssh from auto-restarting (OPTIONAL)"
-  $SUDO systemctl disable ssh.service
+  if [ "$USER" = "mint" ]; then
+    echo "* disabling: ssh from auto-restarting (OPTIONAL)"
+    $SUDO systemctl disable ssh.service
+  fi
 
   echo "* starting ssh service"
   $SUDO systemctl start ssh.service
@@ -424,10 +438,12 @@ function enable_ssh()
   echo "* check-status: systemctl status ssh"
   $SUDO systemctl status ssh
 
-  echo && echo "* NOTE: in Mint Linux, default user \`mint' has no password, therefore need to add to \`/etc/ssh/sshd_config':"
-  echo "PermitEmptyPasswords yes"
-  echo && echo "# sudo vi /etc/ssh/sshd_config"
-  echo "# systemctl restart ssh.service"
+  if [ "$USER" = "mint" ]; then
+    echo && echo "* NOTE: in Mint Linux, default user \`mint' has no password, therefore need to add to \`/etc/ssh/sshd_config':"
+    echo "PermitEmptyPasswords yes"
+    echo && echo "# sudo vi /etc/ssh/sshd_config"
+    echo "# systemctl restart ssh.service"
+  fi
 }
 
 function disable_ssh()
