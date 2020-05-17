@@ -122,7 +122,7 @@ if [ "$1" = "-io" -o -z "$1" ]; then
   sysbench fileio --file-total-size=$SIZE_TO_TEST cleanup --verbosity=2
 
   echo "  - dd: $SIZE_TO_TEST_COUNT x 1M write test:"
-  if [[ "$OSTYPE" == darwin* ]]; then
+  if echo "$OSTYPE" |grep -q darwin; then
     dd if=/dev/zero of=./tempfile bs=1048576 count=$SIZE_TO_TEST_COUNT conv=notrunc 2>&1 |egrep -v 'records in|records out' | sed "s/$/		--> dd disk $SIZE_TO_TEST write speed/"
   else
     dd if=/dev/zero of=./tempfile bs=1M count=$SIZE_TO_TEST_COUNT conv=fdatasync,notrunc 2>&1 |egrep -v 'records in|records out' | sed "s/$/		--> dd disk $SIZE_TO_TEST write speed/"
