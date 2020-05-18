@@ -128,6 +128,7 @@ function install_general_packages
     $INSTALL_CMD remmina
     $INSTALL_CMD remmina-plugin-rdp
     $INSTALL_CMD remmina-plugin-vnc
+    $INSTALL_CMD xdotool
   fi
 
   # Laptop specific tools
