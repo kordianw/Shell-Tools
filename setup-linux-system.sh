@@ -160,6 +160,7 @@ function install_general_packages
   $INSTALL_CMD gcc           # GNU compiler
   $INSTALL_CMD libc6-dev     # LIBC dev headers
   $INSTALL_CMD automake      # automake
+  $INSTALL_CMD pkg-config    # pkg-config
   $INSTALL_CMD openssl       # SSL
   $INSTALL_CMD libssl-dev    # SSL libraries
   $INSTALL_CMD libncurses5-dev libncursesw5-dev
@@ -184,6 +185,7 @@ function install_general_packages
   $INSTALL_CMD sysbench      # multi-threaded benchmark tool
   $INSTALL_CMD lsof          # Utility to list open files
   $INSTALL_CMD ncdu          # Disk usage analysis
+  $INSTALL_CMD boot-repair   # Graphical tool to repair boot problems
 
   # network & security tools
   $INSTALL_CMD telnet        # telnet for checking connectivity
