@@ -321,9 +321,20 @@ function change_timezone()
 
   # additional checks using timedatectl
   if which timedatectl >&/dev/null; then
+    # check that this works
+    timedatectl list-timezones >&/dev/null
+
+    # does this even work?
+    if [ $? -ne 0 ]; then
+      echo && echo "$PROG: the: \`timedatectl list-timezones' is not working on this host:" >&2
+      timedatectl list-timezones
+      echo & echo "...try setting the TZ manually via: \"export TZ=$TZ\"" >&2
+      exit 3
+    fi
+
     # check that valid
     if [ `timedatectl list-timezones |grep -c $TZ` -ne 1 ]; then
-      echo "$PROG: the TZ \'$TZ' doesn't seem to be valid?" >&2; exit 3
+      echo "$PROG: the TZ \'$TZ' doesn't seem to be valid?" >&2; exit 4
     fi
 
     # check whether we're already there...
@@ -331,7 +342,7 @@ function change_timezone()
     [ -z "$CURRENT_TZ" ] && { echo "$PROG: can't get current system's TZ via timedatectl status!" >&2; exit 1; }
 
     if [ "$CURRENT_TZ" = "$TZ" ]; then
-      echo "$PROG: according to \`timedatectl -status', this system TZ is already set to $TZ - nothing to do." >&2; exit 4
+      echo "$PROG: according to \`timedatectl -status', this system TZ is already set to $TZ - nothing to do." >&2; exit 5
     fi
   fi
 
