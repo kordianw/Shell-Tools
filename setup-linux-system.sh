@@ -294,29 +294,35 @@ function change_timezone()
   cat /etc/timezone || exit 1
   ls -l /etc/localtime || exit 2
 
+  # SPECIAL CASE FOR NYC/US Eastern
+  CHECK_TZ="$TZ"
+  [ "$CHECK_TZ" = "America/New_York" -o "$CHECK_TZ" = "US/Eastern" ] && CHECK_TZ="America/New_York|US/Eastern"
+
   # do we need to do anything???
-  if ls -l /etc/localtime | grep -q "$TZ"; then
-    echo -e "\n$PROG: according to /etc/localtime, this system TZ is already set to $TZ - nothing to do:" >&2
+  if ls -l /etc/localtime | egrep -q "$CHECK_TZ"; then
+    echo -e "\n$PROG: according to /etc/localtime (#1), this system TZ is already set to $TZ - good, nothing to do:" >&2
     ls -l /etc/localtime || exit 1
 
-    if grep -q "$TZ" /etc/timezone; then
-      echo -e "\n$PROG: according to /etc/timezone, this system TZ is already set to $TZ - nothing to do:" >&2
+    if egrep -q "$CHECK_TZ" /etc/timezone; then
+      echo -e "\n$PROG: according to /etc/timezone (#2), this system TZ is already set to $TZ - good, nothing to do:" >&2
       cat /etc/timezone || exit 2
     fi
 
-    echo && echo "* running \`timedatectl status' - check for sync:"
-    timedatectl status || exit 3
+    if which timedatectl >&/dev/null; then
+      echo && echo "* running \`timedatectl status' - check for sync:"
+      timedatectl status || exit 3
+    fi
 
-    exit 4
+    exit 0
   fi
 
   # fall-back
-  if grep -q "$TZ" /etc/timezone; then
+  if egrep -q "$CHECK_TZ" /etc/timezone; then
     echo -e "\n$PROG: according to /etc/timezone, this system TZ is already set to $TZ - nothing to do:" >&2
     cat /etc/timezone || exit 1
     ls -l /etc/localtime || exit 2
 
-    exit 5
+    exit 0
   fi
 
   # additional checks using timedatectl
@@ -342,7 +348,7 @@ function change_timezone()
     [ -z "$CURRENT_TZ" ] && { echo "$PROG: can't get current system's TZ via timedatectl status!" >&2; exit 1; }
 
     if [ "$CURRENT_TZ" = "$TZ" ]; then
-      echo "$PROG: according to \`timedatectl -status', this system TZ is already set to $TZ - nothing to do." >&2; exit 5
+      echo "$PROG: according to \`timedatectl -status', this system TZ is already set to $TZ - nothing to do." >&2; exit 0
     fi
   fi
 
@@ -406,7 +412,7 @@ function enable_zsh()
 
   # do we already have it set?
   if getent passwd $USER | grep -q ":$ZSH"; then
-    echo "$PROG: your user's < $USER > shell is already: $ZSH - nothing to do!" >&2; exit 5
+    echo "$PROG: your user's < $USER > shell is already: $ZSH - nothing to do!" >&2; exit 0
   fi
 
   # make sure it's in /etc/shells
@@ -715,6 +721,17 @@ function install_rhel()
   sudo yum -y install perl-Mozilla-CA        # for SSL handling
 }
 
+function stop_cloud9_services ()
+{
+  # stop services taking up CPU & MEM
+  # - can always be switched back on when necessary
+  sudo service containerd stop
+  sudo service docker stop
+  sudo service mysql stop
+  sudo service apache2 stop
+  sudo service snapd stop
+}
+
 #
 # MAIN
 #
@@ -734,6 +751,8 @@ Usage: $PROG <options> [param]
         -SSH1   install/enable SSH server via apt (for SSH-ing in) * useful on Mint Linux
         -SSH0   disable & completely remove SSH server (via apt)
 
+        -C9_STOP_SERVICES   stops unnecessary services on AWS Cloud9 VMs
+
         -BREW   install brew pkgs: MacOS/Darwin (uses brew)
         -RH     install yum  pkgs: RHEL Red Hat Linux (uses yum)
         -PI     install apt  pkgs: Raspbian PI Linux (uses apt)
@@ -742,30 +761,23 @@ Usage: $PROG <options> [param]
 !
 elif [ "$1" = "-GENPKG" ]; then
   install_general_packages;
-
 elif [ "$1" = "-TZ" ]; then
   change_timezone;
-
 elif [ "$1" = "-ZSH" ]; then
   enable_zsh;
-
 elif [ "$1" = "-SSH1" ]; then
   enable_ssh;
-
 elif [ "$1" = "-SSH0" ]; then
   disable_ssh;
-
+elif [ "$1" = "-C9_STOP_SERVICES" ]; then
+  stop_cloud9_services;
 elif [ "$1" = "-BREW" ]; then
   install_brew;
-
 elif [ "$1" = "-PI" ]; then
   install_pi;
-
 elif [ "$1" = "-RH" ]; then
   install_rhel;
-
 else
-
   echo "$PROG: see usage via \`$PROG --help' ..." 2>&1
   exit 1
 fi
