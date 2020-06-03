@@ -193,6 +193,7 @@ function install_general_packages
   $INSTALL_CMD dnsutils      # provides dig+nslookup
   $INSTALL_CMD netcat        # TCP/IP swiss army knife
   $INSTALL_CMD nmap          # The Network Mapper/Scanner
+  $INSTALL_CMD sshfs         # filesystem client based on SSH File Transfer Protocol
   $INSTALL_CMD netdiscover   # SMBIOS/DMI table decoder
   $INSTALL_CMD ntpdate       # one-off synchronize clock with a remote NTP server
   $INSTALL_CMD ntpstat       # show network time protocol (ntp) status
@@ -384,8 +385,12 @@ function change_timezone()
   cat /etc/timezone || exit 1
   ls -l /etc/localtime || exit 2
 
-  echo && echo "* running \`timedatectl status' - check for sync:"
-  timedatectl status
+  if which timedatectl >&/dev/null; then
+    echo && echo "* running \`timedatectl status' - check for sync:"
+    timedatectl status
+  else
+    echo && echo "* no \`timedatectl status' - can't work out final TZ status..."
+  fi
 }
 
 function enable_zsh()
@@ -606,6 +611,7 @@ function install_pi()
   $INSTALL_CMD dnsutils      # provides dig+nslookup
   $INSTALL_CMD netcat        # TCP/IP swiss army knife
   $INSTALL_CMD nmap          # The Network Mapper/Scanner
+  $INSTALL_CMD sshfs         # filesystem client based on SSH File Transfer Protocol
   $INSTALL_CMD netdiscover   # SMBIOS/DMI table decoder
   $INSTALL_CMD ntpdate       # one-off synchronize clock with a remote NTP server
   $INSTALL_CMD ntpstat       # show network time protocol (ntp) status
@@ -721,7 +727,23 @@ function install_rhel()
   sudo yum -y install perl-Mozilla-CA        # for SSL handling
 }
 
-function stop_cloud9_services ()
+function setup_gcp_cloud_shell_basics()
+{
+  echo "** installing key packages..."
+  sudo apt install -qq -y zsh screen
+
+  echo && echo "** setting up key items..."
+  ~/bin/scripts/setup-linux-system.sh -ZSH || exit 99
+  #~/bin/scripts/setup-linux-system.sh -TZ  || exit 99
+
+  echo && echo "** stopping unneeded services..."
+  sudo service docker stop
+
+  echo && echo "** starting ZSH..."
+  exec zsh
+}
+
+function stop_cloud9_services()
 {
   # stop services taking up CPU & MEM
   # - can always be switched back on when necessary
@@ -751,6 +773,7 @@ Usage: $PROG <options> [param]
         -SSH1   install/enable SSH server via apt (for SSH-ing in) * useful on Mint Linux
         -SSH0   disable & completely remove SSH server (via apt)
 
+        -GCP_BASICS         installs basic packages for GCP Cloud Shell purposes
         -C9_STOP_SERVICES   stops unnecessary services on AWS Cloud9 VMs
 
         -BREW   install brew pkgs: MacOS/Darwin (uses brew)
@@ -769,6 +792,8 @@ elif [ "$1" = "-SSH1" ]; then
   enable_ssh;
 elif [ "$1" = "-SSH0" ]; then
   disable_ssh;
+elif [ "$1" = "-GCP_BASICS" ]; then
+  setup_gcp_cloud_shell_basics;
 elif [ "$1" = "-C9_STOP_SERVICES" ]; then
   stop_cloud9_services;
 elif [ "$1" = "-BREW" ]; then
