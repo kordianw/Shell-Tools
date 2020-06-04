@@ -727,33 +727,6 @@ function install_rhel()
   sudo yum -y install perl-Mozilla-CA        # for SSL handling
 }
 
-function setup_gcp_cloud_shell_basics()
-{
-  echo "** installing key packages..."
-  sudo apt install -qq -y zsh screen
-
-  echo && echo "** setting up key items..."
-  ~/bin/scripts/setup-linux-system.sh -ZSH || exit 99
-  #~/bin/scripts/setup-linux-system.sh -TZ  || exit 99
-
-  echo && echo "** stopping unneeded services..."
-  sudo service docker stop
-
-  echo && echo "** starting ZSH..."
-  exec zsh
-}
-
-function stop_cloud9_services()
-{
-  # stop services taking up CPU & MEM
-  # - can always be switched back on when necessary
-  sudo service containerd stop
-  sudo service docker stop
-  sudo service mysql stop
-  sudo service apache2 stop
-  sudo service snapd stop
-}
-
 #
 # MAIN
 #
@@ -773,9 +746,6 @@ Usage: $PROG <options> [param]
         -SSH1   install/enable SSH server via apt (for SSH-ing in) * useful on Mint Linux
         -SSH0   disable & completely remove SSH server (via apt)
 
-        -GCP_BASICS         installs basic packages for GCP Cloud Shell purposes
-        -C9_STOP_SERVICES   stops unnecessary services on AWS Cloud9 VMs
-
         -BREW   install brew pkgs: MacOS/Darwin (uses brew)
         -RH     install yum  pkgs: RHEL Red Hat Linux (uses yum)
         -PI     install apt  pkgs: Raspbian PI Linux (uses apt)
@@ -792,10 +762,6 @@ elif [ "$1" = "-SSH1" ]; then
   enable_ssh;
 elif [ "$1" = "-SSH0" ]; then
   disable_ssh;
-elif [ "$1" = "-GCP_BASICS" ]; then
-  setup_gcp_cloud_shell_basics;
-elif [ "$1" = "-C9_STOP_SERVICES" ]; then
-  stop_cloud9_services;
 elif [ "$1" = "-BREW" ]; then
   install_brew;
 elif [ "$1" = "-PI" ]; then
