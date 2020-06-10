@@ -1,8 +1,8 @@
 #!/bin/bash
 #
 # Script to setup:
-# - GCP (Google Cloud Platform) DevShell (free)
-# - AWS (Amazon Web Services) Cloud9 Shell (paid via EC2)
+# - GCP (Google Cloud Platform) DevShell (free, ethemeral-shared-CPU VM)
+# - AWS (Amazon Web Services) Cloud9 Shell (paid per-hour via dedicated EC2, 30 mins timeout for auto-shutdown)
 #
 # * NOTES:
 # GCP: Get the hostname to SSH in on port 6000 (boosted mode):
@@ -10,10 +10,11 @@
 # GCP: URL for web-use: https://console.cloud.google.com/cloudshell/editor?shellonly=true
 # GCP: Documentation: https://cloud.google.com/shell/docs/how-cloud-shell-works
 #
+# GCP: boost mode moves from E2-shared-core `e2-small' to `e2-medium' (Debian w/5GB disk) for 24 hours (doubles your RAM from 2GB to 4GB + more BW)
+# GVP: * details: https://cloud.google.com/compute/docs/machine-types#e2_shared-core_machine_types
 # GCP: NB: runs ~/.customize_environment script as root upon machine provisioning (/var/log/customize*, /google/devshell/customize_environment_done)
-# GCP: boost mode moves from e2-small to e2-medium (Debian w/5GB disk) for 24 hours (doubles your RAM from 2GB to 4GB)
-# GCP: limits: 20mins after logout resets VM, 50 hrs/week usage limit, 12hr max session, 5GB home-dir gets deleted after 120 days (4 months) of inactivity
-# GCP: to use `gloud' correctly, set your GCP project ID, eg: DEVSHELL_PROJECT_ID=kw-general-purpose
+# GCP: limits: 20mins after logout resets VM, 50 hrs/week usage limit (7hrs/day), 12hr max session, 5GB home-dir deleted >120 days (4 months) of inactivity
+# GCP: to use `gcloud' correctly, set your GCP project ID, eg: DEVSHELL_PROJECT_ID=kw-general-purpose
 # GCP: for privacy, set: ~/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true
 #
 # * By Kordian Witek <code [at] kordy.com>, Jun 2020
