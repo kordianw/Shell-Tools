@@ -155,6 +155,7 @@ function install_general_packages
   $INSTALL_CMD git           # github/git
   $INSTALL_CMD jq            # lightweight and flexible command-line JSON processor
   $INSTALL_CMD s3cmd         # S3 client
+  $INSTALL_CMD rclone        # cloud upload/download client
   
   # compiling / gcc
   $INSTALL_CMD build-essential
