@@ -142,6 +142,10 @@ function install_general_packages
     $INSTALL_CMD caffeine      # prevent the desktop becoming idle in full-screen mode
   fi
 
+  # MAIL
+  #$INSTALL_CMD mailutils    # this allows mail to be delivered
+  #$INSTALL_CMD mutt         # more friendly mail client
+
   # terminal multipliers
   $INSTALL_CMD screen        # GNU screen
   $INSTALL_CMD tmux          # GNU tmux
@@ -219,54 +223,6 @@ function install_general_packages
     DIR=`dirname "$0"`
     dpkg -l > $DIR/pkg-installed-list.txt
   fi
-
-  # ==== Useful APT commands:
-  # LIST & SEARCH:
-  # - dpkg -l                     List all installed packages
-  # - apt search search_string    Search for packages
-  # - apt show package            Show locally-cached details about package (local+remote)
-  # - apt list                    List all AVAILABLE packages (to be installed)
-  # - apt list --upgradable       List all packages that are installed and which can be upgraded
-  # - apt changelog package       Shows changelogs for packages (v.useful)
-  # - apt-cache showpkg package   Shows package dependencies (reverse & forward)
-  #
-  # QUERY:
-  # - dpkg -s package             Show info only locally installed package (cf: rpm -qi)
-  # - dpkg -L package             List files installed by a package (cf: rpm -ql)
-  # - dpkg -S /path/file          List which package a given file belongs to (cf: rpm -qf)
-  #
-  # INSTALL:
-  # - sudo apt install package    Download & install/upgrade (resolving dependencies)
-  #                               * apt install --only-upgrade package <-- only upgrades
-  # - sudo dpkg -i package        install local pkg
-  #
-  # REMOVE:
-  # - sudo apt remove package     Uninstalls a package
-  # - sudo apt purge package      Uninstalls a package + removes any config files
-  # - sudo apt autoremove         Removes unneeded packages (eg: installed as prior dependencies)
-  #
-  # UPGRADE:
-  # - apt list --upgradable       List all packages that are installed and which can be upgraded
-  # - apt policy package          Shows all available versions of package that can be installed
-  # - apt changelog package       Shows changelogs for packages (v.useful)
-  # - sudo apt update             Update the local database to make sure it matches remote sources
-  # - sudo apt upgrade            Only upgrades installed packages, where possible (no removal).
-  # - sudo apt safe-upgrade       Same, but installed packages will not be removed unless they are unused.
-  # - sudo apt dist-upgrade       Same, but may add or remove packages to satisfy new dependencies.
-  #                               * apt-get -s dist-upgrade <-- simulation to see what it would do
-  #
-  # CLEAN:
-  # - sudo apt-get clean          Free up the disk space by cleaning retrieved .deb packages
-  # - sudo apt-get autoclean      Deletes all .deb files from /var/cache/apt/archives to free-up disk space
-  # - sudo apt autoremove         Removes unneeded packages (eg: installed as prior dependencies)
-  #
-  # APT_FILE:
-  # - sudo apt-file update        Update the apt-file database locally
-  # - apt-file search /path/file  Search what package provides /path/file
-  # - apt-file list package       Show files to be installed by a package
-  # Note: apt is a front-end for apt-get, apt-cache and dpkg
-  #
-  # apt history is in /var/log/apt/history.log
 }
 
 function change_timezone()
@@ -741,7 +697,7 @@ $PROG: Script to setup a new Linux system, eg: install packages via \`yum/apt'
 
 Usage: $PROG <options> [param]
         -TZ     set the system's timezone (apt-based systems)
-        -GENPKG general install apt/ym pkgs: on Linux (Ubuntu, Mint, Debian etc) [apt/yum]
+        -GENPKG general install apt/yum pkgs: on Linux (Ubuntu, Mint, Debian etc) [apt/yum]
         -ZSH    enable the \`zsh' shell via \`chsh'
 
         -SSH1   install/enable SSH server via apt (for SSH-ing in) * useful on Mint Linux
