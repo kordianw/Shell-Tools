@@ -3,10 +3,12 @@
 # Script to setup a Linux system, eg: install additional packages on a Linux machine
 # - works on RHEL, Ubuntu, Debian (incl. Mint) and Raspbian
 #
-# To create a serparate user:
+# To create a separate user:
 # # sudo useradd -m kordy
 # # sudo passwd kordy
 # # sudo su - kordy
+#
+# HW-INFO: # curl -s https://raw.githubusercontent.com/kordianw/HW-Info/master/hw-info.sh | bash
 #
 # * By Kordian Witek <code [at] kordy.com>, Nov 2017
 #
