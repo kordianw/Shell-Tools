@@ -148,8 +148,11 @@ function install_general_packages
   fi
 
   # MAIL
+  #$INSTALL_CMD postfix      # this allows mail to be delivered
   #$INSTALL_CMD mailutils    # this allows mail to be delivered
   #$INSTALL_CMD mutt         # more friendly mail client
+  #$INSTALL_CMD procmail     # could be useful
+  #$INSTALL_CMD libsasl2-modules  # needed for sendgrid/external SMTP
 
   # terminal multipliers
   $INSTALL_CMD screen        # GNU screen
