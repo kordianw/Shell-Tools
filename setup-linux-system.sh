@@ -3,6 +3,11 @@
 # Script to setup a Linux system, eg: install additional packages on a Linux machine
 # - works on RHEL, Ubuntu, Debian (incl. Mint) and Raspbian
 #
+# To create a serparate user:
+# # sudo useradd -m kordy
+# # sudo passwd kordy
+# # sudo su - kordy
+#
 # * By Kordian Witek <code [at] kordy.com>, Nov 2017
 #
 
@@ -174,6 +179,10 @@ function install_general_packages
   # additional modules
   $INSTALL_CMD libjson-perl        # JSON.pm
   $INSTALL_CMD libdate-manip-perl  # DateManip.pm
+  $INSTALL_CMD libxml-sax-perl     # for XML parsing (faster)
+  $INSTALL_CMD libxml-parser-perl  # for XML parsing (faster)
+
+
 
   # system utils (may require cron-entries)
   #$INSTALL_CMD sysstat       # install stat utils such as sar, iostat, etc
@@ -672,6 +681,9 @@ function install_rhel()
 
   sudo yum -y install perl-XML-Simple        # for XML parsing
   sudo yum -y install perl-JSON              # for JSON parsing
+  # need to have XML::SAX & XML::Parser installed, and ParserDetails.ini needs to exist
+  sudo yum -y install libxml-sax-perl        # for XML parsing (faster)
+  sudo yum -y install libxml-parser-perl     # for XML parsing (faster)
 
   sudo yum -y install perl-DBI
   sudo yum -y install perl-DBD-MySQL
