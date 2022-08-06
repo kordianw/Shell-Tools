@@ -35,7 +35,11 @@ function setup()
   fi
 
   # do we need sudo?
-  SUDO="sudo"
+  if [ "$EUID" -ne 0 ]; then
+    SUDO="sudo"
+  else
+    SUDO=""
+  fi
 
   # where is my SRC dir located?
   KW_SRC_DIR="$HOME/src"
@@ -94,6 +98,8 @@ function install_general_packages
   #   -> comment out all the cron-entries
   # - copy from backup, eg: Chrome/Firefox, Remmina settings
   #
+
+  START_TIME=`date "+%s"`
 
   [ "$OSTYPE" != "linux-gnu" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
   [ ! -r /etc/os-release ] && { echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2; exit 3; }
@@ -187,8 +193,6 @@ function install_general_packages
   $INSTALL_CMD libxml-sax-perl     # for XML parsing (faster)
   $INSTALL_CMD libxml-parser-perl  # for XML parsing (faster)
 
-
-
   # system utils (may require cron-entries)
   #$INSTALL_CMD sysstat       # install stat utils such as sar, iostat, etc
   #$INSTALL_CMD mlocate       # quickly find files on the filesystem based on their name
@@ -236,6 +240,14 @@ function install_general_packages
     echo && echo "* storing a backup of all installed packages..."
     DIR=`dirname "$0"`
     dpkg -l > $DIR/pkg-installed-list.txt
+  fi
+
+  # show end time
+  END_TIME=`date +%s`
+  TIME_TAKEN=$(( $END_TIME - $START_TIME ))
+  if [ $TIME_TAKEN -gt 60 ]; then
+    TIME_TAKEN=`echo "($END_TIME - $START_TIME) / 60" | bc -l | sed 's/\(...\).*/\1/'`
+    echo "  <<< Time taken: $TIME_TAKEN min(s) @ `date +%H:%M` >>>" 1>&2
   fi
 }
 
