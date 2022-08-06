@@ -107,6 +107,25 @@ function install_sw()
   ~/bin/scripts/setup-linux-system.sh -GENPKG
 }
 
+function backup_gcp_home()
+{
+  USER="kordian"
+  TARGET_BACKUP="$HOME/gcp-cloudshell-bkup.tar.gz"
+
+  echo -n "Please enter the IP address of the Google Cloud Shell: "
+  read IP_ADDRESS
+  if [ -n $IP_ADDRESS ]; then
+    # EXEC:
+    ssh $IP_ADDRESS "cd /home && tar --exclude='.zcompdump' --exclude='.zsh_history' --exclude='.viminfo' --exclude='src/dl' --exclude='.gnupg' -cvf - $USER | gzip -9" >$TARGET_BACKUP
+
+    chmod 600 $TARGET_BACKUP >&/dev/null
+    echo && ls -lh $TARGET_BACKUP
+  else
+    echo "--FATAL: Nothing read!" 1>&2
+    exit 99
+  fi
+}
+
 #
 # MAIN
 #
@@ -124,6 +143,8 @@ Usage: $PROG <options> [param]
 
         -sw     installs additional software
 
+        -gcp_bkup backs-up GCP Cloud Shell Home DIR
+
         -h      this screen
 !
 elif [ "$1" = "-c9" ]; then
@@ -132,6 +153,8 @@ elif [ "$1" = "-gcp" ]; then
   setup_gcp;
 elif [ "$1" = "-sw" ]; then
   install_sw;
+elif [ "$1" = "-gcp_bkup" ]; then
+  backup_gcp_home;
 elif echo `hostname` | grep -q "devshell-vm"; then
   echo "- assuming GCP DevShell VM..." 1>&2
   setup_gcp;
