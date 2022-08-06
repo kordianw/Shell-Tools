@@ -1,17 +1,19 @@
 #!/bin/bash
 #
 # Script to setup:
-# - GCP (Google Cloud Platform) DevShell (free, ethemeral-shared-CPU VM)
+# - GCP (Google Cloud Platform) DevShell (free, Debian, ethemeral-shared-CPU VM w/5GB HOME)
 # - AWS (Amazon Web Services) Cloud9 Shell (paid per-hour via dedicated EC2, 30 mins timeout for auto-shutdown)
 #
 # * NOTES:
-# GCP: Get the hostname to SSH in on port 6000 (boosted mode):
-# GCP: # ~/google-cloud-sdk/bin/gcloud alpha cloud-shell ssh --boosted --dry-run
+# GCP: download the Google Cloud SDK (Linux works on Cygwin): https://cloud.google.com/sdk/docs/install-sdk#linux
+# GCP: no need to initialize or do anything, just run as-is
+# GCP: LOGIN: ~/google-cloud-sdk/bin/gcloud auth login --no-launch-browser
+# GCP: Get the hostname to SSH in on port 6000 - already in ~/.ssh/config (may need IP ranges)
+# GCP: there is an alias in ~/.zshrc for this already:
+# GCP: # ~/google-cloud-sdk/bin/gcloud cloud-shell ssh --dry-run
 # GCP: URL for web-use: https://console.cloud.google.com/cloudshell/editor?shellonly=true
 # GCP: Documentation: https://cloud.google.com/shell/docs/how-cloud-shell-works
 #
-# GCP: boost mode moves from E2-shared-core `e2-small' to `e2-medium' (Debian w/5GB disk) for 24 hours (doubles your RAM from 2GB to 4GB + more BW)
-# GVP: * details: https://cloud.google.com/compute/docs/machine-types#e2_shared-core_machine_types
 # GCP: NB: runs ~/.customize_environment script as root upon machine provisioning (/var/log/customize*, /google/devshell/customize_environment_done)
 # GCP: limits: 20mins after logout resets VM, 50 hrs/week usage limit (7hrs/day), 12hr max session, 5GB home-dir deleted >120 days (4 months) of inactivity
 # GCP: to use `gcloud' correctly, set your GCP project ID, eg: DEVSHELL_PROJECT_ID=kw-general-purpose
@@ -70,7 +72,7 @@ apt install -qq -y $KEY_PACKAGES || exit 1
   chmod 755 ~/.customize_environment >&/dev/null
 
   echo "** installing key packages..."
-  sudo apt install -qq -y zsh screen sshpass
+  sudo apt install -qq -y $KEY_PACKAGES
 
   # chsh ZSH
   if ! getent passwd $USER | grep -q "zsh"; then
