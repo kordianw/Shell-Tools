@@ -51,28 +51,37 @@ function setup_gcp()
 {
   update_scripts;
 
-  #
-  # what are my GCP key packages to install?
-  #
-  KEY_PACKAGES="zsh screen sshpass"
-
   # set-up ~/.customize_environment
 echo "#!/bin/sh
-# Kordian's config to customize GCP CloudShell
-# - note: this runs as \`root'
+##
+## Kordian's config to customize GCP CloudShell
+##
+# - note: this runs as \`root' once during initial cloudshell creation/boot-up
+# - runs in background, when done touches: /google/devshell/customize_environment_done
+# - logs in /var/log/customize_environment
 
-# install ZSH
+# set env as non-interactive, to suppress errors in screen installation
+export DEBIAN_FRONTEND="noninteractive"
+# echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
+
+echo \"-> start-run as \`whoami\`: \`date\`\"
+
+# install ZSH & set as default for \`kordian'
 apt install -qq -y zsh || exit 1
-chsh --shell /bin/zsh $USER
+chsh --shell /bin/zsh kordian
 
 # install additional packages
-apt install -qq -y $KEY_PACKAGES || exit 1
+apt install -qq -y screen sshpass || exit 1
+
+echo \"-> end-run as \`whoami\`: \`date\`\"
 
 # EOF" > ~/.customize_environment
   chmod 755 ~/.customize_environment >&/dev/null
 
   echo "** installing key packages..."
-  sudo apt install -qq -y $KEY_PACKAGES
+  [ ! -x /bin/zsh ] && sudo apt install -qq -y zsh
+  [ ! -x /bin/screen ] && sudo apt install -qq -y screen
+  [ ! -x /bin/sshpass ] && sudo apt install -qq -y sshpass
 
   # chsh ZSH
   if ! getent passwd $USER | grep -q "zsh"; then
@@ -88,7 +97,7 @@ apt install -qq -y $KEY_PACKAGES || exit 1
 
   # start ZSH
   if [ "$SHELL" != "/bin/zsh" ]; then
-    echo && echo "** starting ZSH..."
+    echo && echo "** restarting with ZSH..."
     exec zsh
   fi
 }
@@ -124,6 +133,9 @@ elif [ "$1" = "-gcp" ]; then
 elif [ "$1" = "-sw" ]; then
   install_sw;
 elif echo `hostname` | grep -q "devshell-vm"; then
+  echo "- assuming GCP DevShell VM..." 1>&2
+  setup_gcp;
+elif [ -n "$DEVSHELL_SERVER_URL" ]; then
   echo "- assuming GCP DevShell VM..." 1>&2
   setup_gcp;
 elif [ -e $HOME/.c9 ]; then
