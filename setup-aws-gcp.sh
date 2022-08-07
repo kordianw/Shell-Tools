@@ -27,8 +27,27 @@
 # FUNCTIONS
 #
 
+function check_root()
+{
+  if [ "$EUID" -ne 0 ]; then
+    sudo -n whoami >&/dev/null
+    if [ $? -ne 0 ]; then
+      echo "--FATAL: this script can only run with sudo/root privileges, \`$USER' doesn't have them!" 1>&2
+      exit 99
+    fi
+  fi
+}
+
 function update_scripts()
 {
+  if [ ! -d ~/src ]; then
+    echo "--FATAL: the account \`$USER' on \``hostname`' is not a standard setup for this: no ~/src dir!" 1>&2
+    exit 98
+  elif [ ! -x ~/src/bkup-and-transfer.sh ]; then
+    echo "--FATAL: the account \`$USER' on \``hostname`' is not a standard setup for this: no ~/src/bkup-and-transfer.sh script!" 1>&2
+    exit 99
+  fi
+
   echo "** updating scripts..."
   cd ~/src && ./bkup-and-transfer.sh -dlupd || exit 1
   cd ~/src && ./bkup-and-transfer.sh -setup || exit 1
@@ -38,6 +57,7 @@ function update_scripts()
 function setup_c9()
 {
   update_scripts;
+  check_root;
 
   # stop services taking up CPU & MEM
   # - can always be switched back on when necessary
@@ -51,6 +71,7 @@ function setup_c9()
 function setup_gcp()
 {
   update_scripts;
+  check_root;
 
   # set-up ~/.customize_environment
 echo "#!/bin/sh
@@ -76,11 +97,11 @@ apt install -qq -y zsh || exit 1
 chsh --shell /bin/zsh kordian
 
 # install additional packages
-echo \"* install screen+sshpass\"
+echo && echo \"* install screen+sshpass\"
 apt install -qq -y screen sshpass || exit 1
 
 # switch off accessibility options
-echo \"* set gcloud accessibility/screen_reader=false, for better table handling\"
+echo && echo \"* set gcloud accessibility/screen_reader=false, for better table handling\"
 gcloud config set accessibility/screen_reader false
 
 echo \"---> end-run as \`whoami\`: \`date\`\"
@@ -122,6 +143,7 @@ echo \"---> end-run as \`whoami\`: \`date\`\"
 
 function install_sw()
 {
+  check_root;
   ~/bin/scripts/setup-linux-system.sh -GENPKG
 }
 
@@ -158,6 +180,7 @@ function backup_cloud_home()
       --exclude='src/dl' \
       --exclude='google-cloud-sdk' \
       --exclude='example-scripts.tar.gz.gpg' \
+      --exclude='Mail/tmp' \
       --exclude='_gsdata_' \
       --exclude='.bash_history' \
       --exclude='.lesshst' \
@@ -172,9 +195,17 @@ function backup_cloud_home()
       --exclude='.sudo_as_admin_successful' \
       --exclude='.theia/logs' \
       --exclude='.config/gcloud/logs' \
+      --exclude='.git/objects' \
+      --exclude='.git/hooks' \
+      --exclude='.git/refs' \
+      --exclude='.git/logs' \
       --exclude='public_html/kordianw.github.io/.git/objects' \
+      --exclude='public_html/kordianw.github.io/.git/hooks' \
+      --exclude='public_html/kordianw.github.io/.git/refs' \
       --exclude='public_html/kordianw.github.io/.git/logs' \
       --exclude='src/kordianw.github.io/.git/objects' \
+      --exclude='src/kordianw.github.io/.git/hooks' \
+      --exclude='src/kordianw.github.io/.git/refs' \
       --exclude='src/kordianw.github.io/.git/logs' \
       -cvf - \$USER | gzip -9" >$TARGET_BACKUP
 
@@ -191,6 +222,73 @@ function backup_cloud_home()
   fi
 }
 
+function update_dyn_dns()
+{
+  #
+  # credentials from Google Domains
+  #
+
+  # nexus.kordy.com
+  NEXUS_DOMAIN="nexus.kordy.com"
+  NEXUS_USER="xmhkDrmaCx4ynGY1"
+  NEXUS_PASSWORD="qhBK4HRDmjxtTPPn"
+
+  # gcp-shell.kordy.com
+  GCP_SHELL_DOMAIN="gcp-shell.kordy.com"
+  GCP_SHELL_USER="9UnFdCv4iQrIxpXN"
+  GCP_SHELL_PASSWORD="6mk0v9NW2MuLdeAg"
+
+  # check HOST variable is set
+  HOST=`hostname`
+  if [ -z "$HOST" ]; then
+    echo "--FATAL: the `hostname` has no HOST variable set!" 1>&2
+    exit 98
+  fi
+
+  # first, get the IP
+  IP=`dig +short myip.opendns.com @resolver1.opendns.com`
+  if [ -z "$IP" ]; then
+    echo "--FATAL: can't work out the external IP addresss for $HOST!" 1>&2
+    exit 99
+  fi
+  echo "* [$HOST] current external IP is: $IP"
+
+  # get DNS
+  DNS_NAME=`host $IP| awk '{print $NF}' | sed 's/\.$//'`
+  if [ -n "$DNS_NAME" ]; then
+    echo "* [$HOST] external DNS name is: << $DNS_NAME >>"
+  else
+    echo "* [$HOST] no external DNS entry!"
+  fi
+
+  #
+  # EXEC
+  # - do the work
+  #
+  if echo $HOST | grep -q nexus; then
+    # is the IP already what it should be?
+    DNS=`host $NEXUS_DOMAIN | awk '{print $NF}'`
+    if [ "$DNS" != "$IP" ]; then
+      echo "* [$HOST] updating DYN_DNS for $NEXUS_DOMAIN -> $IP"
+      curl -v "https://$NEXUS_USER:$NEXUS_PASSWORD@domains.google.com/nic/update?hostname=$NEXUS_DOMAIN&myip=$IP"
+    else
+      echo "* [$HOST] DONE! DNS for \`$NEXUS_DOMAIN' is already set to $IP"
+    fi
+  elif echo $HOST | egrep -q "^cs-.*default$"; then
+    # is the IP already what it should be?
+    DNS=`host $GCP_SHELL_DOMAIN | awk '{print $NF}'`
+    if [ "$DNS" != "$IP" ]; then
+      echo "* [$HOST] updating DYN_DNS for $GCP_SHELL_DOMAIN -> $IP"
+      curl -v "https://$GCP_SHELL_USER:$GCP_SHELL_PASSWORD@domains.google.com/nic/update?hostname=$GCP_SHELL_DOMAIN&myip=$IP"
+    else
+      echo "* [$HOST] DONE! DNS for \`$GCP_SHELL_DOMAIN' is already set to $IP"
+    fi
+  else
+    echo "--FATAL: no configured DYN-DNS use-case for $HOST" 1>&2
+    exit 99
+  fi
+}
+
 #
 # MAIN
 #
@@ -203,10 +301,26 @@ $PROG: Script to setup AWS Cloud9 and GCP CloudShell
        * install the most important PKGs, for convenience, dev, etc
 
 Usage: $PROG <options> [param]
-        -c9     sets-up AWS Cloud9
-        -gcp    sets-up GCP CloudShell
+        -c9       sets-up AWS Cloud9
+                  * runs: ./bkup-and-transfer.sh -dlupd
+                  * runs: ./bkup-and-transfer.sh -setup
+                  * stops memory hungry services: containerd,docker,mysql,apache2,snapd
 
-        -sw     installs additional software
+        -gcp      sets-up GCP Cloud Shell
+                  * runs: ./bkup-and-transfer.sh -dlupd
+                  * runs: ./bkup-and-transfer.sh -setup
+                  * creates/updates ~/.customize_environment
+                  * [if needed ] installs ZSH, SCREEN, SSHPASS
+                  * [if needed ] sets ZSH as default shell
+                  * [if needed ] stops memory hungry process if <4GB RAM: docker
+                  * updates Dynamic DNS
+
+        -sw       installs additional software
+                  * uses \`setup_linux-server.sh -GENPKG'
+
+        -dyn_dns  update Google Dynamic DNS
+                  * nexus
+                  * gcp-cloudshell
 
         -cloud_bkup <IP|DNS>  backs-up Cloud Server Home DIR
 
@@ -220,12 +334,16 @@ elif [ "$1" = "-sw" ]; then
   install_sw;
 elif [ "$1" = "-cloud_bkup" ]; then
   backup_cloud_home $2;
+elif [ "$1" = "-dyn_dns" ]; then
+  update_dyn_dns;
 elif echo `hostname` | grep -q "devshell-vm"; then
   echo "- assuming GCP DevShell VM..." 1>&2
   setup_gcp;
+  update_dyn_dns;
 elif [ -n "$DEVSHELL_SERVER_URL" -o -n "$DEVSHELL_SERVER_BASE_URL" ]; then
   echo "- assuming GCP Cloud Shell VM..." 1>&2
   setup_gcp;
+  update_dyn_dns;
 elif [ -e $HOME/.c9 ]; then
   echo "- assuming AWS Cloud9 VM..." 1>&2
   setup_c9;
