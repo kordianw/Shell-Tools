@@ -128,16 +128,26 @@ function backup_gcp_home()
   USER="kordian"
   TARGET_BACKUP="$HOME/gcp-cloudshell-bkup.tar.gz"
 
-  echo -n "Please enter the IP address of the Google Cloud Shell: "
-  read IP_ADDRESS
+  # read from USER if not provided as a param
+  IP_ADDRESS="$1"
+  if [ ! -n "$IP_ADDRESS" ]; then
+    echo -n "Please enter the IP address of the Google Cloud Shell: "
+    read IP_ADDRESS
+  fi
+
   if [ -n $IP_ADDRESS ]; then
     # EXEC:
-    ssh $IP_ADDRESS "cd /home && tar --exclude='.zcompdump' --exclude='.zsh_history' --exclude='.viminfo' --exclude='src/dl' --exclude='.gnupg' -cvf - $USER | gzip -9" >$TARGET_BACKUP
+    ssh $IP_ADDRESS "cd /home && tar --exclude='.zcompdump' --exclude='.zsh_history' --exclude='.viminfo' --exclude='src/dl' --exclude='.gnupg' --exclude='.theia/logs' --exclude='.cache' --exclude='.config/gcloud/logs' -cvf - $USER | gzip -9" >$TARGET_BACKUP
 
-    chmod 600 $TARGET_BACKUP >&/dev/null
-    echo && ls -lh $TARGET_BACKUP
+    if [ -s "$TARGET_BACKUP" ]; then
+      chmod 600 $TARGET_BACKUP >&/dev/null
+      echo && ls -lh $TARGET_BACKUP
+    else
+      [ -e "$TARGET_BACKUP" -a ! -s "$TARGET_BACKUP" ] && rm -f "$TARGET_BACKUP"
+      echo "*** tar backup unsuccessful, see errors above!" 1>&2
+    fi
   else
-    echo "--FATAL: Nothing read!" 1>&2
+    echo "--FATAL: No Google Cloud Shell IP Address - Nothing read!" 1>&2
     exit 99
   fi
 }
@@ -159,7 +169,7 @@ Usage: $PROG <options> [param]
 
         -sw     installs additional software
 
-        -gcp_bkup backs-up GCP Cloud Shell Home DIR
+        -gcp_bkup <IP>  backs-up GCP Cloud Shell Home DIR
 
         -h      this screen
 !
@@ -170,7 +180,7 @@ elif [ "$1" = "-gcp" ]; then
 elif [ "$1" = "-sw" ]; then
   install_sw;
 elif [ "$1" = "-gcp_bkup" ]; then
-  backup_gcp_home;
+  backup_gcp_home $2;
 elif echo `hostname` | grep -q "devshell-vm"; then
   echo "- assuming GCP DevShell VM..." 1>&2
   setup_gcp;
