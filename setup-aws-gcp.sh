@@ -62,23 +62,25 @@ echo "#!/bin/sh
 # - logs in /var/log/customize_environment
 
 # set env as non-interactive, to suppress errors in screen installation
-export DEBIAN_FRONTEND="noninteractive"
+export DEBIAN_FRONTEND=\"noninteractive\"
 # echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
-# set the EDT timezone & 24 hour time
+# set the EDT timezone
 export TZ=\"America/New_York\"
-export LC_TIME=\"en_GB.UTF-8\"
 
 echo \"---> start-run as \`whoami\`: \`date\`\"
 
 # install ZSH & set as default for \`kordian'
+echo \"* install+setup: zsh\"
 apt install -qq -y zsh || exit 1
 chsh --shell /bin/zsh kordian
 
 # install additional packages
+echo \"* install screen+sshpass\"
 apt install -qq -y screen sshpass || exit 1
 
 # switch off accessibility options
+echo \"* set gcloud accessibility/screen_reader=false, for better table handling\"
 gcloud config set accessibility/screen_reader false
 
 echo \"---> end-run as \`whoami\`: \`date\`\"
