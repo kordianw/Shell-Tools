@@ -128,9 +128,12 @@ echo \"---> end-run as \`whoami\`: \`date\`\"
   # - only if less than 4GB of RAM remaining
   FREE_MEM=`free -m | awk '/Mem/{print $NF}'`
   if [ $FREE_MEM -lt 4000 ]; then
-    echo && echo "** stopping un-needed service: docker (to reclaim memory)..."
+    echo && echo "** stopping un-needed service: docker,snapd (to reclaim memory)..."
     if ps aux | grep -q "[d]ockerd"; then
       sudo service docker stop
+    fi
+    if ps aux | grep -q "[s]napd"; then
+      sudo service snapd stop
     fi
   fi
 
@@ -265,6 +268,7 @@ function update_dyn_dns()
   # EXEC
   # - do the work
   #
+  # ->>> NEXUS
   if echo $HOST | grep -q nexus; then
     # is the IP already what it should be?
     DNS=`host $NEXUS_DOMAIN | awk '{print $NF}'`
@@ -274,6 +278,7 @@ function update_dyn_dns()
     else
       echo "* [$HOST] DONE! DNS for \`$NEXUS_DOMAIN' is already set to $IP"
     fi
+  # ->>> GCP-SHELL
   elif echo $HOST | egrep -q "^cs-.*default$"; then
     # is the IP already what it should be?
     DNS=`host $GCP_SHELL_DOMAIN | awk '{print $NF}'`
@@ -283,8 +288,9 @@ function update_dyn_dns()
     else
       echo "* [$HOST] DONE! DNS for \`$GCP_SHELL_DOMAIN' is already set to $IP"
     fi
+  # ->>> NO-USE-CASE YET!
   else
-    echo "--FATAL: no configured DYN-DNS use-case for $HOST" 1>&2
+    echo "--FATAL: no configured DYN-DNS use-case for \'$HOST'" 1>&2
     exit 99
   fi
 }
@@ -312,7 +318,7 @@ Usage: $PROG <options> [param]
                   * creates/updates ~/.customize_environment
                   * [if needed ] installs ZSH, SCREEN, SSHPASS
                   * [if needed ] sets ZSH as default shell
-                  * [if needed ] stops memory hungry process if <4GB RAM: docker
+                  * [if needed ] stops memory hungry process if <4GB RAM: docker,snapd
                   * updates Dynamic DNS
 
         -sw       installs additional software
