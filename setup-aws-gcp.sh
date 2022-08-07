@@ -123,21 +123,58 @@ function install_sw()
   ~/bin/scripts/setup-linux-system.sh -GENPKG
 }
 
-function backup_gcp_home()
+function backup_cloud_home()
 {
-  USER="kordian"
-  TARGET_BACKUP="$HOME/gcp-cloudshell-bkup.tar.gz"
+  # defaults
+  SERVICE="cloud-server"
 
   # read from USER if not provided as a param
-  IP_ADDRESS="$1"
-  if [ ! -n "$IP_ADDRESS" ]; then
-    echo -n "Please enter the IP address of the Google Cloud Shell: "
-    read IP_ADDRESS
+  HOST_ADDRESS="$1"
+  if [ ! -n "$HOST_ADDRESS" ]; then
+    echo -n "Please enter DNS/IP address of the Cloud Host (ssh): "
+    read HOST_ADDRESS
   fi
 
-  if [ -n $IP_ADDRESS ]; then
+  if [ -n $HOST_ADDRESS ]; then
+    # use-cases
+    if echo "$HOST_ADDRESS" | egrep -q '^[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$'; then
+      SERVICE="gcp-cloudshell"
+    else
+      SERVICE=`echo $HOST_ADDRESS | awk -F. '{print $1}'`
+    fi
+
+    # construct target dir backup
+    TARGET_DIR=$HOME
+    [ -d $HOME/Backups ] && TARGET_DIR=$HOME/Backups
+    TARGET_BACKUP="$TARGET_DIR/$SERVICE-bkup-`date +%Y-%m-%d`.tar.gz"
+
+    # status message
+    echo "--> backing up to: $TARGET_BACKUP"
+
     # EXEC:
-    ssh $IP_ADDRESS "cd /home && tar --exclude='.zcompdump' --exclude='.zsh_history' --exclude='.viminfo' --exclude='src/dl' --exclude='.gnupg' --exclude='.theia/logs' --exclude='.cache' --exclude='.config/gcloud/logs' -cvf - $USER | gzip -9" >$TARGET_BACKUP
+    ssh $HOST_ADDRESS "cd /home && tar \
+      --exclude='src/dl' \
+      --exclude='google-cloud-sdk' \
+      --exclude='example-scripts.tar.gz.gpg' \
+      --exclude='_gsdata_' \
+      --exclude='.bash_history' \
+      --exclude='.lesshst' \
+      --exclude='.wget-hsts' \
+      --exclude='.zcompdump' \
+      --exclude='.zsh_history' \
+      --exclude='.viminfo' \
+      --exclude='.gnupg' \
+      --exclude='.cache' \
+      --exclude='.ebcache' \
+      --exclude='.Trash' \
+      --exclude='.sudo_as_admin_successful' \
+      --exclude='.theia/logs' \
+      --exclude='.config/gcloud/logs' \
+      --exclude='public_html/kordianw.github.io/.git/objects' \
+      --exclude='public_html/kordianw.github.io/.git/logs' \
+      --exclude='src/kordianw.github.io/.git/objects' \
+      --exclude='src/kordianw.github.io/.git/logs' \
+      -cvf - \$USER | gzip -9" >$TARGET_BACKUP
 
     if [ -s "$TARGET_BACKUP" ]; then
       chmod 600 $TARGET_BACKUP >&/dev/null
@@ -169,7 +206,7 @@ Usage: $PROG <options> [param]
 
         -sw     installs additional software
 
-        -gcp_bkup <IP>  backs-up GCP Cloud Shell Home DIR
+        -cloud_bkup <IP|DNS>  backs-up Cloud Server Home DIR
 
         -h      this screen
 !
@@ -179,8 +216,8 @@ elif [ "$1" = "-gcp" ]; then
   setup_gcp;
 elif [ "$1" = "-sw" ]; then
   install_sw;
-elif [ "$1" = "-gcp_bkup" ]; then
-  backup_gcp_home $2;
+elif [ "$1" = "-cloud_bkup" ]; then
+  backup_cloud_home $2;
 elif echo `hostname` | grep -q "devshell-vm"; then
   echo "- assuming GCP DevShell VM..." 1>&2
   setup_gcp;
