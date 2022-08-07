@@ -46,6 +46,17 @@ function setup()
   [ -d "$HOME/playground" ] && KW_SRC_DIR="$HOME/playground"
 }
 
+function check_root()
+{
+  if [ "$EUID" -ne 0 ]; then
+    sudo -n whoami >&/dev/null
+    if [ $? -ne 0 ]; then
+      echo "--FATAL: this script can only run with sudo/root privileges, \`$USER' doesn't have them!" 1>&2
+      exit 99
+    fi
+  fi
+}
+
 function install_general_packages
 {
   #
@@ -106,6 +117,7 @@ function install_general_packages
 
   # setup program & vars
   setup
+  check_root
 
   # -y=yes, -q=quiet
   if [ "$PKG" = "apt" ]; then
@@ -255,6 +267,7 @@ function change_timezone()
 {
   # setup program & vars
   setup
+  check_root
 
   # check we know what TZ we're going to
   [ -z "$TZ" ] && { echo "$PROG: no TZ variable set!" >&2; exit 1; }
@@ -328,7 +341,7 @@ function change_timezone()
         echo "$PROG: according to \`timedatectl -status', this system TZ is already set to $TZ - nothing to do." >&2
         exit 0
       fi
-    elif
+    else
       echo && echo "$PROG: the: \`timedatectl list-timezones' is not working on this host:" >&2
       timedatectl list-timezones
       echo & echo "...if everything fails, try setting the TZ manually via: \"export TZ=$TZ\"" >&2
@@ -424,6 +437,8 @@ function enable_zsh()
 
 function enable_ssh()
 {
+  check_root
+
   [ "$OSTYPE" != "linux-gnu" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
   [ ! -r /etc/os-release ] && { echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2; exit 3; }
   [ ! -x /usr/bin/apt ] && { echo "$PROG: can't find/exec APT!" >&2; exit 4; }
@@ -457,6 +472,8 @@ function enable_ssh()
 
 function disable_ssh()
 {
+  check_root
+
   [ "$OSTYPE" != "linux-gnu" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
   [ ! -r /etc/os-release ] && { echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2; exit 3; }
   [ ! -x /usr/bin/apt ] && { echo "$PROG: can't find/exec APT!" >&2; exit 4; }
@@ -538,6 +555,8 @@ function install_brew()
 function install_pi()
 {
   # RASPBIAN PI
+
+  check_root
   [ "$OSTYPE" != "linux-gnueabihf" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnueabihf >>!" >&2; exit 2; }
   [ ! -r /etc/os-release ] && { echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2; exit 3; }
   [ ! -x /usr/bin/apt ] && { echo "$PROG: can't find/exec APT!" >&2; exit 4; }
@@ -622,6 +641,8 @@ function install_pi()
 function install_rhel()
 {
   # RED HAT LINUX
+
+  check_root
 
   [ "$OSTYPE" != "linux-gnu" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
   [ ! -r /etc/redhat-release ] && { echo "$PROG: no /etc/redhat-release file, is this really RHEL ?" >&2; exit 3; }
