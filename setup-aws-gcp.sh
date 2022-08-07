@@ -82,6 +82,13 @@ echo "#!/bin/sh
 # - runs in background, when done touches: /google/devshell/customize_environment_done
 # - logs in /var/log/customize_environment
 
+echo \"---> start-run as \`whoami\`: \`date\`\"
+
+# gcp-shell.kordy.com: update dynamic DNS entry
+echo && echo \"* update DYNAMIC DNS\"
+IP=\`dig +short myip.opendns.com @resolver1.opendns.com\`
+curl \"https://9UnFdCv4iQrIxpXN:6mk0v9NW2MuLdeAg@domains.google.com/nic/update?hostname=gcp-shell.kordy.com&myip=\$IP\" &
+
 # set env as non-interactive, to suppress errors in screen installation
 export DEBIAN_FRONTEND=\"noninteractive\"
 # echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
@@ -89,16 +96,14 @@ export DEBIAN_FRONTEND=\"noninteractive\"
 # set the EDT timezone
 export TZ=\"America/New_York\"
 
-echo \"---> start-run as \`whoami\`: \`date\`\"
-
 # install ZSH & set as default for \`kordian'
-echo \"* install+setup: zsh\"
-apt install -qq -y zsh || exit 1
+echo && echo \"* install+setup: zsh\"
+apt install -qq -y zsh
 chsh --shell /bin/zsh kordian
 
 # install additional packages
 echo && echo \"* install screen+sshpass\"
-apt install -qq -y screen sshpass || exit 1
+apt install -qq -y screen sshpass
 
 # switch off accessibility options
 echo && echo \"* set gcloud accessibility/screen_reader=false, for better table handling\"
@@ -274,7 +279,7 @@ function update_dyn_dns()
     DNS=`host $NEXUS_DOMAIN | awk '{print $NF}'`
     if [ "$DNS" != "$IP" ]; then
       echo "* [$HOST] updating DYN_DNS for $NEXUS_DOMAIN -> $IP"
-      curl -v "https://$NEXUS_USER:$NEXUS_PASSWORD@domains.google.com/nic/update?hostname=$NEXUS_DOMAIN&myip=$IP"
+      curl "https://$NEXUS_USER:$NEXUS_PASSWORD@domains.google.com/nic/update?hostname=$NEXUS_DOMAIN&myip=$IP"
     else
       echo "* [$HOST] DONE! DNS for \`$NEXUS_DOMAIN' is already set to $IP"
     fi
@@ -284,7 +289,7 @@ function update_dyn_dns()
     DNS=`host $GCP_SHELL_DOMAIN | awk '{print $NF}'`
     if [ "$DNS" != "$IP" ]; then
       echo "* [$HOST] updating DYN_DNS for $GCP_SHELL_DOMAIN -> $IP"
-      curl -v "https://$GCP_SHELL_USER:$GCP_SHELL_PASSWORD@domains.google.com/nic/update?hostname=$GCP_SHELL_DOMAIN&myip=$IP"
+      curl "https://$GCP_SHELL_USER:$GCP_SHELL_PASSWORD@domains.google.com/nic/update?hostname=$GCP_SHELL_DOMAIN&myip=$IP"
     else
       echo "* [$HOST] DONE! DNS for \`$GCP_SHELL_DOMAIN' is already set to $IP"
     fi
