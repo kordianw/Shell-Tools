@@ -15,9 +15,10 @@
 # GCP: Documentation: https://cloud.google.com/shell/docs/how-cloud-shell-works
 #
 # GCP: NB: runs ~/.customize_environment script as root upon machine provisioning (/var/log/customize*, /google/devshell/customize_environment_done)
-# GCP: limits: 20mins after logout resets VM, 50 hrs/week usage limit (7hrs/day), 12hr max session, 5GB home-dir deleted >120 days (4 months) of inactivity
+# GCP: NB: limits: 20mins after logout resets VM (you get a new VM), 50 hrs/week usage limit (7hrs/day), 12hr max session, 5GB home-dir deleted >120 days (4 months) of inactivity
 # GCP: to use `gcloud' correctly, set your GCP project ID, eg: DEVSHELL_PROJECT_ID=kw-general-purpose
 # GCP: for privacy, set: ~/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true
+# GCP: **web-url**: https://console.cloud.google.com/cloudshell/editor?shellonly=true
 #
 # * By Kordian Witek <code [at] kordy.com>, Jun 2020
 #
@@ -64,7 +65,11 @@ echo "#!/bin/sh
 export DEBIAN_FRONTEND="noninteractive"
 # echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
-echo \"-> start-run as \`whoami\`: \`date\`\"
+# set the EDT timezone & 24 hour time
+export TZ=\"America/New_York\"
+export LC_TIME=\"en_GB.UTF-8\"
+
+echo \"---> start-run as \`whoami\`: \`date\`\"
 
 # install ZSH & set as default for \`kordian'
 apt install -qq -y zsh || exit 1
@@ -73,15 +78,22 @@ chsh --shell /bin/zsh kordian
 # install additional packages
 apt install -qq -y screen sshpass || exit 1
 
-echo \"-> end-run as \`whoami\`: \`date\`\"
+# switch off accessibility options
+gcloud config set accessibility/screen_reader false
+
+echo \"---> end-run as \`whoami\`: \`date\`\"
 
 # EOF" > ~/.customize_environment
   chmod 755 ~/.customize_environment >&/dev/null
 
-  echo "** installing key packages..."
-  [ ! -x /bin/zsh ] && sudo apt install -qq -y zsh
-  [ ! -x /bin/screen ] && sudo apt install -qq -y screen
-  [ ! -x /bin/sshpass ] && sudo apt install -qq -y sshpass
+  # ZSH/SCREEN/SSHPASS
+  # - we need sshpass for easier syncing later on (we use if safely)
+  if [ ! -x /bin/zsh -o ! -x /bin/screen -o ! -x /bin/sshpass ]; then
+    echo "** installing key packages..."
+    [ ! -x /bin/zsh ] && sudo apt install -qq -y zsh
+    [ ! -x /bin/screen ] && sudo apt install -qq -y screen
+    [ ! -x /bin/sshpass ] && sudo apt install -qq -y sshpass
+  fi
 
   # chsh ZSH
   if ! getent passwd $USER | grep -q "zsh"; then
@@ -90,9 +102,13 @@ echo \"-> end-run as \`whoami\`: \`date\`\"
   fi
 
   # stop some services which take up CPU/memory
-  echo && echo "** stopping un-needed services..."
-  if ps aux | grep -q "[d]ockerd"; then
-    sudo service docker stop
+  # - only if less than 4GB of RAM remaining
+  FREE_MEM=`free -m | awk '/Mem/{print $NF}'`
+  if [ $FREE_MEM -lt 4000 ]; then
+    echo && echo "** stopping un-needed service: docker (to reclaim memory)..."
+    if ps aux | grep -q "[d]ockerd"; then
+      sudo service docker stop
+    fi
   fi
 
   # start ZSH
@@ -158,8 +174,8 @@ elif [ "$1" = "-gcp_bkup" ]; then
 elif echo `hostname` | grep -q "devshell-vm"; then
   echo "- assuming GCP DevShell VM..." 1>&2
   setup_gcp;
-elif [ -n "$DEVSHELL_SERVER_URL" ]; then
-  echo "- assuming GCP DevShell VM..." 1>&2
+elif [ -n "$DEVSHELL_SERVER_URL" -o -n "$DEVSHELL_SERVER_BASE_URL" ]; then
+  echo "- assuming GCP Cloud Shell VM..." 1>&2
   setup_gcp;
 elif [ -e $HOME/.c9 ]; then
   echo "- assuming AWS Cloud9 VM..." 1>&2
