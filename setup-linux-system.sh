@@ -311,29 +311,29 @@ function change_timezone()
 
   # additional checks using timedatectl
   if which timedatectl >&/dev/null; then
+
     # check that this works
     timedatectl list-timezones >&/dev/null
+    if [ $? -eq 0 ]; then
+      # check that valid
+      if [ `timedatectl list-timezones |grep -c $TZ` -ne 1 ]; then
+        echo "$PROG: the TZ \'$TZ' doesn't seem to be valid?" >&2; exit 4
+      fi
 
-    # does this even work?
-    if [ $? -ne 0 ]; then
+      # check whether we're already there...
+      CURRENT_TZ=`timedatectl status | awk '/Time zone/{print $3}'`
+      [ -z "$CURRENT_TZ" ] && { echo "$PROG: can't get current system's TZ via timedatectl status!" >&2; exit 1; }
+
+      if [ "$CURRENT_TZ" = "$TZ" ]; then
+        echo "$PROG: according to \`timedatectl -status', this system TZ is already set to $TZ - nothing to do." >&2
+        exit 0
+      fi
+    elif
       echo && echo "$PROG: the: \`timedatectl list-timezones' is not working on this host:" >&2
       timedatectl list-timezones
-      echo & echo "...try setting the TZ manually via: \"export TZ=$TZ\"" >&2
-      exit 3
+      echo & echo "...if everything fails, try setting the TZ manually via: \"export TZ=$TZ\"" >&2
     fi
 
-    # check that valid
-    if [ `timedatectl list-timezones |grep -c $TZ` -ne 1 ]; then
-      echo "$PROG: the TZ \'$TZ' doesn't seem to be valid?" >&2; exit 4
-    fi
-
-    # check whether we're already there...
-    CURRENT_TZ=`timedatectl status | awk '/Time zone/{print $3}'`
-    [ -z "$CURRENT_TZ" ] && { echo "$PROG: can't get current system's TZ via timedatectl status!" >&2; exit 1; }
-
-    if [ "$CURRENT_TZ" = "$TZ" ]; then
-      echo "$PROG: according to \`timedatectl -status', this system TZ is already set to $TZ - nothing to do." >&2; exit 0
-    fi
   fi
 
   # which method of change?
@@ -719,7 +719,7 @@ function install_rhel()
 
 ####################
 PROG=`basename $0`
-if [ $# -eq 0 -o "$1" = "-h" ]; then
+if [ $# -eq 0 -o "$1" = "-h" -o "$1" = "--help" ]; then
   cat <<! >&2
 $PROG: Script to setup a new Linux system, eg: install packages via \`yum/apt'
        * install the most important PKGs, for convenience, dev, etc
