@@ -121,7 +121,7 @@ function install_general_packages
 
   # -y=yes, -q=quiet
   if [ "$PKG" = "apt" ]; then
-    INSTALL_CMD="$SUDO apt install -qq -y"
+    INSTALL_CMD="$SUDO apt-get install -qq -y"
   elif [ "$PKG" = "yum" ]; then
     INSTALL_CMD="$SUDO yum -y install"
   else
@@ -364,7 +364,7 @@ function change_timezone()
       # method 1
       #echo 'tzdata tzdata/Areas select Europe' | debconf-set-selections
       #echo 'tzdata tzdata/Zones/Europe select New_York' | debconf-set-selections
-      #DEBIAN_FRONTEND="noninteractive" apt install -y tzdata
+      #DEBIAN_FRONTEND="noninteractive" apt-get install -y tzdata
 
       # method 2
       export DEBIAN_FRONTEND=noninteractive
@@ -467,7 +467,7 @@ function enable_ssh()
     echo "* SSHD already installed: not installing openssh-server"
   else
     echo "* installing: openssh-server"
-    $SUDO apt install -qq -y openssh-server
+    $SUDO apt-get install -qq -y openssh-server
   fi
 
   if [ "$USER" = "mint" ]; then
@@ -581,7 +581,7 @@ function install_pi()
   [ ! -x /usr/bin/apt ] && { echo "$PROG: can't find/exec APT!" >&2; exit 4; }
 
   # -y=yes, -q=quiet
-  INSTALL_CMD="sudo apt install -qq -y"
+  INSTALL_CMD="sudo apt-get install -qq -y"
 
   # update the local database to make sure it matches remote sources
   echo "* updating the apt local database..."
