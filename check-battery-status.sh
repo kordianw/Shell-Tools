@@ -1,7 +1,7 @@
 #!/bin/bash
 # check battery & AC status (Linux)
 #
-# * By Kordian Witek <code [at] kordy.com>
+# * By Kordian W. <code [at] kordy.com>
 #
 
 # check that we have the right utils

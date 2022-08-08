@@ -10,7 +10,7 @@
 # - keeps the brightnes up for up X hours, default=3 (perfect for a movie)
 # - leaves no permanent record
 #
-# * By Kordian Witek <code [at] kordy.com>, May 2020
+# * By Kordian W. <code [at] kordy.com>, May 2020
 #
 
 # how many hours to keep the brightness up?

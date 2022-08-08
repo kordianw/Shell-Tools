@@ -3,7 +3,7 @@
 # Script to fix Cygwin Permissions
 # - useful when permissions are screwed up on a Windows system
 #
-# * By Kordian Witek <code [at] kordian.com>, March 2011
+# * By Kordian W. <code [at] kordian.com>, March 2011
 #
 
 ####################

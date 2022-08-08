@@ -2,7 +2,7 @@
 # tests CPU+Mem+IO speed using `sysbench'
 # - writes test files to current dir
 #
-# * By Kordian Witek <code [at] kordy.com>, Jan 2020
+# * By Kordian W. <code [at] kordy.com>, Jan 2020
 #
 
 # maximum number prime to calculate - this usually takes around 1-2mins so is a perfect test

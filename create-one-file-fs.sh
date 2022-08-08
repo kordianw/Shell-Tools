@@ -4,7 +4,7 @@
 # - takes care of creation of the FS
 # - mounting/umounting
 #
-# * By Kordian Witek <code [at] kordy.com>, April 2020
+# * By Kordian W. <code [at] kordy.com>, April 2020
 #
 
 # what FS do we use?

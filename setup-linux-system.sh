@@ -10,7 +10,7 @@
 #
 # HW-INFO: # curl -s https://raw.githubusercontent.com/kordianw/HW-Info/master/hw-info.sh | bash
 #
-# * By Kordian Witek <code [at] kordy.com>, Nov 2017
+# * By Kordian W. <code [at] kordy.com>, Nov 2017
 #
 
 # default timezone (find using `tzselect' or `timedatectl list-timezones')

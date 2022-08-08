@@ -2,7 +2,7 @@
 # Quick and user-friendly filter to netstat(8) which makes the output more relevant + tidied.
 # - works on Linux/Unix & Cygwin
 #
-# * By Kordian Witek <code [at] kordy.com>, Jan 2002
+# * By Kordian W. <code [at] kordy.com>, Jan 2002
 #
 use strict;
 use warnings;

@@ -20,8 +20,18 @@
 # GCP: for privacy, set: ~/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true
 # GCP: **web-url**: https://console.cloud.google.com/cloudshell/editor?shellonly=true
 #
-# * By Kordian Witek <code [at] kordy.com>, Jun 2020
+# * By Kordian W. <code [at] kordy.com>, Jun 2020
 #
+
+#######################################
+
+# What is the DNS alias for GCP Shell?
+GCP_DNS_ALIAS="gcp-shell.kordy.com"
+
+# location of Google Cloud SDK?
+GOOGLE_CLOUD_SDK=~/google-cloud-sdk
+
+#######################################
 
 #
 # FUNCTIONS
@@ -68,6 +78,14 @@ function setup_c9()
   sudo service snapd stop
 }
 
+function connect_cloudshell()
+{
+  if [ ! -d "$GOOGLE_CLOUD_SDK" ]; then
+    echo "--FATAL: no Google Cloud SDK in $GOOGLE_CLOUD_SDK !" 1>&2
+    exit 99
+  fi
+}
+
 function setup_gcp()
 {
   update_scripts;
@@ -78,6 +96,16 @@ function setup_gcp()
   # - parses YAML & assigns config items into variables, prefixed with "conf_"
   #
   eval $(parse_yaml "google-domains-dyndns-secrets.yaml" "conf_")
+
+  # check that we have the right stuff
+  if [ -z "$conf_google_main_user" ]; then
+    echo "--FATAL: no main Google user config!\n" 1>&2
+    exit 98
+  fi
+  if [ -z "$conf_gcp_shell_dns" ]; then
+    echo "--FATAL: no GCP Shell DNS config!\n" 1>&2
+    exit 99
+  fi
 
   # set-up ~/.customize_environment
 echo "#!/bin/sh
@@ -93,8 +121,8 @@ export TZ=\"America/New_York\"
 
 echo \"---> start-run as \`whoami\`: \`date\`\"
 
-# gcp-shell.kordy.com: update dynamic DNS entry
-echo && echo \"* [\`date +%H:%M\`] update \`gcp-shell.kordy.com' DYNAMIC DNS\"
+# $conf_gcp_shell_dns: update dynamic DNS entry
+echo && echo \"* [\`date +%H:%M\`] update \`$conf_gcp_shell_dns' DYNAMIC DNS\"
 IP=\`dig +short myip.opendns.com @resolver1.opendns.com\`
 curl \"https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=\$IP\" &
 
@@ -102,10 +130,10 @@ curl \"https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/
 export DEBIAN_FRONTEND=\"noninteractive\"
 # echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
-# install ZSH & set as default for \`kordian'
+# install ZSH & set as default for \`$conf_google_main_user'
 echo && echo \"* [\`date +%H:%M\`] install+setup: zsh\"
 apt install -qq -y zsh
-chsh --shell /bin/zsh kordian
+chsh --shell /bin/zsh $conf_google_main_user
 
 # install additional packages
 echo && echo \"* [\`date +%H:%M\`] install screen+sshpass\"
@@ -113,7 +141,7 @@ apt install -qq -y screen sshpass
 
 # change system's timezone
 echo && echo \"* [\`date +%H:%M\`] changing system's timezone to local timezone\"
-~kordian/bin/scripts/setup-linux-system.sh -TZ
+~$conf_google_main_user/bin/scripts/setup-linux-system.sh -TZ
 
 # switch off accessibility options
 echo && echo \"* [\`date +%H:%M\`] set gcloud accessibility/screen_reader=false, for better table handling\"
@@ -123,7 +151,7 @@ echo \"---> end-run (Phase 1) as \`whoami\`: \`date\`\"
 
 # PHASE 2 - SW INSTALL -> ~5mins
 echo && echo \"* [\`date +%H:%M\`] starting Phase 2 (~5 mins) - SOFTWARE INSTALL\"
-nice ~kordian/bin/scripts/setup-linux-system.sh -GENPKG
+nice ~$conf_google_main_user/bin/scripts/setup-linux-system.sh -GENPKG
 
 echo \"---> end-run (Phase 2) as \`whoami\`: \`date\`\"
 
@@ -392,10 +420,10 @@ $PROG: Script to setup AWS Cloud9 and GCP CloudShell
        * install the most important PKGs, for convenience, dev, etc
 
 Usage: $PROG <options> [param]
-        -c9_setup   sets-up AWS Cloud9
-                    * runs: ./bkup-and-transfer.sh -dlupd
-                    * runs: ./bkup-and-transfer.sh -setup
-                    * stops memory hungry services: containerd,docker,mysql,apache2,snapd
+        -cloudshell connects/sets-up GCP Cloud Shell
+                    * checks if it exists via DynDNS
+                    * creates a new GCP Cloud Shell session /OR/
+                    * connects via SSH to an existing GCP Cloud Shell session
 
         -gcp_setup  sets-up GCP Cloud Shell
                     * runs: ./bkup-and-transfer.sh -dlupd
@@ -406,12 +434,17 @@ Usage: $PROG <options> [param]
                     * [if needed ] stops memory hungry process if <4GB RAM: docker,snapd
                     * updates Dynamic DNS
 
-        -sw         installs additional software
-                    * uses \`setup_linux-server.sh -GENPKG'
+        -c9_setup   sets-up AWS Cloud9
+                    * runs: ./bkup-and-transfer.sh -dlupd
+                    * runs: ./bkup-and-transfer.sh -setup
+                    * stops memory hungry services: containerd,docker,mysql,apache2,snapd
 
         -dyn_dns    update Google Dynamic DNS
                     * nexus
                     * gcp-cloudshell
+
+        -sw         installs additional software
+                    * uses \`setup_linux-server.sh -GENPKG'
 
         -cloud_bkup <IP|DNS>  backs-up Cloud Server Home DIR
 
@@ -421,6 +454,8 @@ elif [ "$1" = "-c9_setup" ]; then
   setup_c9;
 elif [ "$1" = "-gcp_setup" ]; then
   setup_gcp;
+elif [ "$1" = "-cloudshell" ]; then
+  connect_cloudshell;
 elif [ "$1" = "-sw" ]; then
   install_sw;
 elif [ "$1" = "-cloud_bkup" ]; then
