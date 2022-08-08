@@ -325,14 +325,14 @@ function update_dyn_dns()
     echo "--FATAL: can't work out the external IP addresss for $HOST!" 1>&2
     exit 99
   fi
-  echo "* [$HOST] current external IP is: $IP"
+  echo "* [$HOST] info: current external IP is: $IP"
 
   # get DNS
   DNS_NAME=`host $IP| awk '{print $NF}' | sed 's/\.$//'`
   if [ -n "$DNS_NAME" ]; then
-    echo "* [$HOST] external DNS name is: << $DNS_NAME >>"
+    echo "* [$HOST] info: external DNS name is: << $DNS_NAME >>"
   else
-    echo "* [$HOST] no external DNS entry!"
+    echo "* [$HOST] info: no external DNS entry!"
   fi
 
   #
@@ -344,20 +344,28 @@ function update_dyn_dns()
     # is the IP already what it should be?
     DNS=`host $conf_nexus_dns | awk '{print $NF}'`
     if [ "$DNS" != "$IP" ]; then
-      echo "* [$HOST] updating DYN_DNS for $conf_nexus_dns -> $IP"
+      echo "* [$HOST] action: updating DYN_DNS for $conf_nexus_dns -> $IP"
       curl "https://$conf_nexus_user:$conf_nexus_password@domains.google.com/nic/update?hostname=$conf_nexus_dns&myip=$IP"
+      if [ $? -ne 0 ]; then
+        echo "--FATAL: curl returned error updating $conf_nexus_dns to $IP!" 1>&2
+        exit 99
+      fi
     else
-      echo "* [$HOST] DONE! DNS for \`$conf_nexus_dns' is already set to $IP"
+      echo "* [$HOST] ALREADY WAS DONE! DNS for \`$conf_nexus_dns' was already set to $IP"
     fi
   # ->>> GCP-SHELL
   elif echo $HOST | egrep -q "^cs-.*default$"; then
     # is the IP already what it should be?
     DNS=`host $conf_gcp_shell_dns | awk '{print $NF}'`
     if [ "$DNS" != "$IP" ]; then
-      echo "* [$HOST] updating DYN_DNS for $conf_gcp_shell_dns -> $IP"
+      echo "* [$HOST] action: updating DYN_DNS for $conf_gcp_shell_dns -> $IP"
       curl "https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=$IP"
+      if [ $? -ne 0 ]; then
+        echo "--FATAL: curl returned error updating $conf_gcp_shell_dns to $IP!" 1>&2
+        exit 99
+      fi
     else
-      echo "* [$HOST] DONE! DNS for \`$conf_gcp_shell_dns' is already set to $IP"
+      echo "* [$HOST] ALREADY WAS DONE! DNS for \`$conf_gcp_shell_dns' was already set to $IP"
     fi
   # ->>> NO-USE-CASE YET!
   else
