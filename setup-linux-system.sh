@@ -361,9 +361,16 @@ function change_timezone()
     #set +x
 
     if [ -e /etc/localtime -a -e /usr/share/zoneinfo/America/New_York ]; then
+      # method 1
+      #echo 'tzdata tzdata/Areas select Europe' | debconf-set-selections
+      #echo 'tzdata tzdata/Zones/Europe select New_York' | debconf-set-selections
+      #DEBIAN_FRONTEND="noninteractive" apt install -y tzdata
+
+      # method 2
       export DEBIAN_FRONTEND=noninteractive
       $SUDO ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
       $SUDO dpkg-reconfigure --frontend noninteractive tzdata
+
       RC=$?
     fi
 
