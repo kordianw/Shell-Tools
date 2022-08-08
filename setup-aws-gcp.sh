@@ -366,6 +366,20 @@ function update_dyn_dns()
   fi
 }
 
+function assume_gcp_shell_setup()
+{
+  # double check that this really is a GCP host
+  if [ -d ~/src -a -d /google/devshell ]; then
+    echo "- assuming GCP DevShell VM - running setup & dyndns update..." 1>&2
+    setup_gcp;
+    update_dyn_dns;
+  else
+    echo "--FATAL: doesn't seem like a Google Cloud Shell server - no ~/src, no /google/devshell..." 1>&2
+    echo && echo "$PROG: see usage via \`$PROG --help' ..." 1>&2
+    exit 1
+  fi
+}
+
 #
 # MAIN
 #
@@ -378,34 +392,34 @@ $PROG: Script to setup AWS Cloud9 and GCP CloudShell
        * install the most important PKGs, for convenience, dev, etc
 
 Usage: $PROG <options> [param]
-        -c9       sets-up AWS Cloud9
-                  * runs: ./bkup-and-transfer.sh -dlupd
-                  * runs: ./bkup-and-transfer.sh -setup
-                  * stops memory hungry services: containerd,docker,mysql,apache2,snapd
+        -c9_setup   sets-up AWS Cloud9
+                    * runs: ./bkup-and-transfer.sh -dlupd
+                    * runs: ./bkup-and-transfer.sh -setup
+                    * stops memory hungry services: containerd,docker,mysql,apache2,snapd
 
-        -gcp      sets-up GCP Cloud Shell
-                  * runs: ./bkup-and-transfer.sh -dlupd
-                  * runs: ./bkup-and-transfer.sh -setup
-                  * creates/updates ~/.customize_environment
-                  * [if needed ] installs ZSH, SCREEN, SSHPASS
-                  * [if needed ] sets ZSH as default shell
-                  * [if needed ] stops memory hungry process if <4GB RAM: docker,snapd
-                  * updates Dynamic DNS
+        -gcp_setup  sets-up GCP Cloud Shell
+                    * runs: ./bkup-and-transfer.sh -dlupd
+                    * runs: ./bkup-and-transfer.sh -setup
+                    * creates/updates ~/.customize_environment
+                    * [if needed ] installs ZSH, SCREEN, SSHPASS
+                    * [if needed ] sets ZSH as default shell
+                    * [if needed ] stops memory hungry process if <4GB RAM: docker,snapd
+                    * updates Dynamic DNS
 
-        -sw       installs additional software
-                  * uses \`setup_linux-server.sh -GENPKG'
+        -sw         installs additional software
+                    * uses \`setup_linux-server.sh -GENPKG'
 
-        -dyn_dns  update Google Dynamic DNS
-                  * nexus
-                  * gcp-cloudshell
+        -dyn_dns    update Google Dynamic DNS
+                    * nexus
+                    * gcp-cloudshell
 
         -cloud_bkup <IP|DNS>  backs-up Cloud Server Home DIR
 
         -h      this screen
 !
-elif [ "$1" = "-c9" ]; then
+elif [ "$1" = "-c9_setup" ]; then
   setup_c9;
-elif [ "$1" = "-gcp" ]; then
+elif [ "$1" = "-gcp_setup" ]; then
   setup_gcp;
 elif [ "$1" = "-sw" ]; then
   install_sw;
@@ -414,18 +428,14 @@ elif [ "$1" = "-cloud_bkup" ]; then
 elif [ "$1" = "-dyn_dns" ]; then
   update_dyn_dns;
 elif echo `hostname` | grep -q "devshell-vm"; then
-  echo "- assuming GCP DevShell VM..." 1>&2
-  setup_gcp;
-  update_dyn_dns;
+  assume_gcp_shell_setup;
 elif [ -n "$DEVSHELL_SERVER_URL" -o -n "$DEVSHELL_SERVER_BASE_URL" ]; then
-  echo "- assuming GCP Cloud Shell VM..." 1>&2
-  setup_gcp;
-  update_dyn_dns;
+  assume_gcp_shell_setup;
 elif [ -e $HOME/.c9 ]; then
   echo "- assuming AWS Cloud9 VM..." 1>&2
   setup_c9;
 else
-  echo "$PROG: see usage via \`$PROG --help' ..." 2>&1
+  echo "$PROG: see usage via \`$PROG --help' ..." 1>&2
   exit 1
 fi
 
