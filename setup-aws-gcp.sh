@@ -73,9 +73,24 @@ function setup_gcp()
   update_scripts;
   check_root;
 
-  # Google DYNDNS credentials
-  GCP_SHELL_USER="9UnFdCv4iQrIxpXN"
-  GCP_SHELL_PASSWORD="6mk0v9NW2MuLdeAg"
+  #
+  # credentials from Google Domains
+  #
+  CRED_FILE=google-domains-dyndns-secrets.yaml
+  CONFIG_YAML_FILE=$CRED_FILE   # default
+  [ -s ~/bin/scripts/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=~/bin/scripts/Config-Files/$CRED_FILE
+  [ -s ~/src/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=~/src/Config-Files/$CRED_FILE
+  [ -s ~/playground/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=~/playground/Config-Files/$CRED_FILE
+  [ -s ./src/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=./src/Config-Files/$CRED_FILE
+  [ -s ./playground/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=./playground/Config-Files/$CRED_FILE
+  [ -s ../../Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=../../Config-Files/$CRED_FILE
+  [ -s ../Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=../Config-Files/$CRED_FILE
+  [ -s ./Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=./Config-Files/$CRED_FILE
+  [ -s ./$CRED_FILE ] && CONFIG_YAML_FILE=./$CRED_FILE
+
+  # PARSE YAML FILE
+  # - assigns config items into variables, prefixed with "conf_"
+  eval $(parse_yaml $CONFIG_YAML_FILE "conf_")
 
   # set-up ~/.customize_environment
 echo "#!/bin/sh
@@ -94,7 +109,7 @@ echo \"---> start-run as \`whoami\`: \`date\`\"
 # gcp-shell.kordy.com: update dynamic DNS entry
 echo && echo \"* [\`date +%H:%M\`] update \`gcp-shell.kordy.com' DYNAMIC DNS\"
 IP=\`dig +short myip.opendns.com @resolver1.opendns.com\`
-curl \"https://$GCP_SHELL_USER:$GCP_SHELL_PASSWORD@domains.google.com/nic/update?hostname=gcp-shell.kordy.com&myip=\$IP\" &
+curl \"https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=\$IP\" &
 
 # set env as non-interactive, to suppress errors in screen installation
 export DEBIAN_FRONTEND=\"noninteractive\"
@@ -244,26 +259,63 @@ function backup_cloud_home()
   fi
 }
 
+function parse_yaml()
+{
+   local prefix=$2
+   local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+
+   # check that config file exists
+   if [ ! -r $1 ]; then
+     echo "--FATAL: config YAML file \"$1\" doesn't exist!" 1>&2
+     exit 99
+   fi
+
+   sed -ne "s|^\($s\):|\1|" \
+        -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
+        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
+
+   awk -F$fs '{
+      indent = length($1)/2;
+      vname[indent] = $2;
+      for (i in vname) {if (i > indent) {delete vname[i]}}
+      if (length($3) > 0) {
+         vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+         printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
+      }
+   }'
+}
+
 function update_dyn_dns()
 {
   #
   # credentials from Google Domains
   #
+  CRED_FILE=google-domains-dyndns-secrets.yaml
+  CONFIG_YAML_FILE=$CRED_FILE   # default
+  [ -s ~/bin/scripts/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=~/bin/scripts/Config-Files/$CRED_FILE
+  [ -s ~/src/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=~/src/Config-Files/$CRED_FILE
+  [ -s ~/playground/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=~/playground/Config-Files/$CRED_FILE
+  [ -s ./src/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=./src/Config-Files/$CRED_FILE
+  [ -s ./playground/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=./playground/Config-Files/$CRED_FILE
+  [ -s ../../Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=../../Config-Files/$CRED_FILE
+  [ -s ../Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=../Config-Files/$CRED_FILE
+  [ -s ./Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=./Config-Files/$CRED_FILE
+  [ -s ./$CRED_FILE ] && CONFIG_YAML_FILE=./$CRED_FILE
 
-  # nexus.kordy.com
-  NEXUS_DOMAIN="nexus.kordy.com"
-  NEXUS_USER="xmhkDrmaCx4ynGY1"
-  NEXUS_PASSWORD="qhBK4HRDmjxtTPPn"
-
-  # gcp-shell.kordy.com
-  GCP_SHELL_DOMAIN="gcp-shell.kordy.com"
-  GCP_SHELL_USER="9UnFdCv4iQrIxpXN"
-  GCP_SHELL_PASSWORD="6mk0v9NW2MuLdeAg"
+  # PARSE YAML FILE
+  # - assigns config items into variables, prefixed with "conf_"
+  eval $(parse_yaml $CONFIG_YAML_FILE "conf_")
 
   # check HOST variable is set
   HOST=`hostname`
   if [ -z "$HOST" ]; then
     echo "--FATAL: the `hostname` has no HOST variable set!" 1>&2
+    exit 98
+  fi
+
+  # check that we have dig
+  if ! which dig >&/dev/null; then
+    echo "--FATAL: the \`dig' binary is not available on `hostname`!" 1>&2
     exit 98
   fi
 
@@ -290,22 +342,22 @@ function update_dyn_dns()
   # ->>> NEXUS
   if echo $HOST | grep -q nexus; then
     # is the IP already what it should be?
-    DNS=`host $NEXUS_DOMAIN | awk '{print $NF}'`
+    DNS=`host $conf_nexus_dns | awk '{print $NF}'`
     if [ "$DNS" != "$IP" ]; then
-      echo "* [$HOST] updating DYN_DNS for $NEXUS_DOMAIN -> $IP"
-      curl "https://$NEXUS_USER:$NEXUS_PASSWORD@domains.google.com/nic/update?hostname=$NEXUS_DOMAIN&myip=$IP"
+      echo "* [$HOST] updating DYN_DNS for $conf_nexus_dns -> $IP"
+      curl "https://$conf_nexus_user:$conf_nexus_password@domains.google.com/nic/update?hostname=$conf_nexus_dns&myip=$IP"
     else
-      echo "* [$HOST] DONE! DNS for \`$NEXUS_DOMAIN' is already set to $IP"
+      echo "* [$HOST] DONE! DNS for \`$conf_nexus_dns' is already set to $IP"
     fi
   # ->>> GCP-SHELL
   elif echo $HOST | egrep -q "^cs-.*default$"; then
     # is the IP already what it should be?
-    DNS=`host $GCP_SHELL_DOMAIN | awk '{print $NF}'`
+    DNS=`host $conf_gcp_shell_dns | awk '{print $NF}'`
     if [ "$DNS" != "$IP" ]; then
-      echo "* [$HOST] updating DYN_DNS for $GCP_SHELL_DOMAIN -> $IP"
-      curl "https://$GCP_SHELL_USER:$GCP_SHELL_PASSWORD@domains.google.com/nic/update?hostname=$GCP_SHELL_DOMAIN&myip=$IP"
+      echo "* [$HOST] updating DYN_DNS for $conf_gcp_shell_dns -> $IP"
+      curl "https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=$IP"
     else
-      echo "* [$HOST] DONE! DNS for \`$GCP_SHELL_DOMAIN' is already set to $IP"
+      echo "* [$HOST] DONE! DNS for \`$conf_gcp_shell_dns' is already set to $IP"
     fi
   # ->>> NO-USE-CASE YET!
   else
