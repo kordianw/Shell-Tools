@@ -82,10 +82,13 @@ echo "#!/bin/sh
 # - runs in background, when done touches: /google/devshell/customize_environment_done
 # - logs in /var/log/customize_environment
 
+# set the EDT timezone
+export TZ=\"America/New_York\"
+
 echo \"---> start-run as \`whoami\`: \`date\`\"
 
 # gcp-shell.kordy.com: update dynamic DNS entry
-echo && echo \"* update DYNAMIC DNS\"
+echo && echo \"* [\`date +%H:%M\`] update \`gcp-shell.kordy.com' DYNAMIC DNS\"
 IP=\`dig +short myip.opendns.com @resolver1.opendns.com\`
 curl \"https://9UnFdCv4iQrIxpXN:6mk0v9NW2MuLdeAg@domains.google.com/nic/update?hostname=gcp-shell.kordy.com&myip=\$IP\" &
 
@@ -93,31 +96,29 @@ curl \"https://9UnFdCv4iQrIxpXN:6mk0v9NW2MuLdeAg@domains.google.com/nic/update?h
 export DEBIAN_FRONTEND=\"noninteractive\"
 # echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
-# set the EDT timezone
-export TZ=\"America/New_York\"
-
 # install ZSH & set as default for \`kordian'
-echo && echo \"* install+setup: zsh\"
+echo && echo \"* [\`date +%H:%M\`] install+setup: zsh\"
 apt install -qq -y zsh
 chsh --shell /bin/zsh kordian
 
 # install additional packages
-echo && echo \"* install screen+sshpass\"
+echo && echo \"* [\`date +%H:%M\`] install screen+sshpass\"
 apt install -qq -y screen sshpass
 
 # change system's timezone
-echo && echo \"* changing system's timezone to local timezone\"
+echo && echo \"* [\`date +%H:%M\`] changing system's timezone to local timezone\"
 ~kordian/bin/scripts/setup-linux-system.sh -TZ
 
 # switch off accessibility options
-echo && echo \"* set gcloud accessibility/screen_reader=false, for better table handling\"
+echo && echo \"* [\`date +%H:%M\`] set gcloud accessibility/screen_reader=false, for better table handling\"
 gcloud config set accessibility/screen_reader false
 
 echo \"---> end-run (Phase 1) as \`whoami\`: \`date\`\"
 
 # PHASE 2 - SW INSTALL -> ~5mins
-echo && echo \"* starting Phase 2 (~5 mins) - SOFTWARE INSTALL\"
+echo && echo \"* [\`date +%H:%M\`] starting Phase 2 (~5 mins) - SOFTWARE INSTALL\"
 nice ~kordian/bin/scripts/setup-linux-system.sh -GENPKG
+
 echo \"---> end-run (Phase 2) as \`whoami\`: \`date\`\"
 
 # EOF" > ~/.customize_environment
@@ -178,7 +179,7 @@ function backup_cloud_home()
 
   if [ -n $HOST_ADDRESS ]; then
     # use-cases
-    if echo "$HOST_ADDRESS" | egrep -q '^[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$'; then
+    if echo "$HOST_ADDRESS" | egrep -q 'gcp-shell|^[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$'; then
       SERVICE="gcp-cloudshell"
     else
       SERVICE=`echo $HOST_ADDRESS | awk -F. '{print $1}'`
