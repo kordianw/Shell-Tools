@@ -75,22 +75,9 @@ function setup_gcp()
 
   #
   # credentials from Google Domains
+  # - parses YAML & assigns config items into variables, prefixed with "conf_"
   #
-  CRED_FILE=google-domains-dyndns-secrets.yaml
-  CONFIG_YAML_FILE=$CRED_FILE   # default
-  [ -s ~/bin/scripts/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=~/bin/scripts/Config-Files/$CRED_FILE
-  [ -s ~/src/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=~/src/Config-Files/$CRED_FILE
-  [ -s ~/playground/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=~/playground/Config-Files/$CRED_FILE
-  [ -s ./src/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=./src/Config-Files/$CRED_FILE
-  [ -s ./playground/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=./playground/Config-Files/$CRED_FILE
-  [ -s ../../Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=../../Config-Files/$CRED_FILE
-  [ -s ../Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=../Config-Files/$CRED_FILE
-  [ -s ./Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=./Config-Files/$CRED_FILE
-  [ -s ./$CRED_FILE ] && CONFIG_YAML_FILE=./$CRED_FILE
-
-  # PARSE YAML FILE
-  # - assigns config items into variables, prefixed with "conf_"
-  eval $(parse_yaml $CONFIG_YAML_FILE "conf_")
+  eval $(parse_yaml "google-domains-dyndns-secrets.yaml" "conf_")
 
   # set-up ~/.customize_environment
 echo "#!/bin/sh
@@ -261,50 +248,54 @@ function backup_cloud_home()
 
 function parse_yaml()
 {
-   local prefix=$2
-   local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+  local prefix=$2
+  local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
 
-   # check that config file exists
-   if [ ! -r $1 ]; then
-     echo "--FATAL: config YAML file \"$1\" doesn't exist!" 1>&2
-     exit 99
-   fi
+  # find the location of `Config-Files' where we store all our configs
+  YAML_FILE=$1   # no-path-yet
+  [ -r ~/bin/scripts/Config-Files/$1 ] && YAML_FILE=~/bin/scripts/Config-Files/$1
+  [ -r ~/src/Config-Files/$1 ] && YAML_FILE=~/src/Config-Files/$1
+  [ -r ~/playground/Config-Files/$1 ] && YAML_FILE=~/playground/Config-Files/$1
+  [ -r ./bin/scripts/Config-Files/$1 ] && YAML_FILE=./bin/scripts/Config-Files/$1
+  [ -r ./src/Config-Files/$1 ] && YAML_FILE=./src/Config-Files/$1
+  [ -r ./playground/Config-Files/$1 ] && YAML_FILE=./playground/Config-Files/$1
+  [ -r ../../Config-Files/$1 ] && YAML_FILE=../../Config-Files/$1
+  [ -r ../Config-Files/$1 ] && YAML_FILE=../Config-Files/$1
+  [ -r ./Config-Files/$1 ] && YAML_FILE=./Config-Files/$1
+  [ -r ./$1 ] && YAML_FILE=./$1
 
-   sed -ne "s|^\($s\):|\1|" \
-        -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
-        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
+  # check that config file exists
+  if [ ! -r $YAML_FILE ]; then
+    echo "--FATAL: config YAML file \"$YAML_FILE\" doesn't exist!" 1>&2
+    exit 98
+  fi
+  if [ ! -s $YAML_FILE ]; then
+    echo "--FATAL: config YAML file \"$YAML_FILE\" is EMPTY!" 1>&2
+    exit 99
+  fi
 
-   awk -F$fs '{
-      indent = length($1)/2;
-      vname[indent] = $2;
-      for (i in vname) {if (i > indent) {delete vname[i]}}
-      if (length($3) > 0) {
-         vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
-         printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
-      }
-   }'
+  sed -ne "s|^\($s\):|\1|" \
+       -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
+       -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $YAML_FILE |
+
+  awk -F$fs '{
+     indent = length($1)/2;
+     vname[indent] = $2;
+     for (i in vname) {if (i > indent) {delete vname[i]}}
+     if (length($3) > 0) {
+        vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+        printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
+     }
+  }'
 }
 
 function update_dyn_dns()
 {
   #
   # credentials from Google Domains
+  # - parses YAML & assigns config items into variables, prefixed with "conf_"
   #
-  CRED_FILE=google-domains-dyndns-secrets.yaml
-  CONFIG_YAML_FILE=$CRED_FILE   # default
-  [ -s ~/bin/scripts/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=~/bin/scripts/Config-Files/$CRED_FILE
-  [ -s ~/src/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=~/src/Config-Files/$CRED_FILE
-  [ -s ~/playground/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=~/playground/Config-Files/$CRED_FILE
-  [ -s ./src/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=./src/Config-Files/$CRED_FILE
-  [ -s ./playground/Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=./playground/Config-Files/$CRED_FILE
-  [ -s ../../Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=../../Config-Files/$CRED_FILE
-  [ -s ../Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=../Config-Files/$CRED_FILE
-  [ -s ./Config-Files/$CRED_FILE ] && CONFIG_YAML_FILE=./Config-Files/$CRED_FILE
-  [ -s ./$CRED_FILE ] && CONFIG_YAML_FILE=./$CRED_FILE
-
-  # PARSE YAML FILE
-  # - assigns config items into variables, prefixed with "conf_"
-  eval $(parse_yaml $CONFIG_YAML_FILE "conf_")
+  eval $(parse_yaml "google-domains-dyndns-secrets.yaml" "conf_")
 
   # check HOST variable is set
   HOST=`hostname`
