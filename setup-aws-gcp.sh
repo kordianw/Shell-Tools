@@ -96,7 +96,7 @@ function connect_cloudshell()
     ssh $GCP_DNS_ALIAS
     RC=$?
   else
-    echo "* [`date +%H:%M`] it's not alive, requesting new GCP Cloud Shell session..." 1>&2
+    echo && echo "* [`date +%H:%M`] it's not alive, requesting new GCP Cloud Shell via \`gcloud'..." 1>&2
 
     # check that we have the SDK
     if [ ! -d "$GOOGLE_CLOUD_SDK" ]; then
@@ -125,19 +125,28 @@ function connect_cloudshell()
     # clean-up
     rm -f $TMP
 
-    # now wait for the DNS to update...
-    echo -ne "* [`date +%H:%M`] waiting for \`$GCP_DNS_ALIAS' to be updated with the IP \`$IP' "
-    while ! timeout 1 bash -c "cat < /dev/null > /dev/tcp/$GCP_DNS_ALIAS/6000"
-    do
-        echo -ne "."
-        sleep 1
-    done
+    # connect via IP while we wait for the DNS to change
+    IP_MASK=`echo $IP | sed 's/^\([0-9][0-9]\.[0-9][0-9]*\)\..*/\1/'`
+    if egrep -q "^Host.*shell.* $IP_MASK\.*" ~/.ssh/config; then
+      sleep 2
+      echo "* [`date +%H:%M`] the IP <$IP> is in ~/.ssh/config via $IP_MASK.*, can connect..."
+      GCP_DNS_ALIAS=$IP
+    else
+      # wait for the DNS to update...
+      echo -ne "* [`date +%H:%M`] waiting for \`$GCP_DNS_ALIAS' to be updated with the IP \`$IP' "
+      while ! timeout 1 bash -c "cat < /dev/null > /dev/tcp/$GCP_DNS_ALIAS/6000"
+      do
+          echo -ne "."
+          sleep 1
+      done
+      echo
+    fi
 
     #
     # SSH
     #
     START_TIME=`date "+%s"`
-    echo && echo "* [`date +%H:%M`] success - ssh \`$GCP_DNS_ALIAS'..."
+    echo "* [`date +%H:%M`] success - ssh \`$GCP_DNS_ALIAS'..."
     ssh $GCP_DNS_ALIAS
     RC=$?
   fi
@@ -196,20 +205,20 @@ echo \"---> start-run as \`whoami\`: \`date\`\"
 # $conf_gcp_shell_dns: update dynamic DNS entry
 echo && echo \"* [\`date +%H:%M\`] update << $conf_gcp_shell_dns >> DYNAMIC DNS\"
 IP=\`dig +short myip.opendns.com @resolver1.opendns.com\`
-curl \"https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=\$IP\" &
+curl -S --no-progress-meter \"https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=\$IP\" &
+
+# install ZSH & set as default for \`$conf_google_main_user'
+echo && echo \"* [\`date +%H:%M\`] install+setup: zsh\"
+apt-get install -qq -y zsh
+chsh --shell /bin/zsh $conf_google_main_user
 
 # set env as non-interactive, to suppress errors in screen installation
 export DEBIAN_FRONTEND=\"noninteractive\"
 # echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
-# install ZSH & set as default for \`$conf_google_main_user'
-echo && echo \"* [\`date +%H:%M\`] install+setup: zsh\"
-apt install -qq -y zsh
-chsh --shell /bin/zsh $conf_google_main_user
-
 # install additional packages
 echo && echo \"* [\`date +%H:%M\`] install screen+sshpass\"
-apt install -qq -y screen sshpass
+apt-get install -qq -y screen sshpass
 
 # change system's timezone
 echo && echo \"* [\`date +%H:%M\`] changing system's timezone to local timezone\"
@@ -234,9 +243,9 @@ echo \"---> end-run (Phase 2) as \`whoami\`: \`date\`\"
   # - we need sshpass for easier syncing later on (we use if safely)
   if [ ! -x /bin/zsh -o ! -x /bin/screen -o ! -x /bin/sshpass ]; then
     echo "** installing key packages..."
-    [ ! -x /bin/zsh ] && sudo apt install -qq -y zsh
-    [ ! -x /bin/screen ] && sudo apt install -qq -y screen
-    [ ! -x /bin/sshpass ] && sudo apt install -qq -y sshpass
+    [ ! -x /bin/zsh ] && sudo apt-get install -qq -y zsh
+    [ ! -x /bin/screen ] && sudo apt-get install -qq -y screen
+    [ ! -x /bin/sshpass ] && sudo apt-get install -qq -y sshpass
   fi
 
   # chsh ZSH
