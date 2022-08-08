@@ -152,7 +152,7 @@ function connect_cloudshell()
   fi
 
   # final info message
-  echo "... session finished at `date +%H:%M` after $TIME_TAKEN." 1>&2
+  echo "... cloudshell session finished at `date +%H:%M` after $TIME_TAKEN." 1>&2
 
   exit $RC
 }
