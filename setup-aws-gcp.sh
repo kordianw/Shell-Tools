@@ -262,6 +262,7 @@ function parse_yaml()
   [ -r ../../Config-Files/$1 ] && YAML_FILE=../../Config-Files/$1
   [ -r ../Config-Files/$1 ] && YAML_FILE=../Config-Files/$1
   [ -r ./Config-Files/$1 ] && YAML_FILE=./Config-Files/$1
+  [ -r `dirname $0`/$1 ] && YAML_FILE=`dirname $0`/$1
   [ -r ./$1 ] && YAML_FILE=./$1
 
   # check that config file exists
