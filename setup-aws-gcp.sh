@@ -23,16 +23,6 @@
 # * By Kordian W. <code [at] kordy.com>, Jun 2020
 #
 
-#######################################
-
-# What is the DNS alias for GCP Shell?
-GCP_DNS_ALIAS="gcp-shell.kordy.com"
-
-# location of Google Cloud SDK?
-GOOGLE_CLOUD_SDK=~/google-cloud-sdk
-
-#######################################
-
 #
 # FUNCTIONS
 #
@@ -80,10 +70,88 @@ function setup_c9()
 
 function connect_cloudshell()
 {
-  if [ ! -d "$GOOGLE_CLOUD_SDK" ]; then
-    echo "--FATAL: no Google Cloud SDK in $GOOGLE_CLOUD_SDK !" 1>&2
-    exit 99
+  #######################################
+
+  # What is the DNS alias for GCP Shell?
+  GCP_DNS_ALIAS="gcp-shell.kordy.com"
+
+  # location of Google Cloud SDK?
+  GOOGLE_CLOUD_SDK=~/google-cloud-sdk
+
+  #######################################
+
+  # is it alive?
+  echo -e "* [`date +%H:%M`] check if \`$GCP_DNS_ALIAS' is alive... " 1>&2
+  if ping -w1 -W1 $GCP_DNS_ALIAS >&/dev/null; then
+    echo "yes, connecting!" 1>&2
+    START_TIME=`date "+%s"`
+
+    #
+    # SSH
+    #
+    ssh $GCP_DNS_ALIAS
+  else
+    echo "* [`date +%H:%M`] it's not alive, requesting new GCP Cloud Shell session..." 1>&2
+
+    # check that we have the SDK
+    if [ ! -d "$GOOGLE_CLOUD_SDK" ]; then
+      echo "--FATAL: no Google Cloud SDK in $GOOGLE_CLOUD_SDK !" 1>&2
+      exit 99
+    fi
+
+    TMP=/tmp/gcp-out-$$
+
+    #
+    # REQUEST GCP CLOUD SHELL
+    #
+    $GOOGLE_CLOUD_SDK/bin/gcloud cloud-shell ssh --dry-run | tee -a $TMP
+
+    if [ $? -ne 0 ]; then
+      echo "--FATAL: error requesting GCP Cloud Shell - \`gcloud' returned RC=$?!" 1>&2
+      exit 99
+    fi
+
+    IP=`awk '/ssh.*@/{print $9}' $TMP | sed 's/^[a-z]*@//'`
+    if [ -z "$IP" ]; then
+      echo "--FATAL: weren't able to get the IP address from the gcloud command!" 1>&2
+      exit 99
+    fi
+
+    # clean-up
+    rm -f $TMP
+
+    # now wait for the DNS to update...
+    echo -e "* [`date +%H:%M`] waiting for \`$GCP_DNS_ALIAS' to be updated with the IP \`$IP'..."
+    while :
+    do
+      if ping -w1 -W1 $GCP_DNS_ALIAS >&/dev/null; then
+        break
+      else
+        sleep 1
+      fi
+    done
+
+    START_TIME=`date "+%s"`
+
+    #
+    # SSH
+    #
+    echo && echo "* [`date +%H:%M`] success - ssh \`$GCP_DNS_ALIAS'..."
+    ssh $GCP_DNS_ALIAS
   fi
+
+  # work out end time
+  END_TIME=`date +%s`
+  TIME_TAKEN=$(( $END_TIME - $START_TIME ))
+  if [ $TIME_TAKEN -gt 60 ]; then
+    TIME_TAKEN=`echo "($END_TIME - $START_TIME) / 60" | bc -l | sed 's/\(...\).*/\1/'`
+    TIME_TAKEN="$TIME_TAKEN min(s)"
+  else
+    TIME_TAKEN="$TIME_TAKEN secs"
+  fi
+
+  # final info message
+  echo "... session finished at `date +%H:%M` after $TIME_TAKEN" 1>&2
 }
 
 function setup_gcp()
