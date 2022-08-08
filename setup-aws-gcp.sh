@@ -81,8 +81,8 @@ function connect_cloudshell()
   #######################################
 
   # is it alive?
-  echo -e "* [`date +%H:%M`] check if \`$GCP_DNS_ALIAS' is alive... " 1>&2
-  if ping -w1 -W1 $GCP_DNS_ALIAS >&/dev/null; then
+  echo -ne "* [`date +%H:%M`] check if \`$GCP_DNS_ALIAS' (:6000) is alive... " 1>&2
+  if timeout 1 bash -c "cat < /dev/null > /dev/tcp/$GCP_DNS_ALIAS/6000"; then
     echo "yes, connecting!" 1>&2
     START_TIME=`date "+%s"`
 
@@ -90,6 +90,7 @@ function connect_cloudshell()
     # SSH
     #
     ssh $GCP_DNS_ALIAS
+    RC=$?
   else
     echo "* [`date +%H:%M`] it's not alive, requesting new GCP Cloud Shell session..." 1>&2
 
@@ -122,22 +123,18 @@ function connect_cloudshell()
 
     # now wait for the DNS to update...
     echo -e "* [`date +%H:%M`] waiting for \`$GCP_DNS_ALIAS' to be updated with the IP \`$IP'..."
-    while :
+    while ! timeout 1 bash -c "cat < /dev/null > /dev/tcp/$GCP_DNS_ALIAS/6000"
     do
-      if ping -w1 -W1 $GCP_DNS_ALIAS >&/dev/null; then
-        break
-      else
         sleep 1
-      fi
     done
-
-    START_TIME=`date "+%s"`
 
     #
     # SSH
     #
+    START_TIME=`date "+%s"`
     echo && echo "* [`date +%H:%M`] success - ssh \`$GCP_DNS_ALIAS'..."
     ssh $GCP_DNS_ALIAS
+    RC=$?
   fi
 
   # work out end time
@@ -152,6 +149,8 @@ function connect_cloudshell()
 
   # final info message
   echo "... session finished at `date +%H:%M` after $TIME_TAKEN" 1>&2
+
+  exit $RC
 }
 
 function setup_gcp()
@@ -167,11 +166,11 @@ function setup_gcp()
 
   # check that we have the right stuff
   if [ -z "$conf_google_main_user" ]; then
-    echo "--FATAL: no main Google user config!\n" 1>&2
+    echo "--FATAL: no main Google user config!" 1>&2
     exit 98
   fi
   if [ -z "$conf_gcp_shell_dns" ]; then
-    echo "--FATAL: no GCP Shell DNS config!\n" 1>&2
+    echo "--FATAL: no GCP Shell DNS config!" 1>&2
     exit 99
   fi
 
@@ -190,7 +189,7 @@ export TZ=\"America/New_York\"
 echo \"---> start-run as \`whoami\`: \`date\`\"
 
 # $conf_gcp_shell_dns: update dynamic DNS entry
-echo && echo \"* [\`date +%H:%M\`] update \`$conf_gcp_shell_dns' DYNAMIC DNS\"
+echo && echo \"* [\`date +%H:%M\`] update << $conf_gcp_shell_dns >> DYNAMIC DNS\"
 IP=\`dig +short myip.opendns.com @resolver1.opendns.com\`
 curl \"https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=\$IP\" &
 
