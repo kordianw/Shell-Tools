@@ -73,6 +73,10 @@ function setup_gcp()
   update_scripts;
   check_root;
 
+  # Google DYNDNS credentials
+  GCP_SHELL_USER="9UnFdCv4iQrIxpXN"
+  GCP_SHELL_PASSWORD="6mk0v9NW2MuLdeAg"
+
   # set-up ~/.customize_environment
 echo "#!/bin/sh
 ##
@@ -90,7 +94,7 @@ echo \"---> start-run as \`whoami\`: \`date\`\"
 # gcp-shell.kordy.com: update dynamic DNS entry
 echo && echo \"* [\`date +%H:%M\`] update \`gcp-shell.kordy.com' DYNAMIC DNS\"
 IP=\`dig +short myip.opendns.com @resolver1.opendns.com\`
-curl \"https://9UnFdCv4iQrIxpXN:6mk0v9NW2MuLdeAg@domains.google.com/nic/update?hostname=gcp-shell.kordy.com&myip=\$IP\" &
+curl \"https://$GCP_SHELL_USER:$GCP_SHELL_PASSWORD@domains.google.com/nic/update?hostname=gcp-shell.kordy.com&myip=\$IP\" &
 
 # set env as non-interactive, to suppress errors in screen installation
 export DEBIAN_FRONTEND=\"noninteractive\"
