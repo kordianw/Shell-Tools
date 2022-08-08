@@ -105,11 +105,20 @@ chsh --shell /bin/zsh kordian
 echo && echo \"* install screen+sshpass\"
 apt install -qq -y screen sshpass
 
+# change system's timezone
+echo && echo \"* changing system's timezone to local timezone\"
+~kordian/bin/scripts/setup-linux-system.sh -TZ
+
 # switch off accessibility options
 echo && echo \"* set gcloud accessibility/screen_reader=false, for better table handling\"
 gcloud config set accessibility/screen_reader false
 
-echo \"---> end-run as \`whoami\`: \`date\`\"
+echo \"---> end-run (Phase 1) as \`whoami\`: \`date\`\"
+
+# PHASE 2 - SW INSTALL -> ~5mins
+echo && echo \"* starting Phase 2 (~5 mins) - SOFTWARE INSTALL\"
+nice ~kordian/bin/scripts/setup-linux-system.sh -GENPKG
+echo \"---> end-run (Phase 2) as \`whoami\`: \`date\`\"
 
 # EOF" > ~/.customize_environment
   chmod 755 ~/.customize_environment >&/dev/null
