@@ -126,9 +126,10 @@ function connect_cloudshell()
     rm -f $TMP
 
     # now wait for the DNS to update...
-    echo -e "* [`date +%H:%M`] waiting for \`$GCP_DNS_ALIAS' to be updated with the IP \`$IP'..."
+    echo -ne "* [`date +%H:%M`] waiting for \`$GCP_DNS_ALIAS' to be updated with the IP \`$IP' "
     while ! timeout 1 bash -c "cat < /dev/null > /dev/tcp/$GCP_DNS_ALIAS/6000"
     do
+        echo -ne "."
         sleep 1
     done
 
