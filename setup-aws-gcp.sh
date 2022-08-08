@@ -248,9 +248,12 @@ echo \"---> end-run (Phase 2) as \`whoami\`: \`date\`\"
   # - only if less than 4GB of RAM remaining
   FREE_MEM=`free -m | awk '/Mem/{print $NF}'`
   if [ $FREE_MEM -lt 4000 ]; then
-    echo && echo "** stopping un-needed service: docker,snapd (to reclaim memory)..."
+    echo && echo "** stopping un-needed service: docker,containerd,snapd (to reclaim memory)..."
     if ps aux | grep -q "[d]ockerd"; then
       sudo service docker stop
+    fi
+    if ps aux | grep -q "[s]ontainterd"; then
+      sudo service containerd stop
     fi
     if ps aux | grep -q "[s]napd"; then
       sudo service snapd stop
