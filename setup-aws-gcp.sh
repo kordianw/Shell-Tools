@@ -72,13 +72,17 @@ function connect_cloudshell()
 {
   #######################################
 
-  # What is the DNS alias for GCP Shell?
-  GCP_DNS_ALIAS="gcp-shell.kordy.com"
-
   # location of Google Cloud SDK?
   GOOGLE_CLOUD_SDK=~/google-cloud-sdk
 
   #######################################
+
+  # What is the DNS alias for GCP Shell?
+  GCP_DNS_ALIAS="$1"
+  if [ -z "$GCP_DNS_ALIAS" ]; then
+    echo "--FATAL: please supply the GCP DNS Alias/DynDNS hostname!" 1>&2
+    exit 1
+  fi
 
   # is it alive?
   echo -ne "* [`date +%H:%M`] check if \`$GCP_DNS_ALIAS' (:6000) is alive... " 1>&2
@@ -142,13 +146,13 @@ function connect_cloudshell()
   TIME_TAKEN=$(( $END_TIME - $START_TIME ))
   if [ $TIME_TAKEN -gt 60 ]; then
     TIME_TAKEN=`echo "($END_TIME - $START_TIME) / 60" | bc -l | sed 's/\(...\).*/\1/'`
-    TIME_TAKEN="$TIME_TAKEN min(s)"
+    TIME_TAKEN="$TIME_TAKEN mins"
   else
     TIME_TAKEN="$TIME_TAKEN secs"
   fi
 
   # final info message
-  echo "... session finished at `date +%H:%M` after $TIME_TAKEN" 1>&2
+  echo "... session finished at `date +%H:%M` after $TIME_TAKEN." 1>&2
 
   exit $RC
 }
@@ -487,7 +491,8 @@ $PROG: Script to setup AWS Cloud9 and GCP CloudShell
        * install the most important PKGs, for convenience, dev, etc
 
 Usage: $PROG <options> [param]
-        -cloudshell connects/sets-up GCP Cloud Shell
+        -cloudshell <dns|ip>
+                    connects/sets-up GCP Cloud Shell
                     * checks if it exists via DynDNS
                     * creates a new GCP Cloud Shell session /OR/
                     * connects via SSH to an existing GCP Cloud Shell session
@@ -522,7 +527,7 @@ elif [ "$1" = "-c9_setup" ]; then
 elif [ "$1" = "-gcp_setup" ]; then
   setup_gcp;
 elif [ "$1" = "-cloudshell" ]; then
-  connect_cloudshell;
+  connect_cloudshell $2;
 elif [ "$1" = "-sw" ]; then
   install_sw;
 elif [ "$1" = "-cloud_bkup" ]; then
