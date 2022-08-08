@@ -297,11 +297,11 @@ function change_timezone()
 
   # do we need to do anything???
   if ls -l /etc/localtime | egrep -q "$CHECK_TZ"; then
-    echo -e "\n$PROG: according to /etc/localtime (#1), this system TZ is already set to $TZ - good, nothing to do:" >&2
+    echo -e "\n$PROG: check 1: according to /etc/localtime (#1), this system TZ is already set to $TZ - good, nothing to do:" >&2
     ls -l /etc/localtime || exit 1
 
     if egrep -q "$CHECK_TZ" /etc/timezone; then
-      echo -e "\n$PROG: according to /etc/timezone (#2), this system TZ is already set to $TZ - good, nothing to do:" >&2
+      echo -e "\n$PROG: check 2: according to /etc/timezone (#2), this system TZ is already set to $TZ - good, nothing to do:" >&2
       cat /etc/timezone || exit 2
     fi
 
@@ -359,7 +359,19 @@ function change_timezone()
     #echo "$TZ" | $SUDO tee /etc/timezone || exit 1
     #sudo dpkg-reconfigure --frontend noninteractive tzdata
     #set +x
-    $SUDO dpkg-reconfigure tzdata
+
+    if [ -e /etc/localtime -a -e /usr/share/zoneinfo/America/New_York ]; then
+      export DEBIAN_FRONTEND=noninteractive
+      $SUDO ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
+      $SUDO dpkg-reconfigure --frontend noninteractive tzdata
+      RC=$?
+    fi
+
+    # try another way ... probably interactive
+    if [ -z "$RC" -o $RC -ne 0 ]; then
+      unset DEBIAN_FRONTEND
+      $SUDO dpkg-reconfigure tzdata
+    fi
 
     # confirm
     echo "- now:   `date`"
