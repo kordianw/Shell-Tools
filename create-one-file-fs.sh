@@ -2,7 +2,7 @@
 #
 # Script to create a one-file FS (vfat/ext4) - useful for Live Linux USBs
 # - takes care of creation of the FS
-# - mounting/umounting
+# - mounting/unmounting
 #
 # * By Kordian W. <code [at] kordy.com>, April 2020
 #
