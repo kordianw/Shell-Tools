@@ -38,9 +38,9 @@ if [ "$1" = "-1GB" ]; then
 fi
 
 # check for space
-SPACE_LEFT=`df -m . | awk '/^\//{print $4}'`
+SPACE_LEFT=`df -m . | awk '/^\/|^overlay/{print $4}'`
 if [ -z "$SPACE_LEFT" ]; then
-  echo "$PROG: can't calculate space left in current dir - via: df -m ." >&2
+  echo "$PROG: can't calculate space left in current dir - via: \`df -m .'" >&2
   exit 98
 elif [ $SPACE_LEFT -lt $MIN_SPACE_NEEDED ]; then
   echo -e "$PROG: FATAL: not enough space left in current dir - seeing $SPACE_LEFT MB, needs at least $MIN_SPACE_NEEDED MB - see below:" >&2
@@ -64,6 +64,10 @@ if `sysbench --version | grep -q "sysbench 0\."`; then
   THREADS_PARAM="num-"
 fi
 
+# set hostname
+HOST=`hostname`
+[ -z "$HOST" ] && HOST=`uname -n`
+
 #
 # CPU TEST
 #
@@ -78,7 +82,7 @@ if [ "$1" = "-cpu" -o -z "$1" ]; then
     fi
   fi
 
-  echo "* [`hostname`] CPU Benchmark: running sysbench ${SYSBENCH_TEST}cpu --cpu-max-prime=$MAX_PRIME, --${THREADS_PARAM}threads=1+$THREADS"
+  echo "* [$HOST] CPU Benchmark: running sysbench ${SYSBENCH_TEST}cpu --cpu-max-prime=$MAX_PRIME, --${THREADS_PARAM}threads=1+$THREADS"
   sysbench ${SYSBENCH_TEST}cpu --cpu-max-prime=$MAX_PRIME --${THREADS_PARAM}threads=1 run | egrep "total time|events per second" | sed "s/$/		--> single core CPU test/"
   if [ "$THREADS" -gt 1 ]; then
     sysbench ${SYSBENCH_TEST}cpu --cpu-max-prime=$MAX_PRIME --${THREADS_PARAM}threads=$THREADS run | egrep "total time|events per second" | sed "s/$/		--> $THREADS threads CPU test/"
@@ -90,7 +94,7 @@ fi
 # MEMORY TEST
 #
 if [ "$1" = "-memory" -o -z "$1" ]; then
-  echo && echo "* [`hostname`] Memory Benchmark: 2GB (read & write)"
+  echo && echo "* [$HOST] Memory Benchmark: 2GB (read & write)"
   sleep 2
 
   #sysbench ${SYSBENCH_TEST}memory --memory-total-size=2G --memory-oper=read run | egrep "total time|transferred"                 # read test
@@ -103,7 +107,7 @@ fi
 # IO TEST
 #
 if [ "$1" = "-io" -o -z "$1" ]; then
-  echo && echo "* [`hostname`] IO Benchmark: $SIZE_TO_TEST"
+  echo && echo "* [$HOST] IO Benchmark: $SIZE_TO_TEST"
   echo -n "  - NB: using following disk: "
   df -Th . | tail -1
   sleep 2
