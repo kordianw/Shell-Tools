@@ -537,11 +537,12 @@ $PROG: Script to setup Cloud VMs, eg: GCP Cloud Shell, AWS CloudShell, Azure Clo
        * install the most important PKGs, for convenience, dev, etc
 
 Usage: $PROG <options> [param]
-        -cloudshell <dns|ip>
+        -cloudshell <dyn_dns_hostname>
                     connects/requests GCP Cloud Shell (via SSH)
                     * checks if it exists via DynDNS
                     * creates a new GCP Cloud Shell session /OR/
                     * connects via SSH to an existing GCP Cloud Shell session
+                    * updates DynamicDNS with the latest IP of the Cloud Shell
                     NB: only GCP currently provides SSH access to Cloud Shell
 
         -gcp_setup  sets-up GCP Cloud Shell VM
@@ -551,7 +552,8 @@ Usage: $PROG <options> [param]
                     * [if needed ] installs ZSH, SCREEN, SSHPASS
                     * [if needed ] sets ZSH as default shell
                     * [if needed ] stops memory hungry process if <4GB RAM: docker,snapd
-                    * updates Dynamic DNS
+                    * [if needed ] updates Dynamic DNS
+                    NOTE: Most of this should already be handled by ~/.customize_environment
 
         -c9_setup   sets-up AWS Cloud9 [paid] VM
                     * runs: ./bkup-and-transfer.sh -dlupd
@@ -559,15 +561,13 @@ Usage: $PROG <options> [param]
                     * stops memory hungry services: containerd,docker,mysql,apache2,snapd
 
         -dyn_dns    update Google Dynamic DNS
-                    * nexus
-                    * gcp-cloudshell
+                    * nexus (main SSH server)
+                    * GCP Cloud Shell
 
-        -sw         installs additional software
-                    * uses \`setup_linux-server.sh -GENPKG'
+        -sw         installs additional software: * uses \`setup_linux-server.sh -GENPKG'
 
         -cloud_bkup <IP|DNS>  backs-up Cloud Server Home DIR
 
-        -h      this screen
 !
 elif [ "$1" = "-c9_setup" ]; then
   setup_c9;
