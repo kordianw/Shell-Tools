@@ -95,7 +95,7 @@ function setup_c9()
   sudo service snapd stop
 }
 
-function connect_cloudshell()
+function connect_gcp_cloudshell()
 {
   #######################################
 
@@ -200,7 +200,7 @@ function connect_cloudshell()
   exit $RC
 }
 
-function setup_gcp()
+function setup_gcp_shell_VM()
 {
   update_scripts;
   check_root;
@@ -516,7 +516,7 @@ function assume_gcp_shell_setup()
   # double check that this really is a GCP host
   if [ -d ~/src -a -d /google/devshell ]; then
     echo "- assuming GCP DevShell VM - running setup & dyndns update..." 1>&2
-    setup_gcp;
+    setup_gcp_shell_VM;
     update_dyn_dns;
   else
     echo "--FATAL: doesn't seem like a Google Cloud Shell server - no ~/src, no /google/devshell..." 1>&2
@@ -538,13 +538,13 @@ $PROG: Script to setup Cloud VMs, eg: GCP Cloud Shell, AWS CloudShell, Azure Clo
 
 Usage: $PROG <options> [param]
         -cloudshell <dns|ip>
-                    connects/sets-up GCP Cloud Shell (via SSH)
+                    connects/requests GCP Cloud Shell (via SSH)
                     * checks if it exists via DynDNS
                     * creates a new GCP Cloud Shell session /OR/
                     * connects via SSH to an existing GCP Cloud Shell session
                     NB: only GCP currently provides SSH access to Cloud Shell
 
-        -gcp_setup  sets-up GCP Cloud Shell
+        -gcp_setup  sets-up GCP Cloud Shell VM
                     * runs: ./bkup-and-transfer.sh -dlupd
                     * runs: ./bkup-and-transfer.sh -setup
                     * creates/updates ~/.customize_environment
@@ -553,7 +553,7 @@ Usage: $PROG <options> [param]
                     * [if needed ] stops memory hungry process if <4GB RAM: docker,snapd
                     * updates Dynamic DNS
 
-        -c9_setup   sets-up AWS Cloud9 [paid]
+        -c9_setup   sets-up AWS Cloud9 [paid] VM
                     * runs: ./bkup-and-transfer.sh -dlupd
                     * runs: ./bkup-and-transfer.sh -setup
                     * stops memory hungry services: containerd,docker,mysql,apache2,snapd
@@ -572,9 +572,9 @@ Usage: $PROG <options> [param]
 elif [ "$1" = "-c9_setup" ]; then
   setup_c9;
 elif [ "$1" = "-gcp_setup" ]; then
-  setup_gcp;
+  setup_gcp_shell_VM;
 elif [ "$1" = "-cloudshell" ]; then
-  connect_cloudshell $2;
+  connect_gcp_cloudshell $2;
 elif [ "$1" = "-sw" ]; then
   install_sw;
 elif [ "$1" = "-cloud_bkup" ]; then
