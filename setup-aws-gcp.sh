@@ -525,17 +525,18 @@ function assume_gcp_shell_setup()
 
 ####################
 PROG=`basename $0`
-if [ "$1" = "-h" -o "$1" = "--help" ]; then
+if [ "$1" = "-h" -o "$1" = "--help" -o "$1" = "-help" ]; then
   cat <<! >&2
-$PROG: Script to setup AWS Cloud9 and GCP CloudShell
+$PROG: Script to setup Cloud VMs, eg: GCP Cloud Shell, AWS CloudShell, Azure Cloud Shell
        * install the most important PKGs, for convenience, dev, etc
 
 Usage: $PROG <options> [param]
         -cloudshell <dns|ip>
-                    connects/sets-up GCP Cloud Shell
+                    connects/sets-up GCP Cloud Shell (via SSH)
                     * checks if it exists via DynDNS
                     * creates a new GCP Cloud Shell session /OR/
                     * connects via SSH to an existing GCP Cloud Shell session
+                    NB: only GCP currently provides SSH access to Cloud Shell
 
         -gcp_setup  sets-up GCP Cloud Shell
                     * runs: ./bkup-and-transfer.sh -dlupd
@@ -582,8 +583,8 @@ elif [ -e $HOME/.c9 ]; then
   echo "- assuming AWS Cloud9 VM..." 1>&2
   setup_c9;
 else
-  echo "$PROG: see usage via \`$PROG --help' ..." 1>&2
-  exit 1
+  echo -e "$PROG: see usage via \`$PROG --help':\n" 1>&2
+  exec $0 --help
 fi
 
 # EOF
