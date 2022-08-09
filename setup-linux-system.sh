@@ -733,7 +733,7 @@ function install_rhel()
   sudo yum -y install bzip2                  # installs bzip2 support
   sudo yum -y install rsync                  # GNU rsync
   sudo yum -y install tofrodos               # installs unix2dos/dos2unix
-  sudo yum -y install bind-utils             # nslookup/host/git
+  sudo yum -y install bind-utils             # nslookup/host/git/dig
   sudo yum -y install telnet
   sudo yum -y install nc                     # ncat/netcat
   sudo yum -y install bc                     # calculator
@@ -778,6 +778,7 @@ function install_rhel()
   # do we have hostname?
   if ! which hostname >&/dev/null; then
     sudo yum -y install bind-utils
+    sudo yum -y install hostname
   fi
 
   # try to install SYSBENCH
