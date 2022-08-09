@@ -1,24 +1,51 @@
 #!/bin/bash
 #
 # Script to setup:
-# - GCP (Google Cloud Platform) DevShell (free, Debian, ethemeral-shared-CPU VM w/5GB HOME)
+# - GCP (Google Cloud Platform) DevShell (free, KVM, Debian, ethemeral-shared-CPU VM w/5GB HOME, web+SSH available)
+# - AWS (Amazon Web Services) CloudShell (free, XenVM, Amazon Linux 2, ethemeral-shared-CPU VM w/1GB HOME, web-only, no SSH available)
 # - AWS (Amazon Web Services) Cloud9 Shell (paid per-hour via dedicated EC2, 30 mins timeout for auto-shutdown)
+# - Azure Cloud Shell (free, HyperV, CBL Linux, ethemeral-shared-CPU VM w/5GB HOME (paid), web-only, no SSH available)
 #
-# * NOTES:
-# GCP: download the Google Cloud SDK (Linux works on Cygwin): https://cloud.google.com/sdk/docs/install-sdk#linux
-# GCP: no need to initialize or do anything, just run as-is
-# GCP: LOGIN: ~/google-cloud-sdk/bin/gcloud auth login --no-launch-browser
-# GCP: Get the hostname to SSH in on port 6000 - already in ~/.ssh/config (may need IP ranges)
-# GCP: there is an alias in ~/.zshrc for this already:
-# GCP: # ~/google-cloud-sdk/bin/gcloud cloud-shell ssh --dry-run
-# GCP: URL for web-use: https://console.cloud.google.com/cloudshell/editor?shellonly=true
-# GCP: Documentation: https://cloud.google.com/shell/docs/how-cloud-shell-works
+# *** Google Cloud Shell:
+# =======================
+# - based on Debian Linux, with 5GB persistent $HOME, 4 x vCPU, 16GB of RAM, SSD+HDD
+# - to use SSH via external IP, download Google Cloud SDK (Linux version works on Cygwin): https://cloud.google.com/sdk/docs/install-sdk#linux
+# - no need to initialize or do anything, just run `gcloud' as-is:
+# LOGIN/AUTH-LINK: ~/google-cloud-sdk/bin/gcloud auth login --no-launch-browser
 #
-# GCP: NB: runs ~/.customize_environment script as root upon machine provisioning (/var/log/customize*, /google/devshell/customize_environment_done)
-# GCP: NB: limits: 20mins after logout resets VM (you get a new VM), 50 hrs/week usage limit (7hrs/day), 12hr max session, 5GB home-dir deleted >120 days (4 months) of inactivity
-# GCP: to use `gcloud' correctly, set your GCP project ID, eg: DEVSHELL_PROJECT_ID=kw-general-purpose
-# GCP: for privacy, set: ~/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true
-# GCP: **web-url**: https://console.cloud.google.com/cloudshell/editor?shellonly=true
+# Get the hostname to SSH in on port 6000 - already in ~/.ssh/config (may need IP ranges)
+# # ~/google-cloud-sdk/bin/gcloud cloud-shell ssh --dry-run
+# URL for web-use: https://console.cloud.google.com/cloudshell/editor?shellonly=true
+#
+# NB: runs ~/.customize_environment script as root upon machine provisioning (/var/log/customize*, /google/devshell/customize_environment_done)
+# NB: limits: 20mins after logout resets VM (you get a new VM), 50 hrs/week usage limit (7hrs/day), 12hr max session, 5GB home-dir deleted >120 days (4 months) of inactivity
+# - to use `gcloud' correctly, set your GCP project ID, eg: DEVSHELL_PROJECT_ID=kw-general-purpose
+# - for privacy, set: ~/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true
+# **web-url**: https://console.cloud.google.com/cloudshell/editor?shellonly=true
+#
+# Documentation: https://cloud.google.com/shell/docs/how-cloud-shell-works
+#
+#
+# *** AWS CloudShell:
+# ===================
+# - based on Amazon Linux 2 (based on RHEL), with 1GB persistent $HOME (per-region), 2 x vCPU, 4GB RAM, SSD (all)
+# NB: limits: 20-30mins after logout resets VM (you get a new VM), max 12 hour session time, weekly usage limit (not sure?), 12hr max session, 1GB home-dir deleted >120 days (4 months) of inactivity
+# - web-only, no external IP address
+# ** web-url**: https://console.aws.amazon.com/cloudshell/home?region=us-east-1
+#
+# Documentation: https://docs.aws.amazon.com/cloudshell/
+#
+#
+# *** Azure Cloud Shell:
+# ======================
+# - based CBL Linux (based on Debian), with 5GB persistent 5GB $HOME, 2 x vCPU, 4GB RAM, HDD (no SSD)
+# - based on CBL - Common Base Linux (Microsoft Linux distribution), which is Debian like
+# - available via direct link: https://shell.azure.com
+# - NB: 20 mins timeout, 5GB home (paid), long-running sessions are terminated 
+# **web-url**: https://shell.azure.com
+#
+# Documentation: https://docs.microsoft.com/en-us/azure/cloud-shell/overview
+#
 #
 # * By Kordian W. <code [at] kordy.com>, Jun 2020
 #
@@ -128,8 +155,8 @@ function connect_cloudshell()
     # connect via IP while we wait for the DNS to change
     IP_MASK=`echo $IP | sed 's/^\([0-9][0-9]\.[0-9][0-9]*\)\..*/\1/'`
     if egrep -q "^Host.*shell.* $IP_MASK\.*" ~/.ssh/config; then
-      echo "* [`date +%H:%M`] IP $IP is in ~/.ssh/config via $IP_MASK.*, wating 4secs to connect..."
-      sleep 4
+      echo "* [`date +%H:%M`] IP $IP is in ~/.ssh/config via $IP_MASK.*, wating 5secs to connect..."
+      sleep 5
       GCP_DNS_ALIAS=$IP
     else
       # wait for the DNS to update...
@@ -155,7 +182,7 @@ function connect_cloudshell()
   END_TIME=`date +%s`
   TIME_TAKEN=$(( $END_TIME - $START_TIME ))
   if [ $TIME_TAKEN -gt 60 ]; then
-    TIME_TAKEN=`echo "($END_TIME - $START_TIME) / 60" | bc -l | sed 's/\(...\).*/\1/'`
+    TIME_TAKEN=`echo "($END_TIME - $START_TIME) / 60" | bc -l | sed 's/\(...\).*/\1/; s/\.$//'`
     TIME_TAKEN="$TIME_TAKEN mins"
   else
     TIME_TAKEN="$TIME_TAKEN secs"
