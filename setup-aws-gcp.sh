@@ -153,19 +153,19 @@ function connect_gcp_cloudshell()
     rm -f $TMP
 
     # update DYN_DNS - while we wait for machine to fully come up!
-    echo "* [`date +%H:%M`] updating \"$GCP_DNS_ALIAS\" Dynamic DNS to $IP." 1>&2
+    echo -ne "* [`date +%H:%M`] updating \"$GCP_DNS_ALIAS\" Dynamic DNS to $IP." 1>&2
     eval $(parse_yaml "google-domains-dyndns-secrets.yaml" "conf_")
     curl -sS "https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=$IP"
 
     # connect via IP while we wait for the DNS to change
     IP_MASK=`echo $IP | sed 's/^\([0-9][0-9]\.[0-9][0-9]*\)\..*/\1/'`
     if egrep -q "^Host.*shell.* $IP_MASK\.*" ~/.ssh/config; then
-      echo "* [`date +%H:%M`] IP $IP is in ~/.ssh/config via $IP_MASK.*, waiting 5 secs to connect..."
+      echo -e "\n* [`date +%H:%M`] IP $IP is in ~/.ssh/config via $IP_MASK.*, waiting 5 secs to connect..." 1>&2
       sleep 5   # 5-6 secs seems reasonable as the time it takes to install zsh - tweaked based on experience
       GCP_DNS_ALIAS=$IP
     else
       # wait for the DNS to update...
-      echo -ne "* [`date +%H:%M`] waiting for \`$GCP_DNS_ALIAS' to be updated with the IP \`$IP' " 1>&2
+      echo -ne "\n* [`date +%H:%M`] waiting for \`$GCP_DNS_ALIAS' to be updated with the IP \`$IP' " 1>&2
 
       while ! timeout 1 bash -c "cat < /dev/null > /dev/tcp/$GCP_DNS_ALIAS/6000"
       do
@@ -243,7 +243,7 @@ nice -n -5 chsh --shell /bin/zsh $conf_google_main_user
 # P2: $conf_gcp_shell_dns: update dynamic DNS entry
 echo && echo \"* [\`date +%H:%M\`] update << $conf_gcp_shell_dns >> DYNAMIC DNS\"
 IP=\`dig +short myip.opendns.com @resolver1.opendns.com\`
-nice -n -5 curl -S --no-progress-meter \"https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=\$IP\"
+nice -n -5 curl -sS \"https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=\$IP\"
 
 # set env as non-interactive, to suppress errors in screen installation
 export DEBIAN_FRONTEND=\"noninteractive\"
