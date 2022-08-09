@@ -110,6 +110,7 @@ function install_general_packages
   # - copy from backup, eg: Chrome/Firefox, Remmina settings
   #
 
+  # record start-time
   START_TIME=`date "+%s"`
 
   [ "$OSTYPE" != "linux-gnu" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
@@ -279,7 +280,7 @@ function change_timezone()
 
   # this system has no /etc/timezone - not sure if this process would work
   if [ ! -e /etc/timezone ]; then
-    echo "$PROG: this system has no \'/etc/timezone' - not sure that this process would work?" >&2; exit 2
+    echo "$PROG: this system has no \`/etc/timezone' - not sure that this process would work?" >&2; exit 2
   fi
 
   # not supporting certain set-ups
@@ -314,12 +315,16 @@ function change_timezone()
   fi
 
   # fall-back
-  if egrep -q "$CHECK_TZ" /etc/timezone; then
-    echo -e "\n$PROG: according to /etc/timezone, this system TZ is already set to $TZ - nothing to do:" >&2
-    cat /etc/timezone || exit 1
-    ls -l /etc/localtime || exit 2
+  if [ -e /etc/timezone ]; then
+    if egrep -q "$CHECK_TZ" /etc/timezone; then
+      echo -e "\n$PROG: according to /etc/timezone, this system TZ is already set to $TZ - nothing to do:" >&2
+      cat /etc/timezone || exit 1
+      ls -l /etc/localtime || exit 2
 
-    exit 0
+      exit 0
+    fi
+  echo
+    echo "** no /etc/timezone exists on this system ..." 1>&2;
   fi
 
   # additional checks using timedatectl
@@ -445,6 +450,18 @@ function enable_zsh()
     echo "$PROG: create a \`$HOME/.zshrc' file before changing the shell!" >&2; exit 7
   else
     echo "$PROG: found \`$HOME/.zshrc', proceeding to change shell to: $ZSH..." >&2;
+  fi
+
+  # is chsh available? (not available on Amazon Linux)
+  if ! which chsh >&/dev/null; then
+    echo "$PROG: \`chsh' is not available on this system ... trying to install" 1>&2
+    check_root
+    OS=`awk -F= '/^NAME=/{print $NF}' /etc/os-release`
+
+    # Amazon Linux -> installs csh
+    if echo $OS | grep -q "Amazon Linux"; then
+      $SUDO yum -y install util-linux-user
+    fi
   fi
 
   #
@@ -663,9 +680,15 @@ function install_rhel()
 
   check_root
 
+  # record start-time
+  START_TIME=`date "+%s"`
+
   [ "$OSTYPE" != "linux-gnu" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
   [ ! -r /etc/redhat-release ] && { echo "$PROG: no /etc/redhat-release file, is this really RHEL ?" >&2; exit 3; }
   [ ! -x /usr/bin/yum ] && { echo "$PROG: can't find/exec YUM, eg for: yum install!" >&2; exit 4; }
+
+  # prepare
+  sudo yum makecache
 
   # MAJOR packages
   sudo yum -y install ansible                # Ansible
@@ -751,6 +774,26 @@ function install_rhel()
   sudo yum -y install perl-DateTime
   sudo yum -y install perl-Date-Calc
   sudo yum -y install perl-Mozilla-CA        # for SSL handling
+
+  # do we have hostname?
+  if ! which hostname >&/dev/null; then
+    sudo yum -y install bind-utils
+  fi
+
+  # try to install SYSBENCH
+  # - use a custom yum repository
+  if ! which sysbench >&/dev/null; then
+    curl -s https://packagecloud.io/install/repositories/akopytov/sysbench/script.rpm.sh | sudo bash
+    sudo yum -y install sysbench
+  fi
+
+  # show end time
+  END_TIME=`date +%s`
+  TIME_TAKEN=$(( $END_TIME - $START_TIME ))
+  if [ $TIME_TAKEN -gt 60 ]; then
+    TIME_TAKEN=`echo "($END_TIME - $START_TIME) / 60" | bc -l | sed 's/\(...\).*/\1/'`
+    echo "  <<< Time taken: $TIME_TAKEN min(s) @ `date +%H:%M` >>>" 1>&2
+  fi
 }
 
 #
