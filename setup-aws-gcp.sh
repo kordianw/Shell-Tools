@@ -128,8 +128,8 @@ function connect_cloudshell()
     # connect via IP while we wait for the DNS to change
     IP_MASK=`echo $IP | sed 's/^\([0-9][0-9]\.[0-9][0-9]*\)\..*/\1/'`
     if egrep -q "^Host.*shell.* $IP_MASK\.*" ~/.ssh/config; then
-      sleep 2
-      echo "* [`date +%H:%M`] the IP <$IP> is in ~/.ssh/config via $IP_MASK.*, can connect..."
+      echo "* [`date +%H:%M`] IP $IP is in ~/.ssh/config via $IP_MASK.*, wating 4secs to connect..."
+      sleep 4
       GCP_DNS_ALIAS=$IP
     else
       # wait for the DNS to update...
@@ -205,12 +205,12 @@ echo \"---> start-run as \`whoami\`: \`date\`\"
 # $conf_gcp_shell_dns: update dynamic DNS entry
 echo && echo \"* [\`date +%H:%M\`] update << $conf_gcp_shell_dns >> DYNAMIC DNS\"
 IP=\`dig +short myip.opendns.com @resolver1.opendns.com\`
-curl -S --no-progress-meter \"https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=\$IP\" &
+nice -n -5 curl -S --no-progress-meter \"https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=\$IP\" &
 
 # install ZSH & set as default for \`$conf_google_main_user'
 echo && echo \"* [\`date +%H:%M\`] install+setup: zsh\"
-apt-get install -qq -y zsh
-chsh --shell /bin/zsh $conf_google_main_user
+nice -n -5 apt-get install -qq -y zsh
+nice -n -5 chsh --shell /bin/zsh $conf_google_main_user
 
 # set env as non-interactive, to suppress errors in screen installation
 export DEBIAN_FRONTEND=\"noninteractive\"
@@ -519,7 +519,7 @@ Usage: $PROG <options> [param]
                     * [if needed ] stops memory hungry process if <4GB RAM: docker,snapd
                     * updates Dynamic DNS
 
-        -c9_setup   sets-up AWS Cloud9
+        -c9_setup   sets-up AWS Cloud9 [paid]
                     * runs: ./bkup-and-transfer.sh -dlupd
                     * runs: ./bkup-and-transfer.sh -setup
                     * stops memory hungry services: containerd,docker,mysql,apache2,snapd
