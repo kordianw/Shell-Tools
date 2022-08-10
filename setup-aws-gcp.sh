@@ -16,7 +16,6 @@
 #
 # Get the hostname to SSH in on port 6000 - already in ~/.ssh/config (may need IP ranges)
 # # ~/google-cloud-sdk/bin/gcloud cloud-shell ssh --dry-run
-# URL for web-use: https://console.cloud.google.com/cloudshell/editor?shellonly=true
 #
 # NB: runs ~/.customize_environment script as root upon machine provisioning (/var/log/customize*, /google/devshell/customize_environment_done)
 # NB: limits: 20mins after logout resets VM (you get a new VM), 50 hrs/week usage limit (7hrs/day), 12hr max session, 5GB home-dir deleted >120 days (4 months) of inactivity
@@ -43,6 +42,7 @@
 # - based CBL Linux (based on Debian), with 5GB persistent 5GB $HOME, 2 x vCPU, 4GB RAM, HDD (no SSD)
 # - based on CBL - Common Base Linux (Microsoft Linux distribution), which is Debian like
 # - NB: no root access, no sudo, just your $HOME and /tmp, can not install additional system-wide packages/tools
+#       -> see suggestions: https://edyoung.github.io/blog/install_tools_locally/
 # - NB: 20 mins timeout, 5GB home (paid), long-running sessions are terminated 
 # **web-url**: https://shell.azure.com
 #
@@ -157,7 +157,7 @@ function connect_gcp_cloudshell()
     # update DYN_DNS - while we wait for machine to fully come up!
     echo -ne "* [`date +%H:%M`] updating \"$GCP_DNS_ALIAS\" Dynamic DNS to $IP ... " 1>&2
     eval $(parse_yaml "google-domains-dyndns-secrets.yaml" "conf_")
-    curl -sS "https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=$IP"
+    curl -fsSL "https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=$IP"
 
     # connect via IP while we wait for the DNS to change
     IP_MASK=`echo $IP | sed 's/^\([0-9][0-9]\.[0-9][0-9]*\)\..*/\1/'`
@@ -245,7 +245,7 @@ nice -n -5 chsh --shell /bin/zsh $conf_google_main_user
 # P2: $conf_gcp_shell_dns: update dynamic DNS entry
 echo && echo \"* [\`date +%H:%M\`] update << $conf_gcp_shell_dns >> DYNAMIC DNS\"
 IP=\`dig +short myip.opendns.com @resolver1.opendns.com\`
-nice -n -5 curl -sS \"https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=\$IP\"
+nice -n -5 curl -fsSL \"https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=\$IP\"
 
 # set env as non-interactive, to suppress errors in screen installation
 export DEBIAN_FRONTEND=\"noninteractive\"
@@ -488,7 +488,7 @@ function update_dyn_dns()
     DNS=`host $conf_nexus_dns | awk '{print $NF}'`
     if [ "$DNS" != "$IP" ]; then
       echo "* [$HOST] action: updating DYN_DNS for $conf_nexus_dns -> $IP"
-      curl -sS "https://$conf_nexus_user:$conf_nexus_password@domains.google.com/nic/update?hostname=$conf_nexus_dns&myip=$IP"
+      curl -fsSL "https://$conf_nexus_user:$conf_nexus_password@domains.google.com/nic/update?hostname=$conf_nexus_dns&myip=$IP"
       if [ $? -ne 0 ]; then
         echo "--FATAL: curl returned error updating $conf_nexus_dns to $IP!" 1>&2
         exit 99
@@ -502,7 +502,7 @@ function update_dyn_dns()
     DNS=`host $conf_gcp_shell_dns | awk '{print $NF}'`
     if [ "$DNS" != "$IP" ]; then
       echo "* [$HOST] action: updating DYN_DNS for $conf_gcp_shell_dns -> $IP"
-      curl -sS "https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=$IP"
+      curl -fsSL "https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=$IP"
       if [ $? -ne 0 ]; then
         echo "--FATAL: curl returned error updating $conf_gcp_shell_dns to $IP!" 1>&2
         exit 99
