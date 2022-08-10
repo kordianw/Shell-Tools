@@ -10,6 +10,7 @@
 # =======================
 # - based on Debian Linux, with 5GB persistent $HOME, 4 x vCPU, 16GB of RAM, SSD+HDD
 # - to use SSH via external IP, download Google Cloud SDK (Linux version works on Cygwin): https://cloud.google.com/sdk/docs/install-sdk#linux
+# - sudo available - can install additional packages via apt install
 # - no need to initialize or do anything, just run `gcloud' as-is:
 # LOGIN/AUTH-LINK: ~/google-cloud-sdk/bin/gcloud auth login --no-launch-browser
 #
@@ -30,6 +31,7 @@
 # ===================
 # - based on Amazon Linux 2 (based on RHEL), with 1GB persistent $HOME (per-region), 2 x vCPU, 4GB RAM, SSD (all)
 # NB: limits: 20-30mins after logout resets VM (you get a new VM), max 12 hour session time, weekly usage limit (not sure?), 12hr max session, 1GB home-dir deleted >120 days (4 months) of inactivity
+# - sudo available - can install additional packages via yum
 # - web-only, no external IP address
 # ** web-url**: https://console.aws.amazon.com/cloudshell/home?region=us-east-1
 #
@@ -40,7 +42,7 @@
 # ======================
 # - based CBL Linux (based on Debian), with 5GB persistent 5GB $HOME, 2 x vCPU, 4GB RAM, HDD (no SSD)
 # - based on CBL - Common Base Linux (Microsoft Linux distribution), which is Debian like
-# - available via direct link: https://shell.azure.com
+# - NB: no root access, no sudo, just your $HOME and /tmp, can not install additional system-wide packages/tools
 # - NB: 20 mins timeout, 5GB home (paid), long-running sessions are terminated 
 # **web-url**: https://shell.azure.com
 #
@@ -153,7 +155,7 @@ function connect_gcp_cloudshell()
     rm -f $TMP
 
     # update DYN_DNS - while we wait for machine to fully come up!
-    echo -ne "* [`date +%H:%M`] updating \"$GCP_DNS_ALIAS\" Dynamic DNS to $IP." 1>&2
+    echo -ne "* [`date +%H:%M`] updating \"$GCP_DNS_ALIAS\" Dynamic DNS to $IP ... " 1>&2
     eval $(parse_yaml "google-domains-dyndns-secrets.yaml" "conf_")
     curl -sS "https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=$IP"
 
@@ -442,6 +444,10 @@ function update_dyn_dns()
   # - parses YAML & assigns config items into variables, prefixed with "conf_"
   #
   eval $(parse_yaml "google-domains-dyndns-secrets.yaml" "conf_")
+  if [ -z "$conf_google_main_user" ]; then
+    echo "--FATAL: were not able to parse YAML file properly... exiting!" 1>&2
+    exit 99
+  fi
 
   # check HOST variable is set
   HOST=`hostname`
@@ -465,7 +471,7 @@ function update_dyn_dns()
   echo "* [$HOST] info: current external IP is: $IP"
 
   # get DNS
-  DNS_NAME=`host $IP| awk '{print $NF}' | sed 's/\.$//'`
+  DNS_NAME=`host $IP| awk '!/not found/{print $NF}' | sed 's/\.$//'`
   if [ -n "$DNS_NAME" ]; then
     echo "* [$HOST] info: external DNS name is: << $DNS_NAME >>"
   else
@@ -579,7 +585,7 @@ elif [ "$1" = "-sw" ]; then
   install_sw;
 elif [ "$1" = "-cloud_bkup" ]; then
   backup_cloud_home $2;
-elif [ "$1" = "-dyn_dns" ]; then
+elif [ "$1" = "-dyn_dns" -o "$1" = "-dyn_DNS" ]; then
   update_dyn_dns;
 elif echo `hostname` | grep -q "devshell-vm"; then
   assume_gcp_shell_setup;
