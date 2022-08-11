@@ -1,10 +1,10 @@
 #!/bin/bash
 #
 # Script to setup:
-# - GCP (Google Cloud Platform) DevShell (free, KVM, Debian, ephemeral-shared-CPU VM w/5GB HOME, web+SSH available)
-# - AWS (Amazon Web Services) CloudShell (free, XenVM, Amazon Linux 2, ephemeral-shared-CPU VM w/1GB HOME, web-only, no SSH available)
+# - GCP (Google Cloud Platform) DevShell (free, KVM, Debian, ephemeral-shared-CPU VM w/5GB HOME, sudo, web+SSH available)
+# - AWS (Amazon Web Services) CloudShell (free, XenVM, Amazon Linux 2, ephemeral-shared-CPU VM w/1GB HOME, web-only, sudo, no SSH available)
 # - AWS (Amazon Web Services) Cloud9 Shell (paid per-hour via dedicated EC2, 30 mins timeout for auto-shutdown)
-# - Azure Cloud Shell (free, HyperV, CBL Linux, ephemeral-shared-CPU VM w/5GB HOME (paid), web-only, no SSH available)
+# - Azure Cloud Shell (free, Hyper-V, CBL Linux, ephemeral-shared-CPU VM w/5GB HOME (paid), web-only, no sudo, no SSH available)
 #
 # *** Google Cloud Shell:
 # =======================
