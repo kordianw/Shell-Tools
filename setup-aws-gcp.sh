@@ -102,6 +102,7 @@ function connect_gcp_cloudshell()
   #######################################
 
   # location of Google Cloud SDK?
+  # - if not in system path
   GOOGLE_CLOUD_SDK=~/google-cloud-sdk
 
   #######################################
@@ -135,10 +136,21 @@ function connect_gcp_cloudshell()
 
     TMP=/tmp/gcp-out-$$
 
+    # do we have `gcloud' ?
+    if ! which gcloud >&/dev/null; then
+      GCLOUD=$GOOGLE_CLOUD_SDK/bin/gcloud
+      if [ ! -x $GCLOUD ]; then
+        echo "--FATAL: no \`gcloud' executable in $GCLOUD!" 1>&2
+        exit 99
+      fi
+    else
+      GCLOUD=gcloud
+    fi
+
     #
     # REQUEST GCP CLOUD SHELL
     #
-    $GOOGLE_CLOUD_SDK/bin/gcloud cloud-shell ssh --dry-run | egrep -v 'Automatic authentication with GCP CLI tools in Cloud Shell is disabled. To enable, please rerun command with' | tee -a $TMP
+    $GCLOUD cloud-shell ssh --dry-run | egrep -v 'Automatic authentication with GCP CLI tools in Cloud Shell is disabled. To enable, please rerun command with' | tee -a $TMP
 
     if [ $? -ne 0 ]; then
       echo "--FATAL: error requesting GCP Cloud Shell - \`gcloud' returned RC=$?!" 1>&2
@@ -293,16 +305,18 @@ echo \"---> end-run (Phase 2) as \`whoami\`: \`date\`\"
   # - only if less than 4GB of RAM remaining
   FREE_MEM=`free -m | awk '/Mem/{print $NF}'`
   if [ $FREE_MEM -lt 4000 ]; then
-    echo && echo "** stopping un-needed service: docker,containerd,snapd (to reclaim memory)..."
+    echo && echo "** stopping un-needed service: docker,containerd (to reclaim memory)..."
     if ps aux | grep -q "[d]ockerd"; then
       sudo service docker stop
     fi
     if ps aux | grep -q "[s]ontainterd"; then
       sudo service containerd stop
     fi
-    if ps aux | grep -q "[s]napd"; then
-      sudo service snapd stop
-    fi
+
+    # NB: leave snapd running as `gcloud' binary is a snap package
+    #if ps aux | grep -q "[s]napd"; then
+    #  sudo service snapd stop
+    #fi
   fi
 
   # start ZSH
@@ -585,7 +599,7 @@ elif [ "$1" = "-sw" ]; then
   install_sw;
 elif [ "$1" = "-cloud_bkup" ]; then
   backup_cloud_home $2;
-elif [ "$1" = "-dyn_dns" -o "$1" = "-dyn_DNS" ]; then
+elif [ "$1" = "-dyn_dns" -o "$1" = "-dyn_DNS" -o "$1" = "-dyndns" ]; then
   update_dyn_dns;
 elif echo `hostname` | grep -q "devshell-vm"; then
   assume_gcp_shell_setup;
