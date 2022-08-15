@@ -125,6 +125,15 @@ function connect_gcp_cloudshell()
     #
     ssh $GCP_DNS_ALIAS
     RC=$?
+
+    # if the IP was somehow reused and we can't get in...
+    if [ $RC -eq 255 ]; then
+      # update DYN_DNS - we have to invalidate
+      echo -ne "* [`date +%H:%M`] alive, but can't connect - invalidating \"$GCP_DNS_ALIAS\" Dynamic DNS IP ... " 1>&2
+      eval $(parse_yaml "google-domains-dyndns-secrets.yaml" "conf_")
+      curl -fsSL "https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=1.1.1.1" && echo
+      exit 1
+    fi
   else
     echo && echo "* [`date +%H:%M`] it's not alive, requesting new GCP Cloud Shell via \`gcloud'..." 1>&2
 
@@ -202,7 +211,7 @@ function connect_gcp_cloudshell()
   END_TIME=`date +%s`
   TIME_TAKEN=$(( $END_TIME - $START_TIME ))
   if [ $TIME_TAKEN -gt 60 ]; then
-    TIME_TAKEN=`echo "($END_TIME - $START_TIME) / 60" | bc -l | sed 's/\(...\).*/\1/; s/\.$//'`
+    TIME_TAKEN=`echo "($END_TIME - $START_TIME) / 60" | bc -l | sed 's/\(...\).*/\1/; s/\.$//; s/\.1$//'`
     TIME_TAKEN="$TIME_TAKEN mins"
   else
     TIME_TAKEN="$TIME_TAKEN secs"
