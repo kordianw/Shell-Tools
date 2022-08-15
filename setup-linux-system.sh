@@ -155,6 +155,7 @@ function install_general_packages
     $INSTALL_CMD remmina-plugin-rdp
     $INSTALL_CMD remmina-plugin-vnc
     $INSTALL_CMD xdotool
+    $INSTALL_CMD boot-repair   # Graphical tool to repair boot problems
   fi
 
   # Laptop specific tools
@@ -222,7 +223,6 @@ function install_general_packages
   $INSTALL_CMD sysbench      # multi-threaded benchmark tool
   $INSTALL_CMD lsof          # Utility to list open files
   $INSTALL_CMD ncdu          # Disk usage analysis
-  $INSTALL_CMD boot-repair   # Graphical tool to repair boot problems
 
   # network & security tools
   $INSTALL_CMD telnet        # telnet for checking connectivity
@@ -430,7 +430,25 @@ function enable_zsh()
 
   # is ZSH available?
   if [ -z "$ZSH" ]; then
-    echo -e "$PROG: The zsh SHELL is not available/installed: run\n# $SUDO $PKG install zsh" >&2; exit 4
+    # not avail - can we install?
+    if [ "$EUID" -eq 0 ]; then
+      # install
+      echo "$PROG: installing \`zsh'..." >&2
+      $SUDO $PKG install -qq -y zsh
+    else
+      sudo -n whoami >&/dev/null
+      if [ $? -eq 0 ]; then
+        # install
+        echo "$PROG: installing \`zsh'..." >&2
+        $SUDO $PKG install -qq -y zsh
+      else
+        echo -e "$PROG: The zsh SHELL is not available/installed: run\n# $SUDO $PKG install zsh" >&2
+        exit 4
+      fi
+    else
+      echo -e "$PROG: The zsh SHELL is not available/installed: run\n# $SUDO $PKG install zsh" >&2
+      exit 5
+    fi 
   else
     echo "$PROG: Found the ZSH as \`$ZSH' ..." >&2
   fi
