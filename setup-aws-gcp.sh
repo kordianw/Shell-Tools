@@ -49,6 +49,35 @@
 # Documentation: https://docs.microsoft.com/en-us/azure/cloud-shell/overview
 #
 #
+# Pros+Cons:
+# ==========
+# GCP Cloud Shell:
+# + SSH+web access
+# + sudo
+# + standard version of Linux (Ubuntu)
+# + 4 vCPU + 16GB (incl. modern CPU)
+# + ~/.customize_env, most-flexible/customizable
+# - no SSD
+# - strict session limits
+#
+# AWS CloudShell:
+# + sudo
+# + SSD
+# - older HW
+# - non-standard Linux (Amazon Linux)
+# - small Homedir @ 1GB
+# - seems slowest to start-up
+#
+# Azure Cloud Shell:
+# + recent HW
+# + fastest to start-up
+# - no sudo
+# - non-standard Linux (CBL Linux)
+# - web-only, no SSH
+# - charged for the 5GB Homedir
+# - no SSD
+#
+#
 # * By Kordian W. <code [at] kordy.com>, Jun 2020
 #
 
@@ -192,8 +221,8 @@ function connect_gcp_cloudshell()
 
       while ! timeout 1 bash -c "cat < /dev/null > /dev/tcp/$GCP_DNS_ALIAS/6000"
       do
-          echo -ne "."
-          sleep 1
+        echo -ne "."
+        sleep 1
       done
       echo
     fi
