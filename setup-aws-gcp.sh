@@ -64,7 +64,7 @@
 # + sudo
 # + SSD
 # - older HW
-# - non-standard Linux (Amazon Linux)
+# - non-standard Linux (Amazon Linux 2)
 # - small Homedir @ 1GB
 # - seems slowest to start-up
 #
@@ -301,11 +301,11 @@ nice -n -5 curl -fsSL \"https://$conf_gcp_shell_user:$conf_gcp_shell_password@do
 export DEBIAN_FRONTEND=\"noninteractive\"
 # echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
-# P3: install additional packages
+# P3: install additional key packages
 echo && echo \"* [\`date +%H:%M\`] install screen+sshpass\"
 apt-get install -qq -y screen sshpass
 
-# P4: change system's timezone
+# P4: change system's timezone to local
 echo && echo \"* [\`date +%H:%M\`] changing system's timezone to local timezone\"
 ~$conf_google_main_user/bin/scripts/setup-linux-system.sh -TZ
 
@@ -315,7 +315,7 @@ gcloud config set accessibility/screen_reader false
 
 echo \"---> end-run (Phase 1) as \`whoami\`: \`date\`\"
 
-# PHASE 2 - SW INSTALL -> ~5mins
+# PHASE 2 - SW INSTALL (all other packages) -> ~5mins
 echo && echo \"* [\`date +%H:%M\`] starting Phase 2 (~5 mins) - SOFTWARE INSTALL\"
 nice ~$conf_google_main_user/bin/scripts/setup-linux-system.sh -GENPKG
 
