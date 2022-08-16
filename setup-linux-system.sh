@@ -450,6 +450,16 @@ function enable_zsh()
     echo "$PROG: Found the ZSH as \`$ZSH' ..." >&2
   fi
 
+  # after potential installation - check for ZSH
+  ZSH=`chsh -l 2>/dev/null | grep zsh`
+  [ -z "$ZSH" ] && ZSH=`which zsh 2>/dev/null`
+
+  # Failure...
+  if [ -z "$ZSH" ]; then
+    echo -e "$PROG: The zsh SHELL is not available/installed & can't be auto-installed: run\n# $SUDO $PKG install zsh" >&2
+    exit 4
+  fi
+
   # do we already have it set?
   if getent passwd $USER | grep -q ":$ZSH"; then
     echo "$PROG: your user's < $USER > shell is already: $ZSH - nothing to do!" >&2; exit 0
