@@ -443,6 +443,9 @@ function enable_zsh()
         $SUDO $PKG install -qq -y zsh
       else
         echo -e "$PROG: The zsh SHELL is not available/installed & can't be auto-installed: run\n# $SUDO $PKG install zsh" >&2
+        echo "-> error: can't get sudo working non-interactively:" >&2
+        sudo -n whoami
+
         exit 4
       fi
     fi 
