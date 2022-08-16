@@ -114,7 +114,8 @@ if [ "$1" = "-io" -o -z "$1" ]; then
 
   # drop caches to accurately measure disk speeds
   echo "  - flushing & clearing cached memory/the disk cache (Press Ctrl-C to cancel):"
-  sudo /sbin/sysctl vm.drop_caches=3
+  #sudo /sbin/sysctl vm.drop_caches=3
+  echo "echo 3 > /proc/sys/vm/drop_caches" | sudo sh
 
   # seqwr: sequential write
   # seqrewr: sequential read+write
