@@ -240,7 +240,7 @@ function connect_gcp_cloudshell()
   END_TIME=`date +%s`
   TIME_TAKEN=$(( $END_TIME - $START_TIME ))
   if [ $TIME_TAKEN -gt 60 ]; then
-    TIME_TAKEN=`echo "($END_TIME - $START_TIME) / 60" | bc -l | sed 's/\(...\).*/\1/; s/\.$//; s/\.1$//'`
+    TIME_TAKEN=`echo "($END_TIME - $START_TIME) / 60" | bc -l | sed 's/\(...\).*/\1/; s/\.$//; s/\.[12]$//'`
     TIME_TAKEN="$TIME_TAKEN mins"
   else
     TIME_TAKEN="$TIME_TAKEN secs"
