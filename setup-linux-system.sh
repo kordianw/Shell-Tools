@@ -442,12 +442,9 @@ function enable_zsh()
         echo "$PROG: installing \`zsh'..." >&2
         $SUDO $PKG install -qq -y zsh
       else
-        echo -e "$PROG: The zsh SHELL is not available/installed: run\n# $SUDO $PKG install zsh" >&2
+        echo -e "$PROG: The zsh SHELL is not available/installed & can't be auto-installed: run\n# $SUDO $PKG install zsh" >&2
         exit 4
       fi
-    else
-      echo -e "$PROG: The zsh SHELL is not available/installed: run\n# $SUDO $PKG install zsh" >&2
-      exit 5
     fi 
   else
     echo "$PROG: Found the ZSH as \`$ZSH' ..." >&2
