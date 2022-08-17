@@ -210,7 +210,7 @@ function connect_gcp_cloudshell()
     curl -fsSL "https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=$IP"
 
     # connect via IP while we wait for the DNS to change
-    IP_MASK=`echo $IP | sed 's/^\([0-9][0-9]\.[0-9][0-9]*\)\..*/\1/'`
+    IP_MASK=`echo $IP | sed 's/^\([0-9][0-9][0-9]*\.[0-9][0-9]*\)\..*/\1/'`
     if egrep -q "^Host.*shell.* $IP_MASK\.*" ~/.ssh/config; then
       echo -e "\n* [`date +%H:%M`] IP $IP is in ~/.ssh/config via $IP_MASK.*, waiting 5 secs to connect..." 1>&2
       sleep 5   # 5-6 secs seems reasonable as the time it takes to install zsh - tweaked based on experience
@@ -247,7 +247,7 @@ function connect_gcp_cloudshell()
   fi
 
   # final info message
-  echo "... cloudshell session finished at `date +%H:%M` after $TIME_TAKEN." 1>&2
+  echo "... cloudshell session finished at `date +%H:%M` after $TIME_TAKEN." | sed 's/ 1 mins/ 1 min/' 1>&2
 
   exit $RC
 }
