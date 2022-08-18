@@ -162,6 +162,8 @@ function connect_gcp_cloudshell()
       eval $(parse_yaml "google-domains-dyndns-secrets.yaml" "conf_")
       curl -fsSL "https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=1.1.1.1" && echo
       exit 1
+    elif [ $RC -ne 0 ]; then
+      echo "--> error: ssh returned non-zero exit code RC=$RC"
     fi
   else
     echo && echo "* [`date +%H:%M`] it's not alive, requesting new GCP Cloud Shell via \`gcloud'..." 1>&2
@@ -222,7 +224,7 @@ function connect_gcp_cloudshell()
       while ! timeout 1 bash -c "cat < /dev/null > /dev/tcp/$GCP_DNS_ALIAS/6000"
       do
         echo -ne "."
-        sleep 1
+        sleep 2
       done
       echo
     fi
@@ -234,6 +236,10 @@ function connect_gcp_cloudshell()
     echo "* [`date +%H:%M`] success: ssh \`$GCP_DNS_ALIAS'..." 1>&2
     ssh $GCP_DNS_ALIAS
     RC=$?
+
+    if [ $RC -ne 0 ]; then
+      echo "   --> error: ssh returned non-zero exit code RC=$RC"
+    fi
   fi
 
   # work out end time
