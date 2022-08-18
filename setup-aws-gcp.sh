@@ -52,7 +52,7 @@
 # Pros+Cons:
 # ==========
 # GCP Cloud Shell:
-# + SSH+web access
+# + SSH+web+app access
 # + sudo
 # + standard version of Linux (Ubuntu)
 # + 4 vCPU + 16GB (incl. modern CPU)
@@ -63,19 +63,22 @@
 # AWS CloudShell:
 # + sudo
 # + SSD
-# - older HW
+# - older HW (slowest)
 # - non-standard Linux (Amazon Linux 2)
 # - small Homedir @ 1GB
 # - seems slowest to start-up
+# - no app access (yet?)
 #
 # Azure Cloud Shell:
 # + recent HW
 # + fastest to start-up
 # - no sudo
 # - non-standard Linux (CBL Linux)
-# - web-only, no SSH
+# - web-only+app, no SSH
 # - charged for the 5GB Homedir
 # - no SSD
+#
+# Free Tier Comparison: https://github.com/cloudcommunity/Cloud-Free-Tier-Comparison
 #
 #
 # * By Kordian W. <code [at] kordy.com>, Jun 2020
