@@ -311,7 +311,7 @@ echo && echo \"* [\`date +%H:%M\`] changing system's timezone to local timezone\
 
 # switch off accessibility options
 echo && echo \"* [\`date +%H:%M\`] set gcloud accessibility/screen_reader=false, for better table handling\"
-gcloud config set accessibility/screen_reader false
+nice gcloud config set accessibility/screen_reader false
 
 echo \"---> end-run (Phase 1) as \`whoami\`: \`date\`\"
 
