@@ -54,8 +54,8 @@ else
       echo && echo "--> WTFMYISP.COM:"
       curl -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g'
 
-      echo && echo "--> IPAPI.CO:"
-      curl -sSL http://ipapi.co/json | egrep -v '"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":'
+      echo && echo "--> IPAPI.COM:"
+      curl -sSL http://ipapi.com/json | egrep -v '"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":'
     fi
   else
     echo "--FATAL: couldn't work out the external IP address!" >&2
