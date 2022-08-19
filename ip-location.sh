@@ -30,20 +30,37 @@ else
       #
       #IP=`dig +short whoami.akamai.net.`
       IP=`dig +short myip.opendns.com @resolver1.opendns.com.`
+      if [ $? -ne 0 ]; then
+        echo "--FATAL: can't work out external/public IP address via cmd (RC=$?): dig +short myip.opendns.com @resolver1.opendns.com." >&2
+        exit 97
+      fi
     elif which nslookup >&/dev/null; then
       #
       # NSLOOKUP
       #
       IP=`nslookup myip.opendns.com resolver1.opendns.com 2>/dev/null | cat -v | awk '/Address:/{print $NF}' | sed 's/[^0-9\.]*//g' |tail -1`
+      if [ $? -ne 0 ]; then
+        echo "--FATAL: can't work out external/public IP address via cmd (RC=$?): nslookup myip.opendns.com resolver1.opendns.com" >&2
+        exit 98
+      fi
     else
-      echo "--FATAL: no \`dig' and no \`nslookup' command!"
+      echo "--FATAL: no \`dig' and no \`nslookup' command on `uname -n`:" >&2
+      which dig
+      which nslookup
+      which host
       exit 99
     fi
   fi
 
   # got the IP!
   if [ -n "$IP" ]; then
-    echo "* geocoding IP << $IP >>" >&2
+    if ! echo "$IP" | grep -q '[0-9][0-9]'; then
+      echo "--FATAL: worked out external/public IP << $IP >> doesn't looks like a valid IP!" >&2
+      exit 99
+    fi
+
+    # IP looks ok!
+    echo "* attempting to geo-locate external/public IP Address << $IP >> ..." >&2
 
     # KEYCDN
     echo "--> KEYCDN.COM:"
