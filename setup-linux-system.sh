@@ -223,6 +223,7 @@ function install_general_packages
   $INSTALL_CMD sysbench      # multi-threaded benchmark tool
   $INSTALL_CMD lsof          # Utility to list open files
   $INSTALL_CMD ncdu          # Disk usage analysis
+  $INSTALL_CMD bind-utils    # tools such as `dig'
 
   # network & security tools
   $INSTALL_CMD telnet        # telnet for checking connectivity
@@ -775,6 +776,7 @@ function install_rhel()
   sudo yum -y install cpuid                  # HW list + monitor
   sudo yum -y install inxi                   # HW list + monitor
   sudo yum -y install neofetch
+  sudo yum -y install bind-utils
 
   # get the EPEL repository
   sudo yum -y install epel-release
