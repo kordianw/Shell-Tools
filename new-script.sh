@@ -39,10 +39,7 @@ else
 # Script to ...
 #
 # * By $HEADER, DATE
-# \$Id\$
 #
-# * Change Log:
-# \$Log\$
 
 ####################
 PROG=\`basename \$0\`
@@ -71,10 +68,7 @@ EOT
 # Script to ...
 #
 # * By $HEADER, DATE
-# \$Id\$
 #
-# * Change Log:
-# \$Log\$
 use strict;
 use warnings;
 

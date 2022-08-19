@@ -7,10 +7,7 @@
 #
 #
 # * By Kordian W. <code [at] kordy.com>, August 2022
-# $Id$
 #
-# * Change Log:
-# $Log$
 
 ####################
 PROG=`basename $0`
