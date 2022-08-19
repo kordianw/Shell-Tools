@@ -165,7 +165,7 @@ function connect_gcp_cloudshell()
       eval $(parse_yaml "google-domains-dyndns-secrets.yaml" "conf_")
       curl -fsSL "https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=1.1.1.1" && echo
       exit 1
-    elif [ $RC -ne 0 ]; then
+    elif [ $RC -ne 0 -a $RC -ne 14 ]; then
       echo "--> error: \`ssh $GCP_DNS_ALIAS' returned non-zero exit code RC=$RC"
     fi
   else
@@ -240,7 +240,8 @@ function connect_gcp_cloudshell()
     ssh $GCP_DNS_ALIAS
     RC=$?
 
-    if [ $RC -ne 0 ]; then
+    # show errors (but RC=14 is OK, as it's a timeout)
+    if [ $RC -ne 0 -a $RC -ne 14 ]; then
       echo "   --> error: \`ssh $GCP_DNS_ALIAS' returned non-zero exit code RC=$RC"
     fi
   fi
