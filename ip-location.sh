@@ -23,9 +23,15 @@ else
   IP="$1"
   if [ -z "$IP" ]; then
     if which dig >&/dev/null; then
+      #
+      # DIG
+      #
       #IP=`dig +short whoami.akamai.net.`
       IP=`dig +short myip.opendns.com @resolver1.opendns.com.`
     elif which nslookup >&/dev/null; then
+      #
+      # NSLOOKUP
+      #
       IP=`nslookup myip.opendns.com resolver1.opendns.com 2>/dev/null | cat -v | awk '/Address:/{print $NF}' | sed 's/[^0-9\.]*//g' |tail -1`
     else
       echo "--FATAL: no \`dig' and no \`nslookup' command!"
@@ -48,14 +54,21 @@ else
     # IPINFO
     echo && echo "--> IPINFO.IO"
     curl -sSL http://ipinfo.io/$IP |egrep -v '^{|^}|"ip":|"readme":|"loc":'
+
+    # IPLOCATION.NET
+    if which links >&/dev/null; then
+      echo && echo "--> IPLOCATION.NET:"
+      links -dump http://iplocation.net | egrep 'IP Location .*Details|Host Name |ISP  |Proxy  |Platform  '
+    fi
     
     # WTFMYISP: bonus category
+    # - when getting current IP (no params)
     if [ -z "$1" ]; then
       echo && echo "--> WTFMYISP.COM:"
       curl -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g'
 
-      echo && echo "--> IPAPI.COM:"
-      curl -sSL http://ipapi.com/json | egrep -v '"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":'
+      echo && echo "--> IPAPI.CO:"
+      curl -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": '
     fi
   else
     echo "--FATAL: couldn't work out the external IP address!" >&2
