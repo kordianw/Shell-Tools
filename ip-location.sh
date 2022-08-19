@@ -25,8 +25,11 @@ else
     if which dig >&/dev/null; then
       #IP=`dig +short whoami.akamai.net.`
       IP=`dig +short myip.opendns.com @resolver1.opendns.com.`
-    else
+    elif which nslookup >&/dev/null; then
       IP=`nslookup myip.opendns.com resolver1.opendns.com 2>/dev/null | cat -v | awk '/Address:/{print $NF}' | sed 's/[^0-9\.]*//g' |tail -1`
+    else
+      echo "--FATAL: no \`dig' and no \`nslookup' command!"
+      exit 99
     fi
   fi
 
