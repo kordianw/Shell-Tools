@@ -1,6 +1,10 @@
 #!/bin/bash
 #
-# Script to work out the the geo-location of an IP address - geocoding
+# Script to work out the geo-location of an IP address - via geocoding, using multiple sources
+#
+# RUN DIRECTLY FROM GITHUB:
+# $ curl -sSL https://github.com/kordianw/Shell-Tools/raw/master/ip-location.sh | bash
+#
 #
 # * By Kordian W. <code [at] kordy.com>, August 2022
 # $Id$
@@ -52,22 +56,26 @@ else
     fi
 
     # IPINFO
-    echo && echo "--> IPINFO.IO"
+    echo && echo "--> IPINFO.IO:"
     curl -sSL http://ipinfo.io/$IP |egrep -v '^{|^}|"ip":|"readme":|"loc":'
 
     # IPLOCATION.NET
-    # - via links
-    LINKS=`which links 2>/dev/null`
-    [ ! -x "$LINKS" -a -x ~/bin/links ] && LINKS=~/bin/links
-    [ ! -x "$LINKS" -a -x ~/bin/links-2.12 ] && LINKS=~/bin/links-2.12
-    if [ -x $LINKS ]; then
+    # - via links/lynx
+    CLI_BROWSER=`which links 2>/dev/null`       # use `links' by default as the text-only browser
+    [ ! -x "$CLI_BROWSER" -a -x ~/bin/links ] && CLI_BROWSER=~/bin/links
+    [ ! -x "$CLI_BROWSER" -a -x ~/bin/links-2.12 ] && CLI_BROWSER=~/bin/links-2.12
+
+    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=`which lynx 2>/dev/null`
+    [ ! -x "$CLI_BROWSER" -a -x ~/bin/lynx ] && CLI_BROWSER=~/bin/lynx
+
+    if [ -x $CLI_BROWSER ]; then
       echo && echo "--> IPLOCATION.NET:"
-      $LINKS -dump http://iplocation.net | egrep 'IP Location .*Details|Host Name |ISP  |Platform  '
+      $CLI_BROWSER -dump http://iplocation.net | egrep 'IP Location .*Details|Host Name |ISP  '
 
       echo && echo "--> IPLOCATION.COM:"
-      $LINKS -dump http://iplocation.com | egrep 'Country  |Region  |City  |Organization  '
+      $CLI_BROWSER -dump http://iplocation.com | egrep 'Country  |Region  |City  |Organization  '
     else
-      echo "--warn: skipping IPLOCATION.NET as $HOST doesn't have \`links' text-only browser installed!" >&2
+      echo "--warn: skipping IPLOCATION.NET as $HOST doesn't have \`links' or \`lynx' text-only browser installed!" >&2
     fi
     
     # WTFMYISP: bonus category
@@ -78,6 +86,8 @@ else
 
       echo && echo "--> IPAPI.CO:"
       curl -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": '
+    else
+      echo "--warn: skipping WTFMYISP.COM & IPAPI.CO as these can only be used on CURRENT IP, rather than PARAM IP!" >&2
     fi
   else
     echo "--FATAL: couldn't work out the external IP address!" >&2
