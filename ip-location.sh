@@ -60,7 +60,7 @@ else
     fi
 
     # IP looks ok!
-    echo "* attempting to geo-locate external/public IP Address << $IP >> ..." >&2
+    echo "* attempting to geo-locate external/public IP Address << $IP >> ..."
 
     # KEYCDN
     echo "--> KEYCDN.COM:"
@@ -112,6 +112,7 @@ else
     fi
   else
     echo "--FATAL: couldn't work out the external IP address!" >&2
+    exit 1
   fi
 fi
 
