@@ -61,7 +61,7 @@ else
     curl -sSL http://ipinfo.io/$IP |egrep -v '^{|^}|"ip":|"readme":|"loc":'
 
     # IPLOCATION.NET
-    # - via links/lynx
+    # - via links/lynx/w3m
     CLI_BROWSER=`which links 2>/dev/null`       # use `links' by default as the text-only browser
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/links ] && CLI_BROWSER=~/bin/links
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/links-2.12 ] && CLI_BROWSER=~/bin/links-2.12
@@ -69,14 +69,20 @@ else
     [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=`which lynx 2>/dev/null`
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/lynx ] && CLI_BROWSER=~/bin/lynx
 
-    if [ -x $CLI_BROWSER ]; then
+    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=`which lynxlet 2>/dev/null`
+    [ ! -x "$CLI_BROWSER" -a -x ~/bin/lynxlet ] && CLI_BROWSER=~/bin/lynxlet
+
+    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=`which w3m 2>/dev/null`
+    [ ! -x "$CLI_BROWSER" -a -x ~/bin/w3m ] && CLI_BROWSER=~/bin/w3m
+
+    if [ -n "$CLI_BROWSER" -a -x "$CLI_BROWSER" ]; then
       echo && echo "--> IPLOCATION.NET:"
       $CLI_BROWSER -dump http://iplocation.net | egrep 'IP Location .*Details|Host Name |ISP  '
 
       echo && echo "--> IPLOCATION.COM:"
       $CLI_BROWSER -dump http://iplocation.com | egrep 'Country  |Region  |City  |Organization  '
     else
-      echo "--warn: skipping IPLOCATION.NET as $HOST doesn't have \`links' or \`lynx' text-only browser installed!" >&2
+      echo && echo "--warn: skipping IPLOCATION.NET/COM as `hostname` doesn't have \`links', \`lynx' or \`w3m' text-only browser installed!" >&2
     fi
     
     # WTFMYISP: bonus category
