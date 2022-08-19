@@ -84,6 +84,9 @@
 # * By Kordian W. <code [at] kordy.com>, Jun 2020
 #
 
+# backup helper script
+BACKUP_HELPER_SCRIPT="bkup-and-transfer.sh"
+
 #
 # FUNCTIONS
 #
@@ -104,14 +107,14 @@ function update_scripts()
   if [ ! -d ~/src ]; then
     echo "--FATAL: the account \`$USER' on \``hostname`' is not a standard setup for this: no ~/src dir!" 1>&2
     exit 98
-  elif [ ! -x ~/src/bkup-and-transfer.sh ]; then
-    echo "--FATAL: the account \`$USER' on \``hostname`' is not a standard setup for this: no ~/src/bkup-and-transfer.sh script!" 1>&2
+  elif [ ! -x ~/src/$BACKUP_HELPER_SCRIPT ]; then
+    echo "--FATAL: the account \`$USER' on \``hostname`' is not a standard setup for this: no ~/src/$BACKUP_HELPER_SCRIPT script!" 1>&2
     exit 99
   fi
 
   echo "** updating scripts..."
-  cd ~/src && ./bkup-and-transfer.sh -dlupd || exit 1
-  cd ~/src && ./bkup-and-transfer.sh -setup || exit 1
+  cd ~/src && ./$BACKUP_HELPER_SCRIPT -dlupd || exit 1
+  cd ~/src && ./$BACKUP_HELPER_SCRIPT -setup || exit 1
   cd - >&/dev/null
 }
 
@@ -593,6 +596,16 @@ function assume_gcp_shell_setup()
   fi
 }
 
+function dl_and_update()
+{
+  echo "** trying to download and update..." >&2
+  [ -x ./src/$BACKUP_HELPER_SCRIPT ] && cd src && exec ./$BACKUP_HELPER_SCRIPT -dlupd
+  [ -x ./playground/$BACKUP_HELPER_SCRIPT ] && cd playground && exec ./$BACKUP_HELPER_SCRIPT -dlupd
+  [ -x ./$BACKUP_HELPER_SCRIPT ] && exec ./$BACKUP_HELPER_SCRIPT -dlupd
+  echo "--FATAL: weren't able to find \`$BACKUP_HELPER_SCRIPT '!" >&2
+  exit 99
+}
+
 #
 # MAIN
 #
@@ -614,8 +627,8 @@ Usage: $PROG <options> [param]
                     NB: only GCP currently provides SSH access to Cloud Shell
 
         -gcp_setup  sets-up GCP Cloud Shell VM
-                    * runs: ./bkup-and-transfer.sh -dlupd
-                    * runs: ./bkup-and-transfer.sh -setup
+                    * runs: ./$BACKUP_HELPER_SCRIPT -dlupd
+                    * runs: ./$BACKUP_HELPER_SCRIPT -setup
                     * creates/updates ~/.customize_environment
                     * [if needed ] installs ZSH, SCREEN, SSHPASS
                     * [if needed ] sets ZSH as default shell
@@ -624,8 +637,8 @@ Usage: $PROG <options> [param]
                     NOTE: Most of this should already be handled by ~/.customize_environment
 
         -c9_setup   sets-up AWS Cloud9 [paid] VM
-                    * runs: ./bkup-and-transfer.sh -dlupd
-                    * runs: ./bkup-and-transfer.sh -setup
+                    * runs: ./$BACKUP_HELPER_SCRIPT -dlupd
+                    * runs: ./$BACKUP_HELPER_SCRIPT -setup
                     * stops memory hungry services: containerd,docker,mysql,apache2,snapd
 
         -dyn_dns    update Google Dynamic DNS
@@ -649,6 +662,8 @@ elif [ "$1" = "-cloud_bkup" ]; then
   backup_cloud_home $2;
 elif [ "$1" = "-dyn_dns" -o "$1" = "-dyn_DNS" -o "$1" = "-dyndns" ]; then
   update_dyn_dns;
+elif [ "$1" = "-dlup" -o "$1" = "-dlupd" ]; then 
+  dl_and_update;
 elif echo `hostname` | grep -q "devshell-vm"; then
   assume_gcp_shell_setup;
 elif [ -n "$DEVSHELL_SERVER_URL" -o -n "$DEVSHELL_SERVER_BASE_URL" ]; then
