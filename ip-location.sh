@@ -63,6 +63,9 @@ else
     if [ -x $LINKS ]; then
       echo && echo "--> IPLOCATION.NET:"
       $LINKS -dump http://iplocation.net | egrep 'IP Location .*Details|Host Name |ISP  |Platform  '
+
+      echo && echo "--> IPLOCATION.COM:"
+      $LINKS -dump http://iplocation.com | egrep 'Country  |Region  |City  |Organization  '
     else
       echo "--warn: skipping IPLOCATION.NET as $HOST doesn't have \`links' text-only browser installed!" >&2
     fi
