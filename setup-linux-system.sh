@@ -740,6 +740,7 @@ function install_rhel()
   sudo yum -y install vim                    # editor of choice
   sudo yum -y install perl
   sudo yum -y install python
+  sudo yum -y install python-pip
   sudo yum -y install git                    # GIT/GITHUB access
   sudo yum -y install jq                     # lightweight and flexible command-line JSON processor
   sudo yum -y install strace                 # debug running processes
