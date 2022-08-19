@@ -16,12 +16,13 @@
 PROG=`basename $0`
 if [ "$1" = "-h" -o "$1" = "--help" ]; then
   cat <<! >&2
-$PROG: Script to work out the the geo-location of an IP address
+$PROG: Script to work out the geo-location of an IP address
+       - via geocoding, using multiple sources
 
 Usage: $PROG [options] [IP]
 	-h	this screen
 
-        NB: defaults to current external IP address
+        NB: defaults to current external/public IP address
 !
 else
   IP="$1"
