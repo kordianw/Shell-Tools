@@ -672,6 +672,7 @@ function install_pi()
   $INSTALL_CMD sysbench      # multi-threaded benchmark tool
   $INSTALL_CMD lsof          # Utility to list open files
   $INSTALL_CMD ncdu          # Disk usage analysis
+  $INSTALL_CMD bind-utils    # tools such as `dig'
 
   # network & security tools
   $INSTALL_CMD telnet        # telnet for checking connectivity
