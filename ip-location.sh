@@ -56,9 +56,15 @@ else
     curl -sSL http://ipinfo.io/$IP |egrep -v '^{|^}|"ip":|"readme":|"loc":'
 
     # IPLOCATION.NET
-    if which links >&/dev/null; then
+    # - via links
+    LINKS=`which links 2>/dev/null`
+    [ ! -x "$LINKS" -a -x ~/bin/links ] && LINKS=~/bin/links
+    [ ! -x "$LINKS" -a -x ~/bin/links-2.12 ] && LINKS=~/bin/links-2.12
+    if [ -x $LINKS ]; then
       echo && echo "--> IPLOCATION.NET:"
-      links -dump http://iplocation.net | egrep 'IP Location .*Details|Host Name |ISP  |Proxy  |Platform  '
+      $LINKS -dump http://iplocation.net | egrep 'IP Location .*Details|Host Name |ISP  |Platform  '
+    else
+      echo "--warn: skipping IPLOCATION.NET as $HOST doesn't have \`links' text-only browser installed!" >&2
     fi
     
     # WTFMYISP: bonus category
