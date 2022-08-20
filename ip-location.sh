@@ -44,11 +44,28 @@ else
         exit 98
       fi
     else
-      echo "--FATAL: no \`dig' and no \`nslookup' command on `uname -n`:" >&2
-      which dig
-      which nslookup
-      which host
-      exit 99
+      echo "--ERROR: no \`dig' and no \`nslookup' command on `uname -n`:" >&2
+      which dig 1>&2
+      which nslookup 1>&2
+      which host 1>&2
+
+      # backup method - just do a little
+      if which curl >&/dev/null; then
+        echo "--BACKUP MODE: will try to geo-code using \`curl' and external websites:" >&2
+
+        echo && echo "--> WTFMYISP.COM:"
+        curl -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g'
+
+        echo && echo "--> IPAPI.CO:"
+        curl -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": '
+
+        # partial successs
+        exit 1
+      else
+        echo "--FATAL: can't invoke \'curl' as it's not available on `uname -n`:" >&2
+        which curl 1>&2
+        exit 99
+      fi
     fi
   fi
 
