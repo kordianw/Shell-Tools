@@ -598,9 +598,9 @@ function assume_gcp_shell_setup()
 
 function dl_and_update()
 {
-  echo "** trying to download and update..." >&2
-  [ -x ./src/$BACKUP_HELPER_SCRIPT ] && cd src && exec ./$BACKUP_HELPER_SCRIPT -dlupd
-  [ -x ./playground/$BACKUP_HELPER_SCRIPT ] && cd playground && exec ./$BACKUP_HELPER_SCRIPT -dlupd
+  echo "** trying to use \`$BACKUP_HELPER_SCRIPT' to download & update..." >&2
+  [ -x ./src/$BACKUP_HELPER_SCRIPT ] && cd src >&/dev/null && exec ./$BACKUP_HELPER_SCRIPT -dlupd
+  [ -x ./playground/$BACKUP_HELPER_SCRIPT ] && cd playground >&/dev/null && exec ./$BACKUP_HELPER_SCRIPT -dlupd
   [ -x ./$BACKUP_HELPER_SCRIPT ] && exec ./$BACKUP_HELPER_SCRIPT -dlupd
   echo "--FATAL: weren't able to find \`$BACKUP_HELPER_SCRIPT '!" >&2
   exit 99
