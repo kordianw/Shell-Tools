@@ -140,15 +140,15 @@ function install_general_packages
   fi
 
   # apps
-  echo && echo "* installing packages..."
+  echo && echo "* GENPKG: installing packages..."
 
-  # major packages - CLI & GUI
+  # GENPKG: major packages - CLI & GUI
   $INSTALL_CMD vim           # VIM: improved vi (VI iMproved)
   $INSTALL_CMD zsh           # the Z Shell (more powerful than bash)
 
-  # GUI Packages
+  # GENPKG: GUI Packages
   if who | grep $USER |grep tty | grep -q ":0"; then
-    echo -e "\n***\n*** INSTALLING GUI PKGS\n***\n"
+    echo -e "\n***\n*** GENPKG: INSTALLING GUI PKGS\n***\n"
     $INSTALL_CMD chromium-browser
     $INSTALL_CMD vlc
     $INSTALL_CMD remmina
@@ -158,9 +158,9 @@ function install_general_packages
     $INSTALL_CMD boot-repair   # Graphical tool to repair boot problems
   fi
 
-  # Laptop specific tools
+  # GENPKG: Laptop specific tools
   if [ -f /sys/module/battery/initstate -o -d /proc/acpi/battery/BAT0 -o -L /sys/class/power_supply/BAT0 ]; then
-    echo -e "\n***\n*** INSTALLING LAPTOP PKGS\n***\n"
+    echo -e "\n***\n*** GENPKG: INSTALLING LAPTOP PKGS\n***\n"
     $INSTALL_CMD acpi          # view battery/ACPI information (LAPTOPS)
     $INSTALL_CMD acpitool      # view battery/ACPI information (LAPTOPS)
     $INSTALL_CMD wavemon       # wireless Device Monitoring Application (LAPTOPS)
@@ -169,14 +169,14 @@ function install_general_packages
     $INSTALL_CMD caffeine      # prevent the desktop becoming idle in full-screen mode
   fi
 
-  # MAIL
+  # GENPKG: Mail
   #$INSTALL_CMD postfix      # this allows mail to be delivered
   #$INSTALL_CMD mailutils    # this allows mail to be delivered
   #$INSTALL_CMD mutt         # more friendly mail client
   #$INSTALL_CMD procmail     # could be useful
   #$INSTALL_CMD libsasl2-modules  # needed for sendgrid/external SMTP
 
-  # terminal multipliers
+  # GENPKG: terminal multipliers
   $INSTALL_CMD screen        # GNU screen
   $INSTALL_CMD tmux          # GNU tmux
 
@@ -185,13 +185,13 @@ function install_general_packages
   $INSTALL_CMD links         # Web browser running in text mode
   $INSTALL_CMD w3m           # WWW browsable pager with excellent tables/frames support
 
-  # development
+  # GENPKG: development
   $INSTALL_CMD git           # github/git
   $INSTALL_CMD jq            # lightweight and flexible command-line JSON processor
   $INSTALL_CMD s3cmd         # S3 client
   $INSTALL_CMD rclone        # cloud upload/download client
   
-  # compiling / gcc
+  # GENPKG: compiling / gcc
   $INSTALL_CMD build-essential
   $INSTALL_CMD gcc           # GNU compiler
   $INSTALL_CMD libc6-dev     # LIBC dev headers
@@ -201,18 +201,22 @@ function install_general_packages
   $INSTALL_CMD libssl-dev    # SSL libraries
   $INSTALL_CMD libncurses5-dev libncursesw5-dev
 
-  # additional modules
+  # GENPKG: additional perl modules
   $INSTALL_CMD libjson-perl        # JSON.pm
   $INSTALL_CMD libdate-manip-perl  # DateManip.pm
   $INSTALL_CMD libxml-sax-perl     # for XML parsing (faster)
   $INSTALL_CMD libxml-parser-perl  # for XML parsing (faster)
 
-  # system utils (may require cron-entries)
+  # GENPKG: additional python modules
+  #$INSTALL_CMD pylint
+  #$INSTALL_CMD python-flask
+
+  # GENPKG: system utils (may require cron-entries)
   #$INSTALL_CMD sysstat       # install stat utils such as sar, iostat, etc
   #$INSTALL_CMD mlocate       # quickly find files on the filesystem based on their name
   [ -x /usr/bin/apt ] && $INSTALL_CMD apt-file      # search for files within Debian packages (CLI)
 
-  # system utils (do not require cron)
+  # GENPKG: system utils (do not require cron)
   $INSTALL_CMD neofetch      # Shows Linux System Information with Distribution Logo
   $INSTALL_CMD inxi          # full featured system information script
   $INSTALL_CMD lshw          # information about hardware configuration, incl. lspci
@@ -225,7 +229,7 @@ function install_general_packages
   $INSTALL_CMD ncdu          # Disk usage analysis
   $INSTALL_CMD bind-utils    # tools such as `dig'
 
-  # network & security tools
+  # GENPKG: network & security tools
   $INSTALL_CMD telnet        # telnet for checking connectivity
   $INSTALL_CMD dnsutils      # provides dig+nslookup
   $INSTALL_CMD netcat        # TCP/IP swiss army knife
@@ -238,7 +242,7 @@ function install_general_packages
   $INSTALL_CMD aircrack-ng   # wireless WEP/WPA cracking utilities
   $INSTALL_CMD sshpass       # Non-interactive ssh password authentication
 
-  # small utils (just helper utils)
+  # GENPKG: small utils (just helper utils)
   $INSTALL_CMD tofrodos      # unix2dos, dos2unix
   $INSTALL_CMD bc            # CLI calculator
   $INSTALL_CMD par           # advanced Paragraph reformatter (can be used inside vim)
@@ -247,16 +251,16 @@ function install_general_packages
 
   if [ "$PKG" = "apt" ]; then
     # update the apt-file utility
-    echo && echo "* updating the apt-file cache..."
+    echo && echo "* GENPKG: updating the apt-file cache..."
     $SUDO apt-file update
 
     # store a backup of currently installed packages
-    echo && echo "* storing a backup of all installed packages..."
+    echo && echo "* GENPKG: storing a backup of all installed packages..."
     DIR=`dirname "$0"`
     dpkg -l > $DIR/pkg-installed-list.txt
   fi
 
-  # show end time
+  # GENPKG: show end time
   END_TIME=`date +%s`
   TIME_TAKEN=$(( $END_TIME - $START_TIME ))
   if [ $TIME_TAKEN -gt 60 ]; then
@@ -576,13 +580,13 @@ function install_brew()
   INSTALL_CMD="brew install"
 
   # update the local database to make sure it matches remote sources
-  echo "* updating the brew database..."
+  echo "* BREW: updating the brew database..."
   brew update
 
   # apps
-  echo && echo "* installing packages..."
+  echo && echo "* BREW: installing packages..."
 
-  # packages
+  # BREW: packages
   $INSTALL_CMD coreutils
   $INSTALL_CMD wget
   $INSTALL_CMD tmux
@@ -591,7 +595,7 @@ function install_brew()
   $INSTALL_CMD nmap
   #$INSTALL_CMD cask    # allow install via: brew cask install google-chrome
 
-  # utils
+  # BREW: utils
   $INSTALL_CMD watch
   $INSTALL_CMD ncdu
   $INSTALL_CMD htop
@@ -599,7 +603,7 @@ function install_brew()
   $INSTALL_CMD inxi
   $INSTALL_CMD mackup
 
-  # compiler & tools
+  # BREW: compiler & tools
   $INSTALL_CMD gcc
   $INSTALL_CMD autoconf
   $INSTALL_CMD automake
@@ -608,11 +612,11 @@ function install_brew()
   $INSTALL_CMD glib
   $INSTALL_CMD pkg-config
 
-  # install `sshpass'
+  # BREW: install `sshpass'
   #brew install http://git.io/sshpass.rb
   brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb
 
-  # list outdated packages and what would be the cleanup
+  # BREW: list outdated packages and what would be the cleanup
   $INSTALL_CMD cleanup -n
   $INSTALL_CMD outdated
 }
@@ -630,21 +634,21 @@ function install_pi()
   INSTALL_CMD="sudo apt-get install -qq -y"
 
   # update the local database to make sure it matches remote sources
-  echo "* updating the apt local database..."
+  echo "* PI: updating the apt local database..."
   sudo apt update
 
   # apps
-  echo && echo "* installing packages..."
+  echo && echo "* PI: installing packages..."
 
-  # major packages
+  # PI: major packages
   $INSTALL_CMD vim           # VIM: improved vi (VI iMproved)
   $INSTALL_CMD zsh           # the Z Shell (more powerful than bash)
 
-  # terminal multipliers
+  # PI: terminal multipliers
   $INSTALL_CMD screen        # GNU screen
   $INSTALL_CMD tmux          # GNU tmux
 
-  # text-based browsers
+  # PI: text-based browsers
   $INSTALL_CMD lynx          # classic non-graphical (text-mode) web browser
   $INSTALL_CMD links         # Web browser running in text mode
   $INSTALL_CMD w3m           # WWW browsable pager with excellent tables/frames support
@@ -653,15 +657,19 @@ function install_pi()
   $INSTALL_CMD git           # github/git
   $INSTALL_CMD jq            # lightweight and flexible command-line JSON processor
 
-  # additional modules
+  # PI: additional perl modules
   $INSTALL_CMD libjson-perl  # JSON.pm
 
-  # system utils (may require cron-entries)
+  # PI: additional python modules
+  #$INSTALL_CMD pylint
+  #$INSTALL_CMD python-flask
+
+  # PI: system utils (may require cron-entries)
   $INSTALL_CMD apt-file      # search for files within Debian packages (CLI)
   $INSTALL_CMD sysstat       # install stat utils such as sar, iostat, etc
   $INSTALL_CMD mlocate       # quickly find files on the filesystem based on their name
 
-  # system utils (do not require cron)
+  # PI: system utils (do not require cron)
   $INSTALL_CMD neofetch      # Shows Linux System Information with Distribution Logo
   $INSTALL_CMD inxi          # full featured system information script
   $INSTALL_CMD lshw          # information about hardware configuration, incl. lspci
@@ -674,7 +682,7 @@ function install_pi()
   $INSTALL_CMD ncdu          # Disk usage analysis
   $INSTALL_CMD bind-utils    # tools such as `dig'
 
-  # network & security tools
+  # PI: network & security tools
   $INSTALL_CMD telnet        # telnet for checking connectivity
   $INSTALL_CMD dnsutils      # provides dig+nslookup
   $INSTALL_CMD netcat        # TCP/IP swiss army knife
@@ -687,7 +695,7 @@ function install_pi()
   $INSTALL_CMD aircrack-ng   # wireless WEP/WPA cracking utilities
   $INSTALL_CMD sshpass       # Non-interactive ssh password authentication
 
-  # small utils (just helper utils)
+  # PI: small utils (just helper utils)
   $INSTALL_CMD tofrodos      # unix2dos, dos2unix
   $INSTALL_CMD bc            # CLI calculator
   $INSTALL_CMD par           # advanced Paragraph reformatter (can be used inside vim)
