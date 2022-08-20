@@ -1,3 +1,7 @@
+# Other Projects/Repositories
+Backups
+work-backup
+
 # Specific ignores (to be reviewed)
 *.csv
 *.db
@@ -18,12 +22,14 @@ _gsdata_
 # Compiled source
 *.pyc
 *.pyo
+*.pyd
 *.com
 *.class
 *.dll
 *.exe
 *.o
 *.so
+__pycache__
 
 # Packages
 *.7z
