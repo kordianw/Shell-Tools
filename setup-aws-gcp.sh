@@ -178,7 +178,10 @@ function connect_gcp_cloudshell()
   # work out end time
   END_TIME=`date +%s`
   TIME_TAKEN=$(( $END_TIME - $START_TIME ))
-  if [ $TIME_TAKEN -gt 60 ]; then
+  if [ $TIME_TAKEN -gt 3600 ]; then
+    TIME_TAKEN=`echo "($END_TIME - $START_TIME) / 60 / 60" | bc -l | sed 's/\(...\).*/\1/; s/\.$//; s/\.0$//'`
+    TIME_TAKEN="$TIME_TAKEN hours"
+  elif [ $TIME_TAKEN -gt 60 ]; then
     TIME_TAKEN=`echo "($END_TIME - $START_TIME) / 60" | bc -l | sed 's/\(...\).*/\1/; s/\.$//; s/\.[012]$//'`
     TIME_TAKEN="$TIME_TAKEN mins"
   else
@@ -186,7 +189,7 @@ function connect_gcp_cloudshell()
   fi
 
   # final info message
-  echo "... cloudshell session finished at `date +%H:%M` after $TIME_TAKEN." | sed 's/ 1 mins/ 1 min/' 1>&2
+  echo "... cloudshell session finished at `date +%H:%M` after $TIME_TAKEN." | sed 's/ 1 mins/ 1 min/; s/ 1 hours/ 1 hour/' 1>&2
 
   exit $RC
 }
