@@ -113,9 +113,13 @@ if [ "$1" = "-io" -o -z "$1" ]; then
   sleep 2
 
   # drop caches to accurately measure disk speeds
-  echo "  - flushing & clearing cached memory/the disk cache (Press Ctrl-C to cancel):"
-  #sudo /sbin/sysctl vm.drop_caches=3
-  echo "echo 3 > /proc/sys/vm/drop_caches" | sudo sh
+  if sudo -n whoami >&/dev/null; then
+    echo "  - flushing & clearing cached memory/the disk cache (Press Ctrl-C to cancel):"
+    #sudo /sbin/sysctl vm.drop_caches=3
+    echo "echo 3 > /proc/sys/vm/drop_caches" | sudo sh
+  else
+    echo "--ERROR: no sudo access on `uname -n`, skipping cache flush..." >&2
+  fi
 
   # seqwr: sequential write
   # seqrewr: sequential read+write
