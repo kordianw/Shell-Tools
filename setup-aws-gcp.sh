@@ -625,10 +625,13 @@ function gcloud_login()
     fi
   fi
 
+  # start-off info
+  echo "* GCP: initializing, using \`$GCLOUD' ..." >&2
+
   # are we logged in?
   GCP_ACCOUNT=`$GCLOUD auth list 2>&1 | egrep "\*" | awk '/@gmail.com/{print $2}'`
   if [ -n "$GCP_ACCOUNT" ]; then
-    echo "* GCP: using account: $GCP_ACCOUNT" >&2
+    echo "* GCP: using account: << $GCP_ACCOUNT >>" >&2
   else
     echo "* GCP: will need to login to your Google account to authorize \`gcloud':" >&2
 
@@ -645,15 +648,31 @@ function gcloud_login()
   # do we have an active project?
   GCP_PROJECT=`$GCLOUD config get-value core/project`
   if [ -n "$GCP_PROJECT" ]; then
-    echo "* GCP: using project: $GCP_PROJECT" >&2
+    echo "* GCP: using project: << $GCP_PROJECT >>" >&2
   else
-    echo "--FATAL: no GCP active project!" >&2
-    $GCLOUD config configurations list 
-    exit 99
+    # set project...
+    echo "* GCP: no primary GCP project set, setting to first active one:"
+    $GCLOUD projects list --filter="lifecycleState=ACTIVE" | sed 's/^/   /'
+
+    GCP_PROJECT=`$GCLOUD projects list --format=json --filter="lifecycleState=ACTIVE" |awk '/"projectId"/{print $NF}' | head -1 | sed 's/[",]//g'`
+    if [ -n "$GCP_PROJECT" ]; then
+      echo "* GCP: setting << $GCP_PROJECT >> as active project:"
+      $GCLOUD config set project $GCP_PROJECT
+      if [ $? -ne 0 ]; then
+        echo "--FATAL: error setting default project as << $GCP_PROJECT >>" >&2
+        $GCLOUD config configurations list 
+        exit 99
+      fi
+    else
+      echo "--FATAL: no GCP active projects:" >&2
+      $GCLOUD config configurations list 
+      exit 99
+    fi
   fi
 
   # final confirmation
   $GCLOUD config configurations list
+  exit $?
 }
 
 #
@@ -664,8 +683,8 @@ function gcloud_login()
 PROG=`basename $0`
 if [ "$1" = "-h" -o "$1" = "--help" -o "$1" = "-help" ]; then
   cat <<! >&2
-$PROG: Script to setup Cloud VMs, eg: GCP Cloud Shell, AWS CloudShell, Azure Cloud Shell
-       * install the most important PKGs, for convenience, dev, etc
+$PROG: Script to aid in working with Public Cloud VMs, ie: GCP, AWS, Azure
+        * set-up and install the most important PKGs, for convenience, dev, etc
 
 Usage: $PROG <options> [param]
         -cloudshell <dyn_dns_hostname>
@@ -677,18 +696,15 @@ Usage: $PROG <options> [param]
                     NB: only GCP currently provides SSH access to Cloud Shell
 
         -gcp_setup  sets-up GCP Cloud Shell VM
-                    * runs: ./$BACKUP_HELPER_SCRIPT -dlupd
-                    * runs: ./$BACKUP_HELPER_SCRIPT -setup
+                    * runs: ./$BACKUP_HELPER_SCRIPT -dlupd && -setup
                     * creates/updates ~/.customize_environment
-                    * [if needed ] installs ZSH, SCREEN, SSHPASS
-                    * [if needed ] sets ZSH as default shell
+                    * [if needed ] installs ZSH, SCREEN, SSHPASS, sets ZSH as default shell
                     * [if needed ] stops memory hungry process if <4GB RAM: docker,snapd
                     * [if needed ] updates Dynamic DNS
                     NOTE: Most of this should already be handled by ~/.customize_environment
 
         -c9_setup   sets-up AWS Cloud9 [paid] VM
-                    * runs: ./$BACKUP_HELPER_SCRIPT -dlupd
-                    * runs: ./$BACKUP_HELPER_SCRIPT -setup
+                    * runs: ./$BACKUP_HELPER_SCRIPT -dlupd && -setup
                     * stops memory hungry services: containerd,docker,mysql,apache2,snapd
 
         -dyn_dns    update Google Dynamic DNS - currently defined:
@@ -696,11 +712,13 @@ Usage: $PROG <options> [param]
                     * GCP Cloud Shell
 
         -glogin     logs-in to GCP's \`gcloud' via \`gcloud auth login'
+                    * allows authenticated use of \`gcloud' and \`gsutil'
 
         -dlupd      runs: $BACKUP_HELPER_SCRIPT -dlupd
         -sw         installs additional software: * uses \`setup_linux-server.sh -GENPKG'
 
         -cloud_bkup <IP|DNS>  backs-up Cloud Server Home DIR
+                              * uses \`tar' over \`ssh', saves as *.tar.gz
 
 !
 elif [ "$1" = "-c9_setup" ]; then
