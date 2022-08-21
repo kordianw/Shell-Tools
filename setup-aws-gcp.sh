@@ -43,6 +43,7 @@
 # - based on CBL - Common Base Linux (Microsoft Linux distribution), which is Debian like
 # - NB: no root access, no sudo, just your $HOME and /tmp, can not install additional system-wide packages/tools
 #       -> see suggestions: https://edyoung.github.io/blog/install_tools_locally/
+#       -> can also use tools such as `Junest' to be able to install packages
 # - NB: 20 mins timeout, 5GB home (paid), long-running sessions are terminated 
 # **web-url**: https://shell.azure.com
 #
@@ -175,22 +176,22 @@ function connect_gcp_cloudshell()
     echo && echo "* [`date +%H:%M`] it's not alive, requesting new GCP Cloud Shell via \`gcloud'..." 1>&2
 
     # check that we have the SDK
-    if [ ! -d "$GOOGLE_CLOUD_SDK" ]; then
-      echo "--FATAL: no Google Cloud SDK in $GOOGLE_CLOUD_SDK !" 1>&2
-      exit 99
-    fi
+    #if [ ! -d "$GOOGLE_CLOUD_SDK" ]; then
+    #  echo "--FATAL: no Google Cloud SDK in $GOOGLE_CLOUD_SDK !" 1>&2
+    #  exit 99
+    #fi
 
     TMP=/tmp/gcp-out-$$
 
-    # do we have `gcloud' ?
+    # do we have `gcloud' binary ?
+    GCLOUD=gcloud
     if ! which gcloud >&/dev/null; then
-      GCLOUD=$GOOGLE_CLOUD_SDK/bin/gcloud
+      [ -x /snap/bin/gcloud ] && GCLOUD=/snap/bin/gcloud
+      [ -d "$GOOGLE_CLOUD_SDK" ] && GCLOUD=$GOOGLE_CLOUD_SDK/bin/gcloud
       if [ ! -x $GCLOUD ]; then
-        echo "--FATAL: no \`gcloud' executable in $GCLOUD!" 1>&2
+        echo "--FATAL: no \`gcloud' executable as $GCLOUD!" 1>&2
         exit 99
       fi
-    else
-      GCLOUD=gcloud
     fi
 
     #
@@ -606,6 +607,50 @@ function dl_and_update()
   exit 99
 }
 
+function gcloud_login()
+{
+  # do we have `gcloud' binary ?
+  GCLOUD=gcloud
+  if ! which gcloud >&/dev/null; then
+    [ -x /snap/bin/gcloud ] && GCLOUD=/snap/bin/gcloud
+    [ -d "$GOOGLE_CLOUD_SDK" ] && GCLOUD=$GOOGLE_CLOUD_SDK/bin/gcloud
+    if [ ! -x $GCLOUD ]; then
+      echo "--FATAL: no \`gcloud' executable as $GCLOUD!" 1>&2
+      exit 99
+    fi
+  fi
+
+  # are we logged in?
+  GCP_ACCOUNT=`$GCLOUD auth list 2>&1 | egrep "\*" | awk '/@gmail.com/{print $2}'`
+  if [ -n "$GCP_ACCOUNT" ]; then
+    echo "* GCP: using account: $GCP_ACCOUNT" >&2
+  else
+    echo "* GCP: will need to login to your Google account to authorize \`gcloud':" >&2
+
+    # on a cloud shell, we have to use --force as otherwise we get an unnecessary prompt
+    if [ -n "$DEVSHELL_SERVER_URL" -o -n "$DEVSHELL_SERVER_BASE_URL" ]; then
+      $GCLOUD auth login --no-launch-browser --force
+      #$GCLOUD auth login --no-browser --force
+    else
+      $GCLOUD auth login --no-launch-browser
+      #$GCLOUD auth login --no-browser
+    fi
+  fi
+
+  # do we have an active project?
+  GCP_PROJECT=`$GCLOUD config get-value core/project`
+  if [ -n "$GCP_PROJECT" ]; then
+    echo "* GCP: using project: $GCP_PROJECT" >&2
+  else
+    echo "--FATAL: no GCP active project!" >&2
+    $GCLOUD config configurations list 
+    exit 99
+  fi
+
+  # final confirmation
+  $GCLOUD config configurations list
+}
+
 #
 # MAIN
 #
@@ -641,10 +686,13 @@ Usage: $PROG <options> [param]
                     * runs: ./$BACKUP_HELPER_SCRIPT -setup
                     * stops memory hungry services: containerd,docker,mysql,apache2,snapd
 
-        -dyn_dns    update Google Dynamic DNS
+        -dyn_dns    update Google Dynamic DNS - currently defined:
                     * nexus (main SSH server)
                     * GCP Cloud Shell
 
+        -glogin     logs-in to GCP's \`gcloud' via \`gcloud auth login'
+
+        -dlupd      runs: $BACKUP_HELPER_SCRIPT -dlupd
         -sw         installs additional software: * uses \`setup_linux-server.sh -GENPKG'
 
         -cloud_bkup <IP|DNS>  backs-up Cloud Server Home DIR
@@ -662,6 +710,8 @@ elif [ "$1" = "-cloud_bkup" ]; then
   backup_cloud_home $2;
 elif [ "$1" = "-dyn_dns" -o "$1" = "-dyn_DNS" -o "$1" = "-dyndns" ]; then
   update_dyn_dns;
+elif [ "$1" = "-glogin" -o "$1" = "-gcp_login" -o "$1" = "-gcloud_login" ]; then
+  gcloud_login;
 elif [ "$1" = "-dlup" -o "$1" = "-dlupd" ]; then 
   dl_and_update;
 elif echo `hostname` | grep -q "devshell-vm"; then
