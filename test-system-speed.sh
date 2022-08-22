@@ -2,6 +2,10 @@
 # tests CPU+Mem+IO speed using `sysbench'
 # - writes test files to current dir
 #
+# OPTIONS:
+# -ssd     <-- checks if a disk is SSD by running a quick IO test
+# -hdparm  <-- adds a hdparm test at the end
+#
 # * By Kordian W. <code [at] kordy.com>, Jan 2020
 #
 
@@ -21,6 +25,39 @@ PROG=`basename $0`
 if [ ! -w . ]; then
   echo "$PROG: you don't have permission to test in the current dir!" >&2
   exit 1
+fi
+
+# check SSD speed - crude way ...
+if [ "$1" = "-ssd" ]; then
+
+  # check if the root drive is SSD
+  # - if SSD, cmd will take around 1 sec
+  # - if HDD, cmd will take around 10 sec
+
+  DF_CMD=`df -Th -x tmpfs -x devtmpfs -x nfs -x smbfs -x cifs -x squashfs -x fuse.sshfs`
+
+  echo "* df output:"
+  echo "$DF_CMD"
+  DEV=`echo "$DF_CMD" |head -2 |tail -1 |awk '{print $1}' |sed 's/[0-9]$//'`
+
+  echo && echo "* timing 1000 disk reads on: << $DEV >> ..."
+  echo "  - if it takes 1-2 secs, most likely it's an SSD"
+  echo "  - if it takes >5 secs, most likely it's an HDD"
+
+  ##########################################################
+
+  if [ -n "$DEV" ]; then
+    time for i in `seq 1 1000`; do
+      dd bs=4k if=$DEV count=1 skip=$(( $RANDOM * 128 )) >/dev/null 2>&1;
+    done
+  else
+    echo "--FATAL: can't work out which dev to test on!" >&2
+    exit 99
+  fi
+
+  ##########################################################
+
+  exit 0
 fi
 
 if ! which sysbench >&/dev/null; then
