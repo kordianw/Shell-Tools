@@ -31,14 +31,14 @@ else
       # - whoami.akamai.net
       # - google
       #
-      IP=`dig +short myip.opendns.com @resolver1.opendns.com. | egrep '[0-9]'`
+      IP=`timeout 3 dig +short myip.opendns.com @resolver1.opendns.com. | egrep '[0-9]'`
       if [ $? -ne 0 ]; then
         echo "--WARN: can't work out external/public IP address via cmd (RC=$?): dig +short myip.opendns.com @resolver1.opendns.com." >&2
       fi
 
       # 2nd attempt via another provider
       if [ -z "$IP" ]; then
-        IP=`dig +short whoami.akamai.net @ns1-1.akamaitech.net. | egrep '[0-9]'`
+        IP=`timeout 3 dig +short whoami.akamai.net @ns1-1.akamaitech.net. | egrep '[0-9]'`
         if [ $? -ne 0 ]; then
           echo "--WARN: can't work out external/public IP address via cmd (RC=$?): dig +short whoami.akamai.net." >&2
         fi
@@ -46,7 +46,7 @@ else
 
       # 3rd attempt via another provider
       if [ -z "$IP" ]; then
-        IP=`dig txt o-o.myaddr.test.l.google.com @ns1.google.com. +short | egrep '[0-9]'`
+        IP=`timeout 3 dig txt o-o.myaddr.test.l.google.com @ns1.google.com. +short | egrep '[0-9]'`
         if [ $? -ne 0 ]; then
           echo "--WARN: can't work out external/public IP address via cmd (RC=$?): dig txt o-o.myaddr.test.l.google.com. @ns1.google.com +short.akamai.net" >&2
         fi
@@ -55,7 +55,7 @@ else
       #
       # NSLOOKUP
       #
-      IP=`nslookup myip.opendns.com resolver1.opendns.com 2>/dev/null | cat -v | awk '/Address:/{print $NF}' |sed 's/[^0-9\.]*//g' |egrep '[0-9]' |tail -1`
+      IP=`timeout 3 nslookup myip.opendns.com resolver1.opendns.com 2>/dev/null | cat -v | awk '/Address:/{print $NF}' |sed 's/[^0-9\.]*//g' |egrep '[0-9]' |tail -1`
       if [ $? -ne 0 ]; then
         echo "--FATAL: can't work out external/public IP address via cmd (RC=$?): nslookup myip.opendns.com resolver1.opendns.com" >&2
         exit 98
