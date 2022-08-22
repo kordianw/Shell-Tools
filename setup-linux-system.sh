@@ -884,11 +884,28 @@ function create_user()
     ZSH=`chsh -l 2>/dev/null | grep zsh`
     [ -z "$ZSH" ] && ZSH=`which zsh 2>/dev/null`
     [ "$ZSH" = "/usr/bin/zsh" -a -x "/bin/zsh" ] && ZSH="/bin/zsh"
+
+    # only change the user's shell to ZSH:
+    # - if ZSH is installed
+    # - we can find the .zshrc to give them
     if [ -x /bin/zsh -o -x /ur/bin/zsh ]; then
-      echo "*** setting \`$ZSH' as shell for user $USER"
-      $SUDO chsh -s $ZSH $USER
+      ZSHRC="./Config-Files/.zshrc"
+      [ ! -r $ZSHRC -a -r "./src/Config-Files/.zshrc" ] && ZSHRC="./src/Config-Files/.zshrc"
+      [ ! -r $ZSHRC -a -r "./playground/Config-Files/.zshrc" ] && ZSHRC="./playground/Config-Files/.zshrc"
+      [ ! -r $ZSHRC -a -r "~/src/Config-Files/.zshrc" ] && ZSHRC="~/src/Config-Files/.zshrc"
+      [ ! -r $ZSHRC -a -r "~/playground/Config-Files/.zshrc" ] && ZSHRC="~/playground/Config-Files/.zshrc"
+      cp -vpf "$ZSHRC" ~$USER/.zshrc || exit 1
+      chown -v $USER ~$USER/.zshrc || exit 1
+
+      if [ -r ~$USER/.zshrc ]; then
+        echo "*** setting \`$ZSH' as shell for user $USER"
+        $SUDO chsh -s $ZSH $USER
+      else
+        echo "--WARN: no-USER-ZSHRC: were not able to change shell for user $USER to ZSH, run:"
+        echo "$ $0 -ZSH"
+      fi
     else
-      echo "--WARN: were not able to change shell for user $USER to ZSH, run:"
+      echo "--WARN: no-ZSH-INSTALLED: were not able to change shell for user $USER to ZSH, run:"
       echo "$ $0 -ZSH"
     fi
 
