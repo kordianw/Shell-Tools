@@ -86,6 +86,15 @@ else
     fi
   fi
 
+  # alternative method of getting the IP
+  if [ -z "$IP" ]; then
+    if which curl >&/dev/null; then
+      IP=""
+      [ -z "$IP" ] && IP=`curl -sSL http://ipecho.net/plain 2>/dev/null`
+      [ -z "$IP" ] && IP=`curl -sSL http: ifconfig.me 2>/dev/null`
+    fi
+  fi
+
   # got the IP!
   if [ -n "$IP" ]; then
     if ! echo "$IP" | grep -q '[0-9][0-9]'; then
