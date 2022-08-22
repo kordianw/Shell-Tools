@@ -34,7 +34,7 @@ if [ "$1" = "-ssd" ]; then
   # - if SSD, cmd will take around 1 sec
   # - if HDD, cmd will take around 10 sec
 
-  DF_CMD=`df -Th -x tmpfs -x devtmpfs -x nfs -x smbfs -x cifs -x squashfs -x fuse.sshfs`
+  DF_CMD=`df -Th -x tmpfs -x devtmpfs -x nfs -x smbfs -x cifs -x squashfs -x fuse.sshfs | egrep -v '/boot/efi'`
 
   echo "* df output:"
   echo "$DF_CMD"
@@ -91,6 +91,8 @@ fi
 # show HW information if available
 if which hw-info.sh >&/dev/null; then
   hw-info.sh
+elif [ -x ~/src/HW-Info/hw-info.sh ]; then
+  ~/src/HW-Info/hw-info.sh
 fi
 
 # sysbench: old-style of new style?
