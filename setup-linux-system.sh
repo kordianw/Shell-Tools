@@ -594,6 +594,10 @@ function install_brew()
     echo "$PROG: installing \`brew.sh' - enter sudo password:"
     sleep 1
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+    
+    if [ $? -ne 0 ]; then
+      echo "--FATAL: issue installing brew!" >&2
+    fi
   fi
 
   INSTALL_CMD="brew install"
@@ -903,8 +907,12 @@ function create_user()
       chown -v $USER /home/$USER/.zshrc || exit 1
 
       if [ -r /home/$USER/.zshrc ]; then
-        echo "*** setting \`$ZSH' as shell for user $USER"
-        $SUDO chsh -s $ZSH $USER
+        if egrep -q "$USER:.*zsh" /etc/passwd; then
+          echo "*** user << $USER >> arlaedy has ZSH as shell"
+        else
+          echo "*** setting \`$ZSH' as shell for user $USER"
+          $SUDO chsh -s $ZSH $USER
+        fi
       else
         echo "--WARN: no-USER-ZSHRC: were not able to change shell for user $USER to ZSH, run:"
         echo "$ $0 -ZSH"
