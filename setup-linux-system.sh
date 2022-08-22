@@ -441,12 +441,24 @@ function enable_zsh()
       # install
       echo "$PROG: installing \`zsh'..." >&2
       $SUDO $PKG install -qq -y zsh
+
+      # try again after doing an update
+      if [ $? -ne 0 -a "$PKG" = "apt" ]; then
+        $SUDO apt-get update
+        $SUDO $PKG install -qq -y zsh
+      fi
     else
       sudo -n whoami >&/dev/null
       if [ $? -eq 0 ]; then
         # install
         echo "$PROG: installing \`zsh'..." >&2
         $SUDO $PKG install -qq -y zsh
+
+        # try again after doing an update
+        if [ $? -ne 0 -a "$PKG" = "apt" ]; then
+          $SUDO apt-get update
+          $SUDO $PKG install -qq -y zsh
+        fi
       else
         echo -e "$PROG: The zsh SHELL is not available/installed & can't be auto-installed: run\n# $SUDO $PKG install zsh" >&2
         echo "-> error: can't get sudo working non-interactively:" >&2
@@ -481,7 +493,7 @@ function enable_zsh()
 
   # don't change shell for `root'
   if [ "$USER" = "root" ]; then
-    echo "--FATAL: handled ZSH installation check, but don't recommend changing shell for \`root'!"
+    echo "--FATAL: handled ZSH installation, but don't recommend changing shell for \`root'!"
     exit 99
   fi
 
@@ -858,11 +870,15 @@ function create_user()
 
   USER="$1"
   if [ -n "$USER" ]; then
-    echo "*** adding user: $USER"
-    $SUDO useradd -m $USER
+    if grep -q "$USER:" /etc/passwd; then
+      echo "*** user << $USER >> already exists ..."
+    else
+      echo "*** adding user: $USER"
+      $SUDO useradd -m $USER
 
-    echo "*** setting passwd for $USER"
-    $SUDO passwd $USER
+      echo "*** setting passwd for $USER"
+      $SUDO passwd $USER
+    fi
 
     # set shell
     ZSH=`chsh -l 2>/dev/null | grep zsh`
@@ -877,7 +893,7 @@ function create_user()
     fi
 
     echo "*** su to & setup the user: $USER"
-    echo "- eg: can run: wget http://XXX.com/dl.sh && bash dl.sh"
+    echo "- eg: run: <<  wget http://<<XXX>>.com/dl.sh && bash dl.sh >>"
     echo
     echo "+ $SUDO su - $USER"
     exec $SUDO su - $USER
@@ -904,7 +920,7 @@ Usage: $PROG <options> [param]
         -GENPKG general install apt/yum pkgs: on Linux (Ubuntu, Mint, Debian etc) [apt/yum]
         -ZSH    enable the \`zsh' shell via \`chsh'
 
-        -USER <user> create a user (run as root) [interactive]
+        -USER <user> add/create a user (run as root) [interactive]
 
         -SSH1   install/enable SSH server via apt (for SSH-ing in) * useful on Mint Linux
         -SSH0   disable & completely remove SSH server (via apt)
