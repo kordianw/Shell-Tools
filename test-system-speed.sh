@@ -142,6 +142,7 @@ if [ "$1" = "-io" -o -z "$1" ]; then
   if echo "$OSTYPE" |grep -q darwin; then
     dd if=/dev/zero of=./tempfile bs=1048576 count=$SIZE_TO_TEST_COUNT conv=notrunc 2>&1 |egrep -v 'records in|records out' | sed "s/$/		--> dd disk $SIZE_TO_TEST write speed/"
   else
+    # dd if=/dev/zero of=/tmp/test bs=64k count=16k conv=fdatasync
     dd if=/dev/zero of=./tempfile bs=1M count=$SIZE_TO_TEST_COUNT conv=fdatasync,notrunc 2>&1 |egrep -v 'records in|records out' | sed "s/$/		--> dd disk $SIZE_TO_TEST write speed/"
   fi
 
@@ -164,6 +165,7 @@ if [ "$1" = "-hdparm" ]; then
   DEV=`lsblk 2>/dev/null |awk '/ \/$/{print $1}' | sed 's/[abcdp][0-9]$//g; s/[^a-z0-9]//g'`
   [ -z "$DEV" ] && { echo "can't work out dev to test..." >&2; exit 1; }
  
+  echo "* running: sudo hdparm -tT /dev/$DEV"
   sudo hdparm -tT /dev/$DEV |tail -1
 fi
 
