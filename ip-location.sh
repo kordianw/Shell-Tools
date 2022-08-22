@@ -31,14 +31,14 @@ else
       # - whoami.akamai.net
       # - google
       #
-      IP=`dig +short myip.opendns.com @resolver1.opendns.com.`
+      IP=`dig +short myip.opendns.com @resolver1.opendns.com. | egrep '[0-9]'`
       if [ $? -ne 0 ]; then
         echo "--WARN: can't work out external/public IP address via cmd (RC=$?): dig +short myip.opendns.com @resolver1.opendns.com." >&2
       fi
 
       # 2nd attempt via another provider
       if [ -z "$IP" ]; then
-        IP=`dig +short whoami.akamai.net @ns1-1.akamaitech.net.`
+        IP=`dig +short whoami.akamai.net @ns1-1.akamaitech.net. | egrep '[0-9]'`
         if [ $? -ne 0 ]; then
           echo "--WARN: can't work out external/public IP address via cmd (RC=$?): dig +short whoami.akamai.net." >&2
         fi
@@ -46,7 +46,7 @@ else
 
       # 3rd attempt via another provider
       if [ -z "$IP" ]; then
-        IP=`dig txt o-o.myaddr.test.l.google.com @ns1.google.com. +short`
+        IP=`dig txt o-o.myaddr.test.l.google.com @ns1.google.com. +short | egrep '[0-9]'`
         if [ $? -ne 0 ]; then
           echo "--WARN: can't work out external/public IP address via cmd (RC=$?): dig txt o-o.myaddr.test.l.google.com. @ns1.google.com +short.akamai.net" >&2
         fi
@@ -55,7 +55,7 @@ else
       #
       # NSLOOKUP
       #
-      IP=`nslookup myip.opendns.com resolver1.opendns.com 2>/dev/null | cat -v | awk '/Address:/{print $NF}' | sed 's/[^0-9\.]*//g' |tail -1`
+      IP=`nslookup myip.opendns.com resolver1.opendns.com 2>/dev/null | cat -v | awk '/Address:/{print $NF}' |sed 's/[^0-9\.]*//g' |egrep '[0-9]' |tail -1`
       if [ $? -ne 0 ]; then
         echo "--FATAL: can't work out external/public IP address via cmd (RC=$?): nslookup myip.opendns.com resolver1.opendns.com" >&2
         exit 98
@@ -145,7 +145,17 @@ else
       echo "--warn: skipping WTFMYISP.COM & IPAPI.CO as these can only be used on CURRENT IP, rather than PARAM IP!" >&2
     fi
   else
-    echo "--FATAL: couldn't work out the external IP address!" >&2
+    echo "--WARN: couldn't work out the external IP address!" >&2
+
+    echo "--BACKUP MODE: will try to geo-code using \`curl' and external websites:" >&2
+
+    echo && echo "--> WTFMYISP.COM:"
+    curl -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g'
+
+    echo && echo "--> IPAPI.CO:"
+    curl -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": '
+
+    # partial successs
     exit 1
   fi
 fi
