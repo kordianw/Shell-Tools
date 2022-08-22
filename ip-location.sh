@@ -33,25 +33,22 @@ else
       #
       IP=`dig +short myip.opendns.com @resolver1.opendns.com.`
       if [ $? -ne 0 ]; then
-        echo "--FATAL: can't work out external/public IP address via cmd (RC=$?): dig +short myip.opendns.com @resolver1.opendns.com." >&2
-        exit 95
+        echo "--WARN: can't work out external/public IP address via cmd (RC=$?): dig +short myip.opendns.com @resolver1.opendns.com." >&2
       fi
 
       # 2nd attempt via another provider
       if [ -z "$IP" ]; then
-        IP=`dig +short whoami.akamai.net @ns1-1.akamaitech.net`
+        IP=`dig +short whoami.akamai.net @ns1-1.akamaitech.net.`
         if [ $? -ne 0 ]; then
-          echo "--FATAL: can't work out external/public IP address via cmd (RC=$?): dig +short whoami.akamai.net." >&2
-          exit 96
+          echo "--WARN: can't work out external/public IP address via cmd (RC=$?): dig +short whoami.akamai.net." >&2
         fi
       fi
 
       # 3rd attempt via another provider
       if [ -z "$IP" ]; then
-        IP=`dig txt o-o.myaddr.test.l.google.com @ns1.google.com +short`
+        IP=`dig txt o-o.myaddr.test.l.google.com @ns1.google.com. +short`
         if [ $? -ne 0 ]; then
-          echo "--FATAL: can't work out external/public IP address via cmd (RC=$?): dig txt o-o.myaddr.test.l.google.com @ns1.google.com +short.akamai.net" >&2
-          exit 97
+          echo "--WARN: can't work out external/public IP address via cmd (RC=$?): dig txt o-o.myaddr.test.l.google.com. @ns1.google.com +short.akamai.net" >&2
         fi
       fi
     elif which nslookup >&/dev/null; then
