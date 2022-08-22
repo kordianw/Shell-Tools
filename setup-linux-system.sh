@@ -203,9 +203,14 @@ function install_general_packages
   $INSTALL_CMD libxml-sax-perl     # for XML parsing (faster)
   $INSTALL_CMD libxml-parser-perl  # for XML parsing (faster)
 
-  # GENPKG: additional python modules
+  # GENPKG: PYTHON 3
+  $INSTALL_CMD python3
+  $INSTALL_CMD python3-pip
+
+  # GENPKG: additional PYTHON modules
   #$INSTALL_CMD pylint
   #$INSTALL_CMD python-flask
+  #$INSTALL_CMD python-boto
 
   # GENPKG: system utils (may require cron-entries)
   #$INSTALL_CMD sysstat       # install stat utils such as sar, iostat, etc
@@ -662,9 +667,14 @@ function install_pi()
   # PI: additional perl modules
   $INSTALL_CMD libjson-perl  # JSON.pm
 
+  # PI: PYTHON 3
+  #$INSTALL_CMD python3
+  #$INSTALL_CMD python3-pip
+
   # PI: additional python modules
   #$INSTALL_CMD pylint
   #$INSTALL_CMD python-flask
+  #$INSTALL_CMD python-boto
 
   # PI: system utils (may require cron-entries)
   $INSTALL_CMD apt-file      # search for files within Debian packages (CLI)
@@ -751,6 +761,8 @@ function install_rhel()
   sudo yum -y install perl
   sudo yum -y install python
   sudo yum -y install python-pip
+  sudo yum -y install python3
+  sudo yum -y install python3-pip
   sudo yum -y install git                    # GIT/GITHUB access
   sudo yum -y install jq                     # lightweight and flexible command-line JSON processor
   sudo yum -y install strace                 # debug running processes
@@ -844,18 +856,31 @@ function create_user()
   setup;
   check_root;
 
-  if [ -n "$1" ]; then
-    echo "*** adding user: $1"
-    $SUDO useradd -m $1
+  USER="$1"
+  if [ -n "$USER" ]; then
+    echo "*** adding user: $USER"
+    $SUDO useradd -m $USER
 
-    echo "*** setting passwd for $1"
-    $SUDO passwd $1
+    echo "*** setting passwd for $USER"
+    $SUDO passwd $USER
 
-    echo "*** su to & setup the user: $1"
+    # set shell
+    ZSH=`chsh -l 2>/dev/null | grep zsh`
+    [ -z "$ZSH" ] && ZSH=`which zsh 2>/dev/null`
+    [ "$ZSH" = "/usr/bin/zsh" -a -x "/bin/zsh" ] && ZSH="/bin/zsh"
+    if [ -x /bin/zsh -o -x /ur/bin/zsh ]; then
+      echo "*** setting \`$ZSH' as shell for user $USER"
+      $SUDO chsh -s $ZSH $USER
+    else
+      echo "--WARN: were not able to change shell for user $USER to ZSH, run:"
+      echo "$ $0 -ZSH"
+    fi
+
+    echo "*** su to & setup the user: $USER"
     echo "- eg: can run: wget http://XXX.com/dl.sh && bash dl.sh"
     echo
-    echo "+ $SUDO su - $1"
-    exec $SUDO su - $1
+    echo "+ $SUDO su - $USER"
+    exec $SUDO su - $USER
     exit $?
   else
     echo "--FATAL: need to supply a user's name to create!" >&2
