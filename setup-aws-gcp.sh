@@ -75,9 +75,12 @@ function connect_gcp_cloudshell()
     exit 1
   fi
 
+  # force-request_flag
+  FORCE_REQUEST="$2"
+
   # is it alive?
   echo -ne "* [`date +%H:%M`] check if \`$GCP_DNS_ALIAS' (:6000) is alive... " 1>&2
-  if timeout 1 bash -c "cat < /dev/null > /dev/tcp/$GCP_DNS_ALIAS/6000"; then
+  if [ -z "$FORCE_REQUEST" ] && timeout 1 bash -c "cat < /dev/null > /dev/tcp/$GCP_DNS_ALIAS/6000"; then
     echo "yes, connecting!" 1>&2
     START_TIME=`date "+%s"`
 
@@ -93,6 +96,9 @@ function connect_gcp_cloudshell()
       echo -ne "* [`date +%H:%M`] alive, but can't connect - invalidating \"$GCP_DNS_ALIAS\" Dynamic DNS IP ... " 1>&2
       eval $(parse_yaml "google-domains-dyndns-secrets.yaml" "conf_")
       curl -fsSL "https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=1.1.1.1" && echo
+
+      # give useful info that it can be force-requested
+      echo && echo "NB: run: \`$0 -cloudshell $GCP_DNS_ALIAS -force_request' to request new GCP Cloud Shell." 1>&2
       exit 1
     elif [ $RC -ne 0 -a $RC -ne 14 ]; then
       echo "--> error: \`ssh $GCP_DNS_ALIAS' returned non-zero exit code RC=$RC"
@@ -649,7 +655,7 @@ elif [ "$1" = "-c9_setup" ]; then
 elif [ "$1" = "-gcp_setup" ]; then
   setup_gcp_shell_VM;
 elif [ "$1" = "-cloudshell" ]; then
-  connect_gcp_cloudshell $2;
+  connect_gcp_cloudshell $2 $3;
 elif [ "$1" = "-sw" ]; then
   install_sw;
 elif [ "$1" = "-cloud_bkup" ]; then
