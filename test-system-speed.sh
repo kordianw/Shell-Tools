@@ -34,14 +34,14 @@ if [ "$1" = "-ssd" ]; then
   # - if SSD, cmd will take around 1 sec
   # - if HDD, cmd will take around 10 sec
 
-  DF_CMD=`df -lTh -x tmpfs -x devtmpfs -x overlay -x squashfs -x fuse.sshfs | egrep -v '/boot/efi'`
-
-  echo "* df output:"
-  echo "$DF_CMD"
-
-  echo && echo "* timing 1500 disk reads on your disks ..."
+  echo "* $PROG: timing 1500 disk reads on your disks ..."
   echo "  - if it takes 1-2 secs to read disk, most likely it's an SSD"
   echo "  - if it takes >5 secss to read disk, most likely it's an HDD"
+
+  DF_CMD=`df -lTh -x tmpfs -x devtmpfs -x overlay -x squashfs -x fuse.sshfs | egrep -v '/boot/efi'`
+
+  echo && echo "* df output:"
+  echo "$DF_CMD"
 
   if ! which lsblk >&/dev/null; then
     echo "--FATAL: you don't have \`lsblk' installed!" >&2
