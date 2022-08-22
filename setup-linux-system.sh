@@ -1,14 +1,10 @@
 #!/bin/bash
 #
 # Script to setup a Linux system, eg: install additional packages on a Linux machine
-# - works on RHEL, Ubuntu, Debian (incl. Mint) and Raspbian
+# - works on Ubuntu, Debian (incl. Mint), RHEL and Raspbian
 #
-# To create a separate user:
-# # sudo useradd -m kordy
-# # sudo passwd kordy
-# # sudo su - kordy
-#
-# HW-INFO: # curl -s https://raw.githubusercontent.com/kordianw/HW-Info/master/hw-info.sh | bash
+# SETUP:   $ wget http://kordy.com/dl.sh && bash dl.sh
+# HW-INFO: $ curl -s https://raw.githubusercontent.com/kordianw/HW-Info/master/hw-info.sh | bash
 #
 # * By Kordian W. <code [at] kordy.com>, Nov 2017
 #
@@ -478,6 +474,12 @@ function enable_zsh()
     echo "$PROG: the shell \`$ZSH' - is not in /etc/shells - this means can't change!" >&2; exit 6
   fi
 
+  # don't change shell for `root'
+  if [ "$USER" = "root" ]; then
+    echo "--FATAL: handled ZSH installation check, but don't recommend changing shell for \`root'!"
+    exit 99
+  fi
+
   # make sure we have ZSHRC installed
   if [ ! -r $HOME/.zshrc ]; then
     echo "$PROG: create a \`$HOME/.zshrc' file before changing the shell!" >&2; exit 7
@@ -492,7 +494,7 @@ function enable_zsh()
     OS=`awk -F= '/^NAME=/{print $NF}' /etc/os-release`
 
     # Amazon Linux -> installs csh
-    if echo $OS | grep -q "Amazon Linux"; then
+    if echo "$OS" | grep -q "Amazon Linux"; then
       $SUDO yum -y install util-linux-user
     fi
   fi
@@ -837,6 +839,30 @@ function install_rhel()
   fi
 }
 
+function create_user()
+{
+  setup;
+  check_root;
+
+  if [ -n "$1" ]; then
+    echo "*** adding user: $1"
+    $SUDO useradd -m $1
+
+    echo "*** setting passwd for $1"
+    $SUDO passwd $1
+
+    echo "*** su to & setup the user: $1"
+    echo "- eg: can run: wget http://XXX.com/dl.sh && bash dl.sh"
+    echo
+    echo "+ $SUDO su - $1"
+    exec $SUDO su - $1
+    exit $?
+  else
+    echo "--FATAL: need to supply a user's name to create!" >&2
+    exit 99
+  fi
+}
+
 #
 # MAIN
 #
@@ -853,6 +879,8 @@ Usage: $PROG <options> [param]
         -GENPKG general install apt/yum pkgs: on Linux (Ubuntu, Mint, Debian etc) [apt/yum]
         -ZSH    enable the \`zsh' shell via \`chsh'
 
+        -USER <user> create a user (run as root) [interactive]
+
         -SSH1   install/enable SSH server via apt (for SSH-ing in) * useful on Mint Linux
         -SSH0   disable & completely remove SSH server (via apt)
 
@@ -868,6 +896,8 @@ elif [ "$1" = "-TZ" ]; then
   change_timezone;
 elif [ "$1" = "-ZSH" ]; then
   enable_zsh;
+elif [ "$1" = "-USER" ]; then
+  create_user $2;
 elif [ "$1" = "-SSH1" ]; then
   enable_ssh;
 elif [ "$1" = "-SSH0" ]; then
