@@ -34,21 +34,35 @@ if [ "$1" = "-ssd" ]; then
   # - if SSD, cmd will take around 1 sec
   # - if HDD, cmd will take around 10 sec
 
-  DF_CMD=`df -Th -x tmpfs -x devtmpfs -x nfs -x smbfs -x cifs -x squashfs -x fuse.sshfs | egrep -v '/boot/efi'`
+  DF_CMD=`df -lTh -x tmpfs -x devtmpfs -x overlay -x squashfs -x fuse.sshfs | egrep -v '/boot/efi'`
 
   echo "* df output:"
   echo "$DF_CMD"
-  DEV=`echo "$DF_CMD" |head -2 |tail -1 |awk '{print $1}' |sed 's/[0-9]$//'`
 
-  echo && echo "* timing 1000 disk reads on: << $DEV >> ..."
-  echo "  - if it takes 1-2 secs, most likely it's an SSD"
-  echo "  - if it takes >5 secs, most likely it's an HDD"
+  echo && echo "* timing 1500 disk reads on your disks ..."
+  echo "  - if it takes 1-2 secs to read disk, most likely it's an SSD"
+  echo "  - if it takes >5 secss to read disk, most likely it's an HDD"
+
+  if ! which lsblk >&/dev/null; then
+    echo "--FATAL: you don't have \`lsblk' installed!" >&2
+    echo "run: apt-get install util-linux" >&2
+    exit 99
+  fi
+
+  echo && echo "* lsblk output:"
+  lsblk | grep "/"
+  lsblk -d -e 1,7 -o NAME,MAJ:MIN,TYPE,FSTYPE,SIZE,RO,VENDOR,MODEL,ROTA,MOUNTPOINT,GROUP,MODE
 
   ##########################################################
 
-  if [ -n "$DEV" ]; then
-    time for i in `seq 1 1000`; do
-      dd bs=4k if=$DEV count=1 skip=$(( $RANDOM * 128 )) >/dev/null 2>&1;
+  if [ -n "$DF_CMD" ]; then
+    for a in `lsblk -d -e 1,7 -o NAME | grep -v NAME`; do
+      DEV="/dev/$a"
+      echo && echo "**** DEV << $DEV >>"
+      time for i in `seq 1 1500`; do
+        dd bs=4k if=$DEV count=1 skip=$(( $RANDOM * 128 )) >/dev/null 2>&1;
+      done | grep real
+      sleep 3
     done
   else
     echo "--FATAL: can't work out which dev to test on!" >&2
