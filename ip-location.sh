@@ -27,12 +27,22 @@ else
     if which dig >&/dev/null; then
       #
       # DIG
+      # - myip.opendns.com
+      # - whoami.akamai.net
       #
-      #IP=`dig +short whoami.akamai.net.`
       IP=`dig +short myip.opendns.com @resolver1.opendns.com.`
       if [ $? -ne 0 ]; then
         echo "--FATAL: can't work out external/public IP address via cmd (RC=$?): dig +short myip.opendns.com @resolver1.opendns.com." >&2
         exit 97
+      fi
+
+      # 2nd attempt via another provider
+      if [ -z "$IP" ]; then
+        IP=`dig +short whoami.akamai.net.`
+        if [ $? -ne 0 ]; then
+          echo "--FATAL: can't work out external/public IP address via cmd (RC=$?): dig +short whoami.akamai.net." >&2
+          exit 97
+        fi
       fi
     elif which nslookup >&/dev/null; then
       #
