@@ -894,10 +894,15 @@ function create_user()
       [ ! -r $ZSHRC -a -r "./playground/Config-Files/.zshrc" ] && ZSHRC="./playground/Config-Files/.zshrc"
       [ ! -r $ZSHRC -a -r "~/src/Config-Files/.zshrc" ] && ZSHRC="~/src/Config-Files/.zshrc"
       [ ! -r $ZSHRC -a -r "~/playground/Config-Files/.zshrc" ] && ZSHRC="~/playground/Config-Files/.zshrc"
-      cp -vpf "$ZSHRC" ~$USER/.zshrc || exit 1
-      chown -v $USER ~$USER/.zshrc || exit 1
 
-      if [ -r ~$USER/.zshrc ]; then
+      if [ ! -d /home/$USER ]; then
+        echo "--FATAL: /home/$USER doesn't exist?!" >&2
+        exit 99
+      fi
+      cp -vpf "$ZSHRC" /home/$USER || exit 1
+      chown -v $USER /home/$USER/.zshrc || exit 1
+
+      if [ -r /home/$USER/.zshrc ]; then
         echo "*** setting \`$ZSH' as shell for user $USER"
         $SUDO chsh -s $ZSH $USER
       else
