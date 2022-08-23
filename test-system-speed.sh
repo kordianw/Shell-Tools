@@ -139,8 +139,11 @@ if [ "$1" = "-cpu" -o -z "$1" ]; then
   if [ -z "$THREADS" ]; then
     THREADS=`sysctl hw.ncpu 2>/dev/null | awk '{print $NF}'`
     if [ -z "$THREADS" ]; then
-      echo "$PROG: --warn: weren't able to work out number of threads via \`lscpu' or \`sysctl hw.ncpu', setting to single-core test only..." >&2
-      THREADS=1
+      THREADS=`cat /proc/cpuinfo |grep -c "^processor.*: [0-9]"`
+      if [ -z "$THREADS" ]; then
+        echo "$PROG: --warn: weren't able to work out number of threads via \`lscpu' or \`sysctl hw.ncpu', setting to single-core test only..." >&2
+        THREADS=1
+      fi
     fi
   fi
 
