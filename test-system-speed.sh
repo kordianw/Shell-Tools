@@ -40,7 +40,7 @@ if [ "$1" = "-ssd" ]; then
   echo "  - if it takes ~2 secs to read disk, most likely it's an SSD"
   echo "  - if it takes >5 secs to read disk, most likely it's an HDD"
 
-  DF_CMD=`df -lTh -x tmpfs -x devtmpfs -x overlay -x squashfs -x fuse.sshfs | egrep -v '/boot/efi'`
+  DF_CMD=`df -lTh -x tmpfs -x devtmpfs -x squashfs -x fuse.sshfs | egrep -v '/boot/efi'`
 
   echo && echo "* df output:"
   echo "$DF_CMD"
