@@ -61,8 +61,8 @@ else
       fi
     elif which curl >&/dev/null; then
       IP=""
-      [ -z "$IP" ] && IP=`curl -sSL http://ipecho.net/plain 2>/dev/null`
-      [ -z "$IP" ] && IP=`curl -sSL http: ifconfig.me 2>/dev/null`
+      [ -z "$IP" ] && IP=`timeout 5 curl -sSL http://ipecho.net/plain 2>/dev/null`
+      [ -z "$IP" ] && IP=`timeout 5 curl -sSL http: ifconfig.me 2>/dev/null`
     else
       echo "--ERROR: no \`dig', no \`nslookup' and no \`curl' command on `uname -n`:" >&2
       which dig 1>&2
@@ -75,8 +75,8 @@ else
   if [ -z "$IP" ]; then
     if which curl >&/dev/null; then
       IP=""
-      [ -z "$IP" ] && IP=`curl -sSL http://ipecho.net/plain 2>/dev/null`
-      [ -z "$IP" ] && IP=`curl -sSL http: ifconfig.me 2>/dev/null`
+      [ -z "$IP" ] && IP=`timeout 5 curl -sSL http://ipecho.net/plain 2>/dev/null`
+      [ -z "$IP" ] && IP=`timeout 5 curl -sSL http: ifconfig.me 2>/dev/null`
     fi
   fi
 
@@ -93,14 +93,14 @@ else
     # KEYCDN
     echo "--> KEYCDN.COM:"
     if which jq >&/dev/null; then
-      curl -sSL -H "User-Agent: keycdn-tools:https://google.com" http://tools.keycdn.com/geo.json?host=$IP | jq . | egrep -v '^{|^}|status"|description"|data"|geo"|host":|ip":|asn":|code":|latitude":|longitude":|metro_code"|datetime":|continent_name":|^ *}'
+      timeout 5 curl -sSL -H "User-Agent: keycdn-tools:https://google.com" http://tools.keycdn.com/geo.json?host=$IP | jq . | egrep -v '^{|^}|status"|description"|data"|geo"|host":|ip":|asn":|code":|latitude":|longitude":|metro_code"|datetime":|continent_name":|^ *}'
     else
-      curl -w "\n" -sSL -H "User-Agent: keycdn-tools:https://google.com" http://tools.keycdn.com/geo.json?host=$IP
+      timeout 5 curl -w "\n" -sSL -H "User-Agent: keycdn-tools:https://google.com" http://tools.keycdn.com/geo.json?host=$IP
     fi
 
     # IPINFO
     echo && echo "--> IPINFO.IO:"
-    curl -sSL http://ipinfo.io/$IP |egrep -v '^{|^}|"ip":|"readme":|"loc":'
+    timeout 5 curl -sSL http://ipinfo.io/$IP |egrep -v '^{|^}|"ip":|"readme":|"loc":'
 
     # IPLOCATION.NET
     # - via links/lynx/w3m
@@ -118,36 +118,71 @@ else
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/w3m ] && CLI_BROWSER=~/bin/w3m
 
     if [ -n "$CLI_BROWSER" -a -x "$CLI_BROWSER" ]; then
+      # ignore invalid SSL certs with links
+      if echo "$CLI_BROWSER" | grep -q links; then
+        CLI_BROWSER="$CLI_BROWSER -ssl.certificates 0"
+      fi
+
       echo && echo "--> IPLOCATION.NET:"
-      $CLI_BROWSER -dump http://iplocation.net | egrep 'IP Location .*Details|Host Name |ISP  '
+      timeout 5 $CLI_BROWSER -dump http://iplocation.net | egrep 'IP Location .*Details|Host Name |ISP  '
 
       echo && echo "--> IPLOCATION.COM:"
-      $CLI_BROWSER -dump https://iplocation.com | egrep 'Country  |Region  |City  |Organization  '
+      timeout 5 $CLI_BROWSER -dump https://iplocation.com | egrep 'Country  |Region  |City  |Organization  '
     else
       echo && echo "--warn: skipping IPLOCATION.NET/COM as `uname -n 2>/dev/null` doesn't have \`links', \`lynx' or \`w3m' text-only browser installed!" >&2
     fi
     
-    # WTFMYISP: bonus category
+    # WTFMYIP: bonus category
     # - when getting current IP (no params)
     if [ -z "$1" ]; then
-      echo && echo "--> WTFMYISP.COM:"
-      curl -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g'
+      echo && echo "--> WTFMYIP.COM:"
+      timeout 5 curl -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g'
 
       echo && echo "--> IPAPI.CO:"
-      curl -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": '
+      timeout 5 curl -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": '
     else
-      echo "--warn: skipping WTFMYISP.COM & IPAPI.CO as these can only be used on CURRENT IP, rather than PARAM IP!" >&2
+      echo "--warn: skipping WTFMYIP.COM & IPAPI.CO as these can only be used on CURRENT IP, rather than PARAM IP!" >&2
     fi
   else
     echo "--WARN: couldn't work out the external IP address!" >&2
 
-    echo "--BACKUP MODE: will try to geo-code using \`curl' and external websites:" >&2
+    echo && echo "--BACKUP MODE: will try to geo-code using \`curl' and external websites:" >&2
 
-    echo && echo "--> WTFMYISP.COM:"
-    curl -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g'
+    echo && echo "--> WTFISMYIP.COM:"
+    timeout 5 curl -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g'
 
     echo && echo "--> IPAPI.CO:"
-    curl -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": '
+    timeout 5 curl -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": '
+
+    # IPLOCATION.COM/NET
+    # - via links/lynx/w3m
+    CLI_BROWSER=`which links 2>/dev/null`       # use `links' by default as the text-only browser
+    [ ! -x "$CLI_BROWSER" -a -x ~/bin/links ] && CLI_BROWSER=~/bin/links
+    [ ! -x "$CLI_BROWSER" -a -x ~/bin/links-2.12 ] && CLI_BROWSER=~/bin/links-2.12
+
+    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=`which lynx 2>/dev/null`
+    [ ! -x "$CLI_BROWSER" -a -x ~/bin/lynx ] && CLI_BROWSER=~/bin/lynx
+
+    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=`which lynxlet 2>/dev/null`
+    [ ! -x "$CLI_BROWSER" -a -x ~/bin/lynxlet ] && CLI_BROWSER=~/bin/lynxlet
+
+    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=`which w3m 2>/dev/null`
+    [ ! -x "$CLI_BROWSER" -a -x ~/bin/w3m ] && CLI_BROWSER=~/bin/w3m
+
+    if [ -n "$CLI_BROWSER" -a -x "$CLI_BROWSER" ]; then
+      # ignore invalid SSL certs with links
+      if echo "$CLI_BROWSER" | grep -q links; then
+        CLI_BROWSER="$CLI_BROWSER -ssl.certificates 0"
+      fi
+
+      echo && echo "--> IPLOCATION.NET:"
+      timeout 5 $CLI_BROWSER -dump http://iplocation.net | egrep 'IP Location .*Details|Host Name |ISP  '
+
+      echo && echo "--> IPLOCATION.COM:"
+      timeout 5 $CLI_BROWSER -dump https://iplocation.com | egrep 'Country  |Region  |City  |Organization  '
+    else
+      echo && echo "--warn: skipping IPLOCATION.NET/COM as `uname -n 2>/dev/null` doesn't have \`links', \`lynx' or \`w3m' text-only browser installed!" >&2
+    fi
 
     # partial successs
     exit 1
