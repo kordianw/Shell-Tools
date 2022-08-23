@@ -285,7 +285,7 @@ function change_timezone()
   fi
 
   # check for /etc/timezone, unless on Fedora
-  if [ -s /etc/timezone ]; then
+  if [ ! -s /etc/timezone ]; then
     echo "$PROG: seems like RHEL/Fedora Linux, which has no /etc/timezone, skipping check..." >&2
   else
     # this system has no /etc/timezone - not sure if this process would work
@@ -506,7 +506,7 @@ function enable_zsh()
 
   # don't change shell for `root'
   if [ "$USER" = "root" ]; then
-    echo "--FATAL: handled ZSH installation, but don't recommend changing shell for \`root'!"
+    echo "--WARN: handled ZSH installation, but don't recommend changing shell for \`root', ENDING script!"
     exit 99
   fi
 
@@ -523,9 +523,11 @@ function enable_zsh()
     check_root
     OS=`awk -F= '/^NAME=/{print $NF}' /etc/os-release`
 
-    # Amazon Linux -> installs csh
-    if echo "$OS" | grep -q "Amazon Linux"; then
+    # various Linux -> installs csh
+    if echo "$OS" | egrep -q "Amazon Linux|Fedora"; then
       $SUDO yum -y install util-linux-user
+    elif echo "$OS" | grep -q "CentOS"; then
+      $SUDO yum -y install util-linux-ng
     fi
   fi
 
@@ -928,8 +930,26 @@ function create_user()
         if egrep -q "$USER:.*zsh" /etc/passwd; then
           echo "*** user << $USER >> arlaedy has ZSH as shell"
         else
-          echo "*** setting \`$ZSH' as shell for user $USER"
-          $SUDO chsh -s $ZSH $USER
+          # is chsh available? (not available on Amazon Linux)
+          if ! which chsh >&/dev/null; then
+            echo "**** \`chsh' is not available on this system ... trying to install" 1>&2
+            check_root
+            OS=`awk -F= '/^NAME=/{print $NF}' /etc/os-release`
+
+            # various Linux -> installs csh
+            if echo "$OS" | egrep -q "Amazon Linux|Fedora"; then
+              $SUDO yum -y install util-linux-user
+            elif echo "$OS" | grep -q "CentOS"; then
+              $SUDO yum -y install util-linux-ng
+            fi
+          fi
+
+          if which chsh >&/dev/null; then
+            echo "*** setting \`$ZSH' as shell for user $USER"
+            $SUDO chsh -s $ZSH $USER
+          else
+            echo "*** no ChSH on this system!" >&2
+          fi
         fi
       else
         echo "--WARN: no-USER-ZSHRC: were not able to change shell for user $USER to ZSH, run:"
