@@ -519,8 +519,13 @@ function enable_zsh()
   #
   # EXEC
   #
-  set -x
+  echo "+ $SUDO chsh -s $ZSH $USER"
   $SUDO chsh -s $ZSH $USER
+
+  if [ $? -ne 0 ]; then
+    echo "+ chsh -s $ZSH"
+    chsh -s $ZSH
+  fi
 }
 
 function enable_ssh()
