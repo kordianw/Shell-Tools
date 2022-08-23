@@ -122,7 +122,7 @@ else
       $CLI_BROWSER -dump http://iplocation.net | egrep 'IP Location .*Details|Host Name |ISP  '
 
       echo && echo "--> IPLOCATION.COM:"
-      $CLI_BROWSER -dump http://iplocation.com | egrep 'Country  |Region  |City  |Organization  '
+      $CLI_BROWSER -dump https://iplocation.com | egrep 'Country  |Region  |City  |Organization  '
     else
       echo && echo "--warn: skipping IPLOCATION.NET/COM as `uname -n 2>/dev/null` doesn't have \`links', \`lynx' or \`w3m' text-only browser installed!" >&2
     fi
