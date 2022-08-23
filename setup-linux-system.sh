@@ -284,18 +284,25 @@ function change_timezone()
     echo "$PROG: the TZ \'$TZ' doesn't seem to exist?" >&2; exit 3
   fi
 
-  # this system has no /etc/timezone - not sure if this process would work
-  if [ ! -e /etc/timezone ]; then
-    echo "$PROG: this system has no \`/etc/timezone' - not sure that this process would work?" >&2; exit 2
+  # check for /etc/timezone, unless on Fedora
+  if [ -s /etc/timezone ]; then
+    echo "$PROG: seems like RHEL/Fedora Linux, which has no /etc/timezone, skipping check..." >&2
+  else
+    # this system has no /etc/timezone - not sure if this process would work
+    if [ ! -e /etc/timezone ]; then
+      echo "$PROG: this system has no \`/etc/timezone' - not sure that this process would work?" >&2; exit 2
+    fi
+
+    # not supporting certain set-ups
+    [ -L /etc/timezone ] && { echo "$PROG: not supporting linked /etc/timezone!" >&2; exit 1; }
+
+    echo "* viewing contents of current /etc/timezone:"
+    cat /etc/timezone || exit 1
   fi
 
-  # not supporting certain set-ups
-  [ -L /etc/timezone ] && { echo "$PROG: not supporting linked /etc/timezone!" >&2; exit 1; }
+  echo "* viewing contents of current /etc/timezone and /etc/localtime link:"
   [ ! -e /etc/localtime ] && { echo "$PROG: not supporting absense of /etc/localtime!" >&2; exit 1; }
   [ -L /etc/localtime ] || { echo "$PROG: not supporting non-linked /etc/localtime!" >&2; exit 1; }
-
-  echo "* viewing contents of current /etc/timezone and /etc/localtime link:"
-  cat /etc/timezone || exit 1
   ls -l /etc/localtime || exit 2
 
   # SPECIAL CASE FOR NYC/US Eastern
@@ -397,18 +404,22 @@ function change_timezone()
   elif which timedatectl >&/dev/null; then
     #
     # CHANGE
-    # - experimental
+    # - this works on RHEL or Fedora
     #
-    echo -e "\nWARN: would execute as fall-back due to dpkg-reconfigure not there:"
-    echo $SUDO timedatectl set-timezone $TZ
+    echo -e "\n* executing: \`$SUDO timedatectl set-timezone $TZ' as fall-back due to dpkg-reconfigure not there:"
+    $SUDO timedatectl set-timezone $TZ
 
   else
     echo "$PROG: no \`timedatectl' and no \`dpkg-reconfigure' binary on the current system - can't change timezone" >&2; exit 1
   fi
 
   # confirm
-  echo && echo "* viewing contents of updated /etc/timezone and /etc/localtime link:"
-  cat /etc/timezone || exit 1
+  if [ -s /etc/timezone ]; then
+    echo && echo "* viewing contents of updated /etc/timezone and /etc/localtime link:"
+    cat /etc/timezone || exit 1
+  fi
+
+  echo && echo "* viewing contents of updated /etc/localtime link:"
   ls -l /etc/localtime || exit 2
 
   if which timedatectl >&/dev/null; then
@@ -439,11 +450,12 @@ function enable_zsh()
     # not avail - can we install?
     if [ "$EUID" -eq 0 ]; then
       # install
-      echo "$PROG: installing \`zsh'..." >&2
+      echo "$PROG: installing \`zsh': $SUDO $PKG install -qq -y zsh..." >&2
       $SUDO $PKG install -qq -y zsh
 
       # try again after doing an update
       if [ $? -ne 0 -a "$PKG" = "apt" ]; then
+        echo "... trying again after doing an \`apt-get update'" >&2
         $SUDO apt-get update
         $SUDO $PKG install -qq -y zsh
       fi
@@ -451,11 +463,12 @@ function enable_zsh()
       sudo -n whoami >&/dev/null
       if [ $? -eq 0 ]; then
         # install
-        echo "$PROG: installing \`zsh'..." >&2
+        echo "$PROG: installing \`zsh': $SUDO $PKG install -qq -y zsh..." >&2
         $SUDO $PKG install -qq -y zsh
 
         # try again after doing an update
         if [ $? -ne 0 -a "$PKG" = "apt" ]; then
+          echo "... trying again after doing an \`apt-get update'" >&2
           $SUDO apt-get update
           $SUDO $PKG install -qq -y zsh
         fi
