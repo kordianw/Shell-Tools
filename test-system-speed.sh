@@ -30,13 +30,15 @@ fi
 # check SSD speed - crude way ...
 if [ "$1" = "-ssd" ]; then
 
+  COUNT=2000
+
   # check if the root drive is SSD
   # - if SSD, cmd will take around 1 sec
   # - if HDD, cmd will take around 10 sec
 
-  echo "* $PROG: timing 1500 disk reads on your disks ..."
-  echo "  - if it takes 1-2 secs to read disk, most likely it's an SSD"
-  echo "  - if it takes >5 secss to read disk, most likely it's an HDD"
+  echo "* $PROG: timing $COUNT disk reads on your disks ..."
+  echo "  - if it takes ~2 secs to read disk, most likely it's an SSD"
+  echo "  - if it takes >5 secs to read disk, most likely it's an HDD"
 
   DF_CMD=`df -lTh -x tmpfs -x devtmpfs -x overlay -x squashfs -x fuse.sshfs | egrep -v '/boot/efi'`
 
@@ -50,8 +52,15 @@ if [ "$1" = "-ssd" ]; then
   fi
 
   echo && echo "* lsblk output:"
-  lsblk | grep "/"
-  lsblk -d -e 1,7 -o NAME,MAJ:MIN,TYPE,FSTYPE,SIZE,RO,VENDOR,MODEL,ROTA,MOUNTPOINT,GROUP,MODE
+  lsblk | grep "/" |egrep -v 'loop|/boot/efi' | grep '[0-9]'
+  lsblk -d -e 1,7 -o NAME,MAJ:MIN,TYPE,FSTYPE,SIZE,RO,VENDOR,MODEL,ROTA,MOUNTPOINT,GROUP,MODE | egrep -v 'CD.ROM'
+
+  # do we need sudo?
+  if [ "$EUID" -ne 0 ]; then
+    SUDO="sudo"
+  else
+    SUDO=""
+  fi
 
   ##########################################################
 
@@ -59,9 +68,9 @@ if [ "$1" = "-ssd" ]; then
     for a in `lsblk -d -e 1,7 -o NAME | grep -v NAME`; do
       DEV="/dev/$a"
       echo && echo "**** DEV << $DEV >>"
-      time for i in `seq 1 1500`; do
-        dd bs=4k if=$DEV count=1 skip=$(( $RANDOM * 128 )) >/dev/null 2>&1;
-      done | grep real
+      time for i in `seq 1 $COUNT`; do
+        $SUDO dd bs=4k if=$DEV count=1 skip=$(( $RANDOM * 128 )) >/dev/null 2>&1;
+      done 2>&1 | grep real
       sleep 3
     done
   else
