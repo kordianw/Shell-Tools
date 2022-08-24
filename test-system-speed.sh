@@ -62,7 +62,7 @@ if [ "$1" = "-ssd" ]; then
       echo "* will use sudo to run tests to make results more accurate" >&2
       SUDO="sudo"
     else
-      echo "*** WARNING *** can't use sudo as current user, results may not be 100% accuarate ..." >&2
+      echo && echo "*** WARNING *** can't use sudo as current user, results may not be 100% accurate ..." >&2
       SUDO=""
     fi
   else
