@@ -896,6 +896,24 @@ function create_user()
   if [ -n "$USER" ]; then
     if grep -q "$USER:" /etc/passwd; then
       echo "*** user << $USER >> already exists ..."
+
+      # was the password already set?
+      if [[ $($SUDO passwd --status "$USER" | awk '{print $2}') = NP ]]; then
+        echo "*** setting passwd for $USER"
+        $SUDO passwd $USER
+
+        if [ $? -ne 0 ]; then
+          echo && echo "*** NB: TRY AGAIN #1: setting passwd for $USER" >&2
+          $SUDO passwd $USER
+        fi
+        if [ $? -ne 0 ]; then
+          echo && echo "*** NB: TRY AGAIN #2: setting passwd for $USER" >&2
+          $SUDO passwd $USER
+          [ $? -ne 0 ] && exit 99
+        fi
+      else
+        echo "*** password already set for: $USER"
+      fi
     else
       echo "*** adding user: $USER"
       $SUDO useradd -m $USER
