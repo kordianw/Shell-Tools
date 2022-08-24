@@ -55,9 +55,16 @@ if [ "$1" = "-ssd" ]; then
   lsblk | grep "/" |egrep -v 'loop|/boot/efi' | grep '[0-9]'
   lsblk -d -e 1,7 -o NAME,MAJ:MIN,TYPE,FSTYPE,SIZE,RO,VENDOR,MODEL,ROTA,MOUNTPOINT,GROUP,MODE | egrep -v 'CD.ROM'
 
-  # do we need sudo?
+  # can we use sudo?
   if [ "$EUID" -ne 0 ]; then
-    SUDO="sudo"
+    sudo -n whoami >&/dev/null
+    if [ $? -eq 0 ]; then
+      echo "* will use sudo to run tests to make results more accurate" >&2
+      SUDO="sudo"
+    else
+      echo "*** WARNING *** can't use sudo as current user, results may not be 100% accuarate ..." >&2
+      SUDO=""
+    fi
   else
     SUDO=""
   fi
