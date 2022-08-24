@@ -109,7 +109,7 @@ function install_general_packages
   # record start-time
   START_TIME=`date "+%s"`
 
-  [ "$OSTYPE" != "linux-gnu" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
+  [ "$OSTYPE" != "linux-gnu" -a "$OSTYPE" != "linux" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
   [ ! -r /etc/os-release ] && { echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2; exit 3; }
 
   # setup program & vars
@@ -441,7 +441,7 @@ function enable_zsh()
   fi
 
   # check for ZSH
-  ZSH=`chsh -l 2>/dev/null | grep zsh`
+  ZSH=`chsh -l 2>/dev/null | grep zsh | tail -1`
   [ -z "$ZSH" ] && ZSH=`which zsh 2>/dev/null`
   [ "$ZSH" = "/usr/bin/zsh" -a -x "/bin/zsh" ] && ZSH="/bin/zsh"
 
@@ -485,7 +485,7 @@ function enable_zsh()
   fi
 
   # after potential installation - check for ZSH
-  ZSH=`chsh -l 2>/dev/null | grep zsh`
+  ZSH=`chsh -l 2>/dev/null | grep zsh | tail -1`
   [ -z "$ZSH" ] && ZSH=`which zsh 2>/dev/null`
 
   # Failure...
@@ -524,10 +524,8 @@ function enable_zsh()
     OS=`awk -F= '/^NAME=/{print $NF}' /etc/os-release`
 
     # various Linux -> installs csh
-    if echo "$OS" | egrep -q "Amazon Linux|Fedora"; then
-      $SUDO yum -y install util-linux-user
-    elif echo "$OS" | grep -q "CentOS"; then
-      $SUDO yum -y install util-linux-ng
+    if echo "$OS" | egrep -q "Amazon Linux|Fedora|CentOS|Rocky"; then
+      $SUDO yum -y -qq install util-linux-user
     fi
   fi
 
@@ -535,7 +533,7 @@ function enable_zsh()
   # EXEC
   #
   echo "+ $SUDO chsh -s $ZSH $USER"
-  $SUDO chsh -s $ZSH $USER
+  $SUDO -n chsh -s $ZSH $USER
 
   if [ $? -ne 0 ]; then
     echo "+ chsh -s $ZSH"
@@ -547,7 +545,7 @@ function enable_ssh()
 {
   check_root
 
-  [ "$OSTYPE" != "linux-gnu" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
+  [ "$OSTYPE" != "linux-gnu" -a "$OSTYPE" != "linux" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
   [ ! -r /etc/os-release ] && { echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2; exit 3; }
   [ ! -x /usr/bin/apt ] && { echo "$PROG: can't find/exec APT!" >&2; exit 4; }
 
@@ -582,7 +580,7 @@ function disable_ssh()
 {
   check_root
 
-  [ "$OSTYPE" != "linux-gnu" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
+  [ "$OSTYPE" != "linux-gnu" -a "$OSTYPE" != "linux" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
   [ ! -r /etc/os-release ] && { echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2; exit 3; }
   [ ! -x /usr/bin/apt ] && { echo "$PROG: can't find/exec APT!" >&2; exit 4; }
 
@@ -669,7 +667,7 @@ function install_pi()
   # RASPBIAN PI
 
   check_root
-  [ "$OSTYPE" != "linux-gnueabihf" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnueabihf >>!" >&2; exit 2; }
+  [ "$OSTYPE" != "linux-gnu" -a "$OSTYPE" != "linux" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnueabihf >>!" >&2; exit 2; }
   [ ! -r /etc/os-release ] && { echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2; exit 3; }
   [ ! -x /usr/bin/apt ] && { echo "$PROG: can't find/exec APT!" >&2; exit 4; }
 
@@ -762,37 +760,37 @@ function install_pi()
 
 function install_rhel()
 {
-  # RED HAT LINUX
+  # RED HAT LINUX / CENT OS LINUX / FEDORA LINUX
 
   check_root
 
   # record start-time
   START_TIME=`date "+%s"`
 
-  [ "$OSTYPE" != "linux-gnu" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
+  [ "$OSTYPE" != "linux-gnu" -a "$OSTYPE" != "linux" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
   [ ! -r /etc/redhat-release ] && { echo "$PROG: no /etc/redhat-release file, is this really RHEL ?" >&2; exit 3; }
   [ ! -x /usr/bin/yum ] && { echo "$PROG: can't find/exec YUM, eg for: yum install!" >&2; exit 4; }
 
-  # prepare
+  # RHEL: prepare
   sudo yum makecache
 
-  # MAJOR packages
+  # RHEL: MAJOR packages
   sudo yum -y install ansible                # Ansible
   sudo yum -y install s3cmd.noarch           # S3CMD - S3 CLI
 
-  # TERMINAL
+  # RHEL: TERMINAL
   sudo yum -y install screen                 # GNU screen
   sudo yum -y install tmux                   # TMUX
 
-  # WBE BROWSING
+  # RHEL: WEB BROWSING
   sudo yum -y install links                  # text-based web-browser #1
   sudo yum -y install lynx                   # text-based web-browser #2
 
-  # MAIL
+  # RHEL: MAIL
   sudo yum -y install mutt                   # allow better command line mail
   sudo yum -y install mailx                  # send cmd line mail
 
-  # DEVEL
+  # RHEL: DEVEL
   sudo yum -y install vim                    # editor of choice
   sudo yum -y install perl
   sudo yum -y install python
@@ -802,22 +800,24 @@ function install_rhel()
   sudo yum -y install git                    # GIT/GITHUB access
   sudo yum -y install jq                     # lightweight and flexible command-line JSON processor
   sudo yum -y install strace                 # debug running processes
+  sudo yum -y install wget
 
-  # COMPILING
+  # RHEL: COMPILING
   sudo yum -y install gcc                    # GNU compiler
   sudo yum -y install automake               # automake
   sudo yum -y install openssl                # SSL
   sudo yum -y install openssl-devel          # SSL libraries
 
-  # SHELLS
+  # RHEL: SHELLS
   sudo yum -y install zsh                    # Z-Shell: my favourite shell
   sudo yum -y install tcsh                   # allow CSH for copy/paste purposes
 
-  # UTILS
+  # RHEL: UTILS
   sudo yum -y install nfs-utils              # NFS mount, showmount, etc
   sudo yum -y install wget
   sudo yum -y install curl
   sudo yum -y install zip                    # installs ZIP support
+  sudo yum -y install tar                    # installs tar support
   sudo yum -y install unzip                  # installs ZIP support (unzip)
   sudo yum -y install bzip2                  # installs bzip2 support
   sudo yum -y install rsync                  # GNU rsync
@@ -838,7 +838,7 @@ function install_rhel()
   sudo yum -y install neofetch
   sudo yum -y install bind-utils
 
-  # get the EPEL repository
+  # RHEL: get the EPEL repository
   sudo yum -y install epel-release
   #wget http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-10.noarch.rpm
   #sudo rpm -ihv epel-release-7-10.noarch.rpm
@@ -902,10 +902,20 @@ function create_user()
 
       echo "*** setting passwd for $USER"
       $SUDO passwd $USER
+
+      if [ $? -ne 0 ]; then
+        echo && echo "*** NB: TRY AGAIN #1: setting passwd for $USER" >&2
+        $SUDO passwd $USER
+      fi
+      if [ $? -ne 0 ]; then
+        echo && echo "*** NB: TRY AGAIN #2: setting passwd for $USER" >&2
+        $SUDO passwd $USER
+        [ $? -ne 0 ] && exit 99
+      fi
     fi
 
     # set shell
-    ZSH=`chsh -l 2>/dev/null | grep zsh`
+    ZSH=`chsh -l 2>/dev/null | grep zsh | tail -1`
     [ -z "$ZSH" ] && ZSH=`which zsh 2>/dev/null`
     [ "$ZSH" = "/usr/bin/zsh" -a -x "/bin/zsh" ] && ZSH="/bin/zsh"
 
@@ -937,10 +947,8 @@ function create_user()
             OS=`awk -F= '/^NAME=/{print $NF}' /etc/os-release`
 
             # various Linux -> installs csh
-            if echo "$OS" | egrep -q "Amazon Linux|Fedora"; then
+            if echo "$OS" | egrep -q "Amazon Linux|Fedora|CentOS|Rocky"; then
               $SUDO yum -y install util-linux-user
-            elif echo "$OS" | grep -q "CentOS"; then
-              $SUDO yum -y install util-linux-ng
             fi
           fi
 
