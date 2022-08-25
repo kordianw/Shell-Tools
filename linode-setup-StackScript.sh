@@ -1,5 +1,5 @@
 #!/bin/bash
-# KW Linode setup StackScript for Debian/Ubuntu Linux
+# Linode setup StackScript for Debian/Ubuntu Linux
 #
 # * By Kordian W. <code [at] kordy.com>, Aug 2022
 #
@@ -68,7 +68,7 @@ apt-get install -qq -y zsh
 # P6: add a non-root user, with same PW as root
 echo && echo "* [`date +%H:%M`] add additional user: $LOCAL_USER"
 if echo "$LOCAL_USER" | egrep -q '^[a-z][a-z]*$'; then
-  PW_HASH=$(getent shadow root | cut -d: -f2)
+  PW_HASH=$(getent shadow $USER | cut -d: -f2)
   [ -z "$PW_HASH" ] && exit 1
   echo "- adding $LOCAL_USER with existing PW hash"
   sudo useradd -m -p "$PW_HASH" $LOCAL_USER || exit 1
