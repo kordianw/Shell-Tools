@@ -88,7 +88,7 @@ function install_general_packages
   # CLI
   # - install `src' playground with all the scripts
   #   * install packages via this script
-  #   * install SSH via this script (CAREFFUL)
+  #   * install SSH via this script (CAREFUL)
   # - LOGIN REMOTELY via ssh: ssh t480s
   #   * copy Config files
   # - chsh
@@ -1028,16 +1028,36 @@ function create_user()
   fi
 }
 
-function install_fail2ban()
+function ssh_conf()
 {
   setup;
   check_root;
+
+  echo && echo "* [`date +%H:%M`] current SSHD_CONFIG:"
+  echo "- ACTIVE settings:"
+  egrep '^#?(Port|PermitRootLogin|PubkeyAuthentication|PermitEmptyPasswords|PasswordAuthentication|AllowUsers)' /etc/ssh/sshd_config | grep -v '^#'
+  echo "- COMMENTED OUT:"
+  egrep '^#?(Port |PermitRootLogin|PubkeyAuthentication|PermitEmptyPasswords|PasswordAuthentication|AllowUsers)' /etc/ssh/sshd_config | grep '^#'
+  sleep 1
+
+  # To directly modify sshd_config.
+  echo && echo "* [`date +%H:%M`] modifying SSHD_CONFIG:"
+  echo sed -i 's/#\?\(Port\s*\).*$/\1 2231/' /etc/ssh/sshd_config
+  echo sed -i 's/#\?\(PermitRootLogin\s*\).*$/\1 no/' /etc/ssh/sshd_config
+  echo sed -i 's/#\?\(PubkeyAuthentication\s*\).*$/\1 yes/' /etc/ssh/sshd_config
+  echo sed -i 's/#\?\(PermitEmptyPasswords\s*\).*$/\1 no/' /etc/ssh/sshd_config
+  echo sed -i 's/#\?\(PasswordAuthentication\s*\).*$/\1 no/' /etc/ssh/sshd_config
 
   # install fail2ban - to increase SSH security
   echo && echo "* [`date +%H:%M`] install+setup: fail2ban"
   $SUDO apt-get install -qq -y fail2ban
   $SUDO systemctl enable fail2ban
   $SUDO systemctl start fail2ban
+
+  # restart SSH
+  $SUDO /etc/init.d/ssh restart
+  #$SUDO service sshd restart
+  #$SUDO service sshd reload
 }
 
 function change_hostname()
@@ -1060,6 +1080,12 @@ function change_hostname()
   if [ "$HOSTNAME" != "localhost" ]; then
     echo "- setting hostname to: $HOSTNAME"
     $SUDO hostnamectl set-hostname $HOSTNAME
+  fi
+
+  # recommended: perform apt update
+  echo "- perform apt update/upgrade on $HOSTNAME"
+  if which apt >&/dev/null; then
+    $SUDO apt update -q && $SUDO apt upgrade -yq
   fi
 
   # reload the shell
@@ -1092,7 +1118,8 @@ Usage: $PROG <options> [param]
         -RH     install yum  pkgs: RHEL Red Hat Linux (uses yum)
         -PI     install apt  pkgs: Raspbian PI Linux (uses apt)
 
-        -FAIL2BAN  install fail2ban (useful when SSH on public Internet)
+        -SSH_CONF  sets-up fail2ban (useful when SSH on public Internet)
+                   * also confirms SSHD config
         -HOSTNAME  change hostname to something more meaningful
 
         -h      this screen
@@ -1112,7 +1139,7 @@ elif [ "$1" = "-SSH0" ]; then
 elif [ "$1" = "-BREW" ]; then
   install_brew;
 elif [ "$1" = "-FAIL2BAN" ]; then
-  install_fail2ban;
+  ssh_conf;
 elif [ "$1" = "-HOSTNAME" ]; then
   change_hostname;
 elif [ "$1" = "-PI" ]; then
