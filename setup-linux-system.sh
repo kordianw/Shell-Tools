@@ -1058,6 +1058,8 @@ function ssh_conf()
   $SUDO /etc/init.d/ssh restart
   #$SUDO service sshd restart
   #$SUDO service sshd reload
+  #$SUDO systemctl stop ssh.service
+  #$SUDO systemctl start ssh.service
 }
 
 function change_hostname()
