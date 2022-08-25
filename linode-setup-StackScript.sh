@@ -30,7 +30,7 @@ echo "* linode DataCenter ID=$LINODE_DATACENTERID, linode RAM=$LINODE_RAM MB"
 echo && echo "* [`date +%H:%M`] setting a hostname to something non-default"
 HOSTNAME=localhost
 OS_NAME=`awk -F= '/^ID=/{print $2}' /etc/os-release`
-OS_RELEASE=`grep "VERSION_ID=" /etc/os-release | sed 's/.*="\([0-9]*\).*/\1/'`
+OS_RELEASE=`grep "VERSION_ID=" /etc/os-release | sed 's/.*="\([0-9]*\).*/\1/; s/"//g'`
 [ -n "$OS_NAME" ] && HOSTNAME=$OS_NAME
 [ -n "$OS_RELEASE" ] && HOSTNAME="$HOSTNAME$OS_RELEASE"
 [ $LINODE_DATACENTERID -eq 6 ]  && HOSTNAME="nj-$HOSTNAME"
