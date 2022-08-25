@@ -44,22 +44,22 @@ cd && mkdir src && cd src
 if echo "$WGET_URL" | egrep -q '^http'; then
   wget -q "$WGET_URL" && chmod 755 dl.sh && mv dl.sh $SETUP_SCRIPT
   cd && ln -s "./src/$SETUP_SCRIPT"
+  cd && ls -lh $SETUP_SCRIPT
   cd && mkdir bin && chmod 755 bin
-  ls -lh ~/src/$SETUP_SCRIPT
 else
   echo "--WARN: invalid URL << $WGET_URL >>, skipping..." >&2
 fi
 
 # P3: set timezone to LOCAL timezone
-echo && echo "* [`date +%H:%M`] setting timezone to Local timezone"
-timedatectl set-timezone America/New_York
+echo && echo "* [`date +%H:%M`] setting timezone to \'$TZ' timezone"
+timedatectl set-timezone $TZ
 
 # set env as non-interactive, to suppress errors in apt-get installation
 export DEBIAN_FRONTEND="noninteractive"
 
 # P4: run apt-get update
-echo && echo "* [`date +%H:%M`] update apt"
-apt-get update -q
+echo && echo "* [`date +%H:%M`] update apt sources"
+apt-get update -qq
 
 # P5: install ZSH
 echo && echo "* [`date +%H:%M`] install+setup: zsh"
@@ -70,9 +70,14 @@ echo && echo "* [`date +%H:%M`] add additional user: $LOCAL_USER"
 if echo "$LOCAL_USER" | egrep -q '^[a-z][a-z]*$'; then
   PW_HASH=$(getent shadow root | cut -d: -f2)
   [ -z "$PW_HASH" ] && exit 1
+  echo "- adding $LOCAL_USER with existing PW hash"
   sudo useradd -m -p "$PW_HASH" $LOCAL_USER || exit 1
+  echo "- changing shell for $LOCAL_USER to /bin/zsh"
   chsh -s /bin/zsh $LOCAL_USER || exit 1
+  echo "- adding $LOCAL_USER to sudo group to allow sudo"
   usermod -aG sudo $LOCAL_USER || exit 1
+
+  echo "- setting up $LOCAL_USER .ssh & homedir"
   U_HOME=/home/$LOCAL_USER
   mkdir $U_HOME/.ssh || exit 1
   cp -fv $HOME/.ssh/authorized_keys $U_HOME/.ssh/authorized_keys || exit 1
@@ -92,13 +97,14 @@ nice systemctl start fail2ban
 ### optional stuff (under `nice') ######################
 
 # install additional key packages
-echo && echo "* [`date +%H:%M`] install screen+sshpass+sysbench"
+echo && echo "* [`date +%H:%M`] install screen,sshpass,sysbench"
 nice apt-get install -qq -y screen sshpass sysbench
 
 echo && echo "* [`date +%H:%M`] perform apt-get upgrade"
 nice apt-get upgrade -y
 
 echo "---> $0: finished-run as `whoami`: `date`"
+
 
 ### Metadata ###########################################
 #
