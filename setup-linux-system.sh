@@ -998,6 +998,18 @@ function create_user()
   fi
 }
 
+function install_fail2ban()
+{
+  setup;
+  check_root;
+
+  # install fail2ban - to increase SSH security
+  echo && echo "* [`date +%H:%M`] install+setup: fail2ban"
+  $SUDO apt-get install -qq -y fail2ban
+  $SUDO systemctl enable fail2ban
+  $SUDO systemctl start fail2ban
+}
+
 #
 # MAIN
 #
@@ -1023,6 +1035,8 @@ Usage: $PROG <options> [param]
         -RH     install yum  pkgs: RHEL Red Hat Linux (uses yum)
         -PI     install apt  pkgs: Raspbian PI Linux (uses apt)
 
+        -FAIL2BAN  install fail2ban (useful when SSH on public Internet)
+
         -h      this screen
 !
 elif [ "$1" = "-GENPKG" ]; then
@@ -1039,6 +1053,8 @@ elif [ "$1" = "-SSH0" ]; then
   disable_ssh;
 elif [ "$1" = "-BREW" ]; then
   install_brew;
+elif [ "$1" = "-FAIL2BAN" ]; then
+  install_fail2ban;
 elif [ "$1" = "-PI" ]; then
   install_pi;
 elif [ "$1" = "-RH" ]; then
