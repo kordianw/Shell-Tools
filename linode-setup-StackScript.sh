@@ -2,15 +2,15 @@
 # Linode setup StackScript for Debian/Ubuntu Linux
 
 # enable logging
-exec >/root/StackScript-$LINODE_ID-`date +%Y-%m-%d`.log 2>&1
-
-echo "---> start-run as `whoami`: `date`"
-
-echo "* setting up Linode ID: << $LINODE_ID >> [lish_user=$LINODE_LISHUSERNAME]"
-echo "* linode DataCenter ID=$LINODE_DATACENTERID, linode RAM=$LINODE_RAM MB"
+exec > $HOME/StackScript-$LINODE_ID-`date +%Y-%m-%d`.log 2>&1
 
 # set the EDT timezone
 export TZ="America/New_York"
+
+echo "---> $0: start-run as `whoami`: `date`"
+
+echo "* setting up Linode ID: << $LINODE_ID >> [lish_user=$LINODE_LISHUSERNAME]"
+echo "* linode DataCenter ID=$LINODE_DATACENTERID, linode RAM=$LINODE_RAM MB"
 
 # P1: get the dl.sh script, which we'll use later
 echo && echo "* [`date +%H:%M`] downloading setup-script"
@@ -35,6 +35,10 @@ nice -n -5 apt-get update -qq
 echo && echo "* [`date +%H:%M`] install+setup: zsh"
 nice -n -5 apt-get install -qq -y zsh
 
+# install fail2ban - to increase SSH security
+echo && echo "* [`date +%H:%M`] install+setup: fail2ban"
+apt-get install -qq -y fail2ban
+
 # add a non-root user
 #useradd -m user
 #chsh -s /bin/zsh user
@@ -42,10 +46,13 @@ nice -n -5 apt-get install -qq -y zsh
 ### optional stuff (under `nice') ######################
 
 # install additional key packages
-echo && echo "* [`date +%H:%M`] install screen+sshpass"
-nice apt-get install -qq -y screen sshpass
+echo && echo "* [`date +%H:%M`] install screen+sshpass+sysbench"
+nice apt-get install -qq -y screen sshpass sysbench
 
-echo "---> finished-run as `whoami`: `date`"
+echo && echo "* [`date +%H:%M`] perform apt-get upgrade"
+nice apt-get upgrade -y
+
+echo "---> $0: finished-run as `whoami`: `date`"
 
 ### Metadata ###########################################
 #
