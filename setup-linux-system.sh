@@ -1000,12 +1000,15 @@ function create_user()
     if [ -n "$CONFIG_BASE" ]; then
       echo "- setting up $USER .ssh & homedir"
       U_HOME=/home/$USER
-      mkdir $U_HOME/.ssh || exit 1
+
+      mkdir $U_HOME/.ssh
+      chmod -v 700 $U_HOME/.ssh
+      chown -v $USER $U_HOME/.ssh
 
       echo "- copying up << $CONFIG_BASE/.ssh/authorized_keys >> to $USER .ssh & homedir"
-      cp -fv $CONFIG_BASE/.ssh/authorized_keys $U_HOME/.ssh/authorized_keys
-      chmod -v 700 $U_HOME/.ssh && chmod 600 $U_HOME/.ssh/authorized_keys
-      chown -v $USER $U_HOME/.ssh $U_HOME/.ssh/authorized_keys
+      [ -s $HOME/.ssh/authorized_keys ] && cp -fv $HOME/.ssh/authorized_keys $U_HOME/.ssh/authorized_keys
+      [ -s $CONFIG_BASE/.ssh/authorized_keys ] && cp -fv $CONFIG_BASE/.ssh/authorized_keys $U_HOME/.ssh/authorized_keys
+      [ -s $U_HOME/.ssh/authorized_keys ] && chmod 600 $U_HOME/.ssh/authorized_keys && chown -v $USER $U_HOME/.ssh/authorized_keys
       ls -lh $U_HOME/.ssh/authorized_keys
       cat $U_HOME/.ssh/authorized_keys
       sleep 1
@@ -1050,14 +1053,18 @@ function change_hostname()
   OS_RELEASE=`grep "VERSION_ID=" /etc/os-release | sed 's/.*="\([0-9]*\).*/\1/'`
   [ -n "$OS_NAME" ] && HOSTNAME=$OS_NAME
   [ -n "$OS_RELEASE" ] && HOSTNAME="$HOSTNAME$OS_RELEASE"
-  [ -n "$LINODE_DATACENTERID" -a $LINODE_DATACENTERID -eq 6 ]  && HOSTNAME="nj-$HOSTNAME"
-  [ -n "$LINODE_DATACENTERID" -a $LINODE_DATACENTERID -eq 15 ] && HOSTNAME="tor-$HOSTNAME"
+  [ -n "$LINODE_DATACENTERID" -a "$LINODE_DATACENTERID" -eq 6 ]  && HOSTNAME="nj-$HOSTNAME"
+  [ -n "$LINODE_DATACENTERID" -a "$LINODE_DATACENTERID" -eq 15 ] && HOSTNAME="tor-$HOSTNAME"
 
   # did we get something?
   if [ "$HOSTNAME" != "localhost" ]; then
     echo "- setting hostname to: $HOSTNAME"
     $SUDO hostnamectl set-hostname $HOSTNAME
   fi
+
+  # reload the shell
+  # - this is needed to reflect the new prompt
+  exec $SHELL --login
 }
 
 #
