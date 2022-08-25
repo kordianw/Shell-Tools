@@ -233,7 +233,7 @@ echo "#!/bin/sh
 # set the EDT timezone
 export TZ=\"America/New_York\"
 
-echo \"---> start-run as \`whoami\`: \`date\`\"
+echo \"---> \$0: start-run as \`whoami\`: \`date\`\"
 
 # P1: install ZSH & set as default for \`$conf_google_main_user'
 echo && echo \"* [\`date +%H:%M\`] install+setup: zsh\"
@@ -267,7 +267,7 @@ echo \"---> end-run (Phase 1) as \`whoami\`: \`date\`\"
 echo && echo \"* [\`date +%H:%M\`] starting Phase 2 (~5 mins) - SOFTWARE INSTALL\"
 nice ~$conf_google_main_user/bin/scripts/setup-linux-system.sh -GENPKG
 
-echo \"---> end-run (Phase 2) as \`whoami\`: \`date\`\"
+echo \"---> \$0: end-run (Phase 2) as \`whoami\`: \`date\`\"
 
 # EOF" > ~/.customize_environment
   chmod 755 ~/.customize_environment >&/dev/null
