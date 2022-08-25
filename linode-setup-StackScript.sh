@@ -38,6 +38,8 @@ nice -n -5 apt-get install -qq -y zsh
 # install fail2ban - to increase SSH security
 echo && echo "* [`date +%H:%M`] install+setup: fail2ban"
 apt-get install -qq -y fail2ban
+systemctl enable fail2ban
+systemctl start fail2ban
 
 # add a non-root user
 #useradd -m user
