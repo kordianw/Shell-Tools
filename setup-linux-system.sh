@@ -946,6 +946,7 @@ function create_user()
       [ ! -r $ZSHRC -a -r "./playground/Config-Files/.zshrc" ] && ZSHRC="./playground/Config-Files/.zshrc"
       [ ! -r $ZSHRC -a -r "~/src/Config-Files/.zshrc" ] && ZSHRC="~/src/Config-Files/.zshrc"
       [ ! -r $ZSHRC -a -r "~/playground/Config-Files/.zshrc" ] && ZSHRC="~/playground/Config-Files/.zshrc"
+      CONFIG_BASE=`dirname $ZSHRC`
 
       if [ ! -d /home/$USER ]; then
         echo "--FATAL: /home/$USER doesn't exist?!" >&2
@@ -973,6 +974,7 @@ function create_user()
           if which chsh >&/dev/null; then
             echo "*** setting \`$ZSH' as shell for user $USER"
             $SUDO chsh -s $ZSH $USER
+            sleep 1
           else
             echo "*** no ChSH on this system!" >&2
           fi
@@ -986,7 +988,32 @@ function create_user()
       echo "$ $0 -ZSH"
     fi
 
-    echo "*** su to & setup the user: $USER"
+    if grep -q sudo /etc/group; then
+      echo "- adding $USER to sudo group to allow sudo"
+      usermod -aG sudo $USER
+      sleep 1
+    else
+      echo "--WARN: no group sudo to add $USER to..."
+    fi
+
+    # set up some basics, such as ssh authorized keys
+    if [ -n "$CONFIG_BASE" ]; then
+      echo "- setting up $USER .ssh & homedir"
+      U_HOME=/home/$USER
+      mkdir $U_HOME/.ssh || exit 1
+
+      echo "- copying up << $CONFIG_BASE/.ssh/authorized_keys >> to $USER .ssh & homedir"
+      cp -fv $CONFIG_BASE/.ssh/authorized_keys $U_HOME/.ssh/authorized_keys
+      chmod -v 700 $U_HOME/.ssh && chmod 600 $U_HOME/.ssh/authorized_keys
+      chown -v $USER $U_HOME/.ssh $U_HOME/.ssh/authorized_keys
+      ls -lh $U_HOME/.ssh/authorized_keys
+      cat $U_HOME/.ssh/authorized_keys
+      sleep 1
+    else
+      echo "--WARN: skip setting up $USER ssh and homedir..."
+    fi
+
+    echo && echo "*** su to & setup the user: $USER"
     echo "- eg: run: <<  wget http://<<XXX>>.com/dl.sh && bash dl.sh >>"
     echo
     echo "+ $SUDO su - $USER"
@@ -1008,6 +1035,29 @@ function install_fail2ban()
   $SUDO apt-get install -qq -y fail2ban
   $SUDO systemctl enable fail2ban
   $SUDO systemctl start fail2ban
+}
+
+function change_hostname()
+{
+  setup;
+  check_root;
+
+  echo && echo "* [`date +%H:%M`] setting a hostname to something non-default"
+
+  # default
+  HOSTNAME=localhost
+  OS_NAME=`awk -F= '/^ID=/{print $2}' /etc/os-release`
+  OS_RELEASE=`grep "VERSION_ID=" /etc/os-release | sed 's/.*="\([0-9]*\).*/\1/'`
+  [ -n "$OS_NAME" ] && HOSTNAME=$OS_NAME
+  [ -n "$OS_RELEASE" ] && HOSTNAME="$HOSTNAME$OS_RELEASE"
+  [ -n "$LINODE_DATACENTERID" -a $LINODE_DATACENTERID -eq 6 ]  && HOSTNAME="nj-$HOSTNAME"
+  [ -n "$LINODE_DATACENTERID" -a $LINODE_DATACENTERID -eq 15 ] && HOSTNAME="tor-$HOSTNAME"
+
+  # did we get something?
+  if [ "$HOSTNAME" != "localhost" ]; then
+    echo "- setting hostname to: $HOSTNAME"
+    $SUDO hostnamectl set-hostname $HOSTNAME
+  fi
 }
 
 #
@@ -1036,6 +1086,7 @@ Usage: $PROG <options> [param]
         -PI     install apt  pkgs: Raspbian PI Linux (uses apt)
 
         -FAIL2BAN  install fail2ban (useful when SSH on public Internet)
+        -HOSTNAME  change hostname to something more meaningful
 
         -h      this screen
 !
@@ -1055,6 +1106,8 @@ elif [ "$1" = "-BREW" ]; then
   install_brew;
 elif [ "$1" = "-FAIL2BAN" ]; then
   install_fail2ban;
+elif [ "$1" = "-HOSTNAME" ]; then
+  change_hostname;
 elif [ "$1" = "-PI" ]; then
   install_pi;
 elif [ "$1" = "-RH" ]; then
