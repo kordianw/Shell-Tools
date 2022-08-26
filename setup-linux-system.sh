@@ -302,7 +302,13 @@ function change_timezone()
 
   echo "* viewing contents of current /etc/timezone and /etc/localtime link:"
   [ ! -e /etc/localtime ] && { echo "$PROG: not supporting absense of /etc/localtime!" >&2; exit 1; }
-  [ -L /etc/localtime ] || { echo "$PROG: not supporting non-linked /etc/localtime!" >&2; exit 1; }
+
+  # special case for Amazon Linux 
+  if grep -q "Amazon Linux" /etc/os-release; then
+    [ -f /etc/localtime ] || { echo "$PROG: not supporting non-existing file /etc/localtime on Amazon Linux!" >&2; exit 1; }
+  else
+    [ -L /etc/localtime ] || { echo "$PROG: not supporting non-linked /etc/localtime!" >&2; exit 1; }
+  fi
   ls -l /etc/localtime || exit 2
 
   # SPECIAL CASE FOR NYC/US Eastern
