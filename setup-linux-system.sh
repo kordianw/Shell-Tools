@@ -430,7 +430,7 @@ function change_timezone()
   fi
 }
 
-function enable_zsh()
+function enable_setup_zsh()
 {
   # setup program & vars
   setup
@@ -1131,7 +1131,7 @@ elif [ "$1" = "-GENPKG" ]; then
 elif [ "$1" = "-TZ" ]; then
   change_timezone;
 elif [ "$1" = "-ZSH" ]; then
-  enable_zsh;
+  enable_setup_zsh;
 elif [ "$1" = "-USER" ]; then
   create_user $2;
 elif [ "$1" = "-SSH1" ]; then
@@ -1140,7 +1140,7 @@ elif [ "$1" = "-SSH0" ]; then
   disable_ssh;
 elif [ "$1" = "-BREW" ]; then
   install_brew;
-elif [ "$1" = "-FAIL2BAN" ]; then
+elif [ "$1" = "-SSH_CONF" ]; then
   ssh_conf;
 elif [ "$1" = "-HOSTNAME" ]; then
   change_hostname;
