@@ -95,6 +95,9 @@ if ! which sysbench >&/dev/null; then
   exit 2
 fi
 
+# load any other LD library paths
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`dirname $(which sysbench)`
+
 # allow working with less capacity
 if [ "$1" = "-1GB" ]; then
   shift
@@ -108,7 +111,7 @@ fi
 SPACE_LEFT=`df -m . | awk '/^\/|^overlay/{print $4}'`
 if [ -z "$SPACE_LEFT" ]; then
   echo "$PROG: can't calculate space left in current dir - via: \`df -m .'" >&2
-  exit 98
+  echo "--WARN: skipping HD tests"
 elif [ $SPACE_LEFT -lt $MIN_SPACE_NEEDED ]; then
   echo -e "$PROG: FATAL: not enough space left in current dir - seeing $SPACE_LEFT MB, needs at least $MIN_SPACE_NEEDED MB - see below:" >&2
   df -h .
@@ -178,48 +181,50 @@ fi
 #
 # IO TEST
 #
-if [ "$1" = "-io" -o -z "$1" ]; then
-  echo && echo "* [$HOST] IO Benchmark: $SIZE_TO_TEST"
-  echo -n "  - NB: using following disk: "
-  df -Th . | tail -1
-  sleep 2
+if [ -n "$SPACE_LEFT" -o "$1" = "-io" ]; then
+  if [ "$1" = "-io" -o -z "$1" ]; then
+    echo && echo "* [$HOST] IO Benchmark: $SIZE_TO_TEST"
+    echo -n "  - NB: using following disk: "
+    df -Th . | tail -1
+    sleep 2
 
-  # drop caches to accurately measure disk speeds
-  if sudo -n whoami >&/dev/null; then
-    echo "  - flushing & clearing cached memory/the disk cache (Press Ctrl-C to cancel):"
-    #sudo /sbin/sysctl vm.drop_caches=3
-    echo "echo 3 > /proc/sys/vm/drop_caches" | sudo sh
-  else
-    echo "--ERROR: no sudo access on `uname -n`, skipping cache flush..." >&2
+    # drop caches to accurately measure disk speeds
+    if sudo -n whoami >&/dev/null; then
+      echo "  - flushing & clearing cached memory/the disk cache (Press Ctrl-C to cancel):"
+      #sudo /sbin/sysctl vm.drop_caches=3
+      echo "echo 3 > /proc/sys/vm/drop_caches" | sudo sh
+    else
+      echo "--ERROR: no sudo access on `uname -n`, skipping cache flush..." >&2
+    fi
+
+    # seqwr: sequential write
+    # seqrewr: sequential read+write
+    # seqrd: sequential read
+    # rndrd: random read
+    # rndwr: random write
+    # rndrw: random read write
+
+    echo "  - running sysbench fileio suite with $SIZE_TO_TEST of test files:"
+
+    sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST prepare --verbosity=2
+    sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST --file-test-mode=rndrw run |egrep 'read, MiB|written, MiB|Operations performed:|Total transferred' | sed "s/$/		--> disk $SIZE_TO_TEST << random >> read+write speed/"
+    sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST cleanup --verbosity=2
+
+    sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST prepare --verbosity=2
+    sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST --file-test-mode=seqrewr run |egrep 'read, MiB|written, MiB|Operations performed:|Total transferred' | sed "s/$/		--> disk $SIZE_TO_TEST << sequential >> read+write speed/"
+    sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST cleanup --verbosity=2
+
+    echo "  - dd: $SIZE_TO_TEST_COUNT x 1M write test:"
+    if echo "$OSTYPE" |grep -q darwin; then
+      dd if=/dev/zero of=./tempfile bs=1048576 count=$SIZE_TO_TEST_COUNT conv=notrunc 2>&1 |egrep -v 'records in|records out' | sed "s/$/		--> dd disk $SIZE_TO_TEST write speed/"
+    else
+      # dd if=/dev/zero of=/tmp/test bs=64k count=16k conv=fdatasync
+      dd if=/dev/zero of=./tempfile bs=1M count=$SIZE_TO_TEST_COUNT conv=fdatasync,notrunc 2>&1 |egrep -v 'records in|records out' | sed "s/$/		--> dd disk $SIZE_TO_TEST write speed/"
+    fi
+
+    # clean-up
+    rm -f ./tempfile
   fi
-
-  # seqwr: sequential write
-  # seqrewr: sequential read+write
-  # seqrd: sequential read
-  # rndrd: random read
-  # rndwr: random write
-  # rndrw: random read write
-
-  echo "  - running sysbench fileio suite with $SIZE_TO_TEST of test files:"
-
-  sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST prepare --verbosity=2
-  sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST --file-test-mode=rndrw run |egrep 'read, MiB|written, MiB|Operations performed:|Total transferred' | sed "s/$/		--> disk $SIZE_TO_TEST << random >> read+write speed/"
-  sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST cleanup --verbosity=2
-
-  sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST prepare --verbosity=2
-  sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST --file-test-mode=seqrewr run |egrep 'read, MiB|written, MiB|Operations performed:|Total transferred' | sed "s/$/		--> disk $SIZE_TO_TEST << sequential >> read+write speed/"
-  sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST cleanup --verbosity=2
-
-  echo "  - dd: $SIZE_TO_TEST_COUNT x 1M write test:"
-  if echo "$OSTYPE" |grep -q darwin; then
-    dd if=/dev/zero of=./tempfile bs=1048576 count=$SIZE_TO_TEST_COUNT conv=notrunc 2>&1 |egrep -v 'records in|records out' | sed "s/$/		--> dd disk $SIZE_TO_TEST write speed/"
-  else
-    # dd if=/dev/zero of=/tmp/test bs=64k count=16k conv=fdatasync
-    dd if=/dev/zero of=./tempfile bs=1M count=$SIZE_TO_TEST_COUNT conv=fdatasync,notrunc 2>&1 |egrep -v 'records in|records out' | sed "s/$/		--> dd disk $SIZE_TO_TEST write speed/"
-  fi
-
-  # clean-up
-  rm -f ./tempfile
 fi
 
 #
