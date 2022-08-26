@@ -813,6 +813,7 @@ function install_rhel()
   sudo yum -y install automake               # automake
   sudo yum -y install openssl                # SSL
   sudo yum -y install openssl-devel          # SSL libraries
+  sudo yum -y install libtool                # libtool
 
   # RHEL: SHELLS
   sudo yum -y install zsh                    # Z-Shell: my favourite shell
