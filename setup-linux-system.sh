@@ -1071,12 +1071,12 @@ function change_hostname()
 
   # default
   HOSTNAME=localhost
-  OS_NAME=`awk -F= '/^ID=/{print $2}' /etc/os-release`
+  OS_NAME=`awk -F= '/^ID=/{print $2}' /etc/os-release| sed 's/"//g'`
   OS_RELEASE=`grep "VERSION_ID=" /etc/os-release | sed 's/.*="\([0-9]*\).*/\1/; s/"//g'`
   [ -n "$OS_NAME" ] && HOSTNAME=$OS_NAME
   [ -n "$OS_RELEASE" ] && HOSTNAME="$HOSTNAME$OS_RELEASE"
-  [ -n "$LINODE_DATACENTERID" -a "$LINODE_DATACENTERID" -eq 6 ]  && HOSTNAME="nj-$HOSTNAME"
-  [ -n "$LINODE_DATACENTERID" -a "$LINODE_DATACENTERID" -eq 15 ] && HOSTNAME="tor-$HOSTNAME"
+  [ -n "$LINODE_DATACENTERID" -a "$LINODE_DATACENTERID" = 6 ]  && HOSTNAME="nj-$HOSTNAME"
+  [ -n "$LINODE_DATACENTERID" -a "$LINODE_DATACENTERID" = 15 ] && HOSTNAME="tor-$HOSTNAME"
 
   # did we get something?
   if [ "$HOSTNAME" != "localhost" ]; then
