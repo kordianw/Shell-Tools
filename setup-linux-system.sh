@@ -816,6 +816,7 @@ function install_rhel()
   sudo yum -y install openssl                # SSL
   sudo yum -y install openssl-devel          # SSL libraries
   sudo yum -y install libtool                # libtool
+  sudo yum -y install pkgconfig              # pkgconfig
 
   # RHEL: SHELLS
   sudo yum -y install zsh                    # Z-Shell: my favourite shell
