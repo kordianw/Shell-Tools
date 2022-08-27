@@ -3,6 +3,7 @@
 # - writes test files to current dir
 #
 # OPTIONS:
+# -install <-- tries to install `sysbench' if not installed
 # -ssd     <-- checks if a disk is SSD by running a quick IO test
 # -hdparm  <-- adds a hdparm test at the end
 #
@@ -90,36 +91,43 @@ if [ "$1" = "-ssd" ]; then
   exit 0
 fi
 
-if ! which sysbench >&/dev/null; then
-  echo "$PROG: you don't have \`sysbench' installed; can't do any CPU performance testing!" >&2
+if [ "$1" = "--install" ]; then
+  if ! which sysbench >&/dev/null; then
+    echo "$PROG: trying to install \`sysbench' ..." >&2
 
-  # quick install...
-  if [ -x /usr/bin/apt ]; then
-    echo "- trying to install sysbench via apt:"
-    sudo apt install -y -qq sysbench
-  else
-    echo "- trying to download, see if you can install:"
-    [ -x /usr/bin/yum ] && echo "  > yum install -y libtool"
-    echo "  > ./autogen.sh"
-    echo "  > ./configure --without-mysql"
-    echo "  > ./make"
-    echo "- binary should be in ./src"
+    # quick install...
+    if [ -x /usr/bin/apt ]; then
+      echo "- trying to install sysbench via apt:"
+      sudo apt install -y -qq sysbench
+    else
+      echo "- trying to download & build from source, see if we can install:"
+      [ -x /usr/bin/yum ] && echo "  > yum install -y libtool"
+      echo "  > ./autogen.sh"
+      echo "  > ./configure --without-mysql"
+      echo "  > ./make"
+      echo "- binary should be in ./src"
 
-    [ -x /usr/bin/yum ] && sudo yum install -qq -y libtool
+      [ -x /usr/bin/yum ] && sudo yum install -qq -y libtool pkgconfig
+      [ -x /usr/bin/yum ] && sudo yum install -qq -y pkgconfig
 
-    curl -sSL -o sysbench-1.0.20.tar.gz https://github.com/akopytov/sysbench/archive/refs/tags/1.0.20.tar.gz && \
-    tar xzf sysbench-1.0.20.tar.gz && \
-    rm -fv sysbench-1.0.20.tar.gz && \
-    cd sysbench-1.0.20 && \
-    ./autogen.sh && \
-    ./configure --without-mysql && \
-    make
+      curl -sSL -o sysbench-1.0.20.tar.gz https://github.com/akopytov/sysbench/archive/refs/tags/1.0.20.tar.gz && \
+      tar xzf sysbench-1.0.20.tar.gz && \
+      rm -fv sysbench-1.0.20.tar.gz && \
+      cd sysbench-1.0.20 && \
+      ./autogen.sh && \
+      ./configure --without-mysql && \
+      make
+    fi
   fi
+else
+  echo "$PROG: sysbench seems already installed:"
+  which sysbench
 fi
 
 # do we now have it?
 if ! which sysbench >&/dev/null; then
-  echo "$PROG: --FATAL: you still don't have \`sysbench' installed; can't do any CPU performance testing!" >&2
+  echo "$PROG: --FATAL: you don't have \`sysbench' installed; can't do any CPU performance testing, you can install:" >&2
+  echo "----> TRY: $ $0 --install"
   exit 2
 fi
 
@@ -165,7 +173,7 @@ if `sysbench --version | grep -q "sysbench 0\."`; then
 fi
 
 # set hostname
-HOST=`hostname`
+HOST=`hostname 2>&/dev/null`
 [ -z "$HOST" ] && HOST=`uname -n`
 
 #
