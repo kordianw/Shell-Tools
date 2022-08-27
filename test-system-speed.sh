@@ -92,24 +92,34 @@ fi
 
 if ! which sysbench >&/dev/null; then
   echo "$PROG: you don't have \`sysbench' installed; can't do any CPU performance testing!" >&2
-  echo "- trying to download, see if you can install:"
-  [ -x /usr/bin/yum ] && echo "  > yum install -y libtool"
-  echo "  > ./autogen.sh"
-  echo "  > ./configure --without-mysql"
-  echo "  > ./make"
-  echo "- binary should be in ./src"
 
   # quick install...
-  [ -x /usr/bin/yum ] && sudo yum install -qq -y libtool
+  if [ -x /usr/bin/apt ]; then
+    echo "- trying to install sysbench via apt:"
+    sudo apt install -y -qq sysbench
+  else
+    echo "- trying to download, see if you can install:"
+    [ -x /usr/bin/yum ] && echo "  > yum install -y libtool"
+    echo "  > ./autogen.sh"
+    echo "  > ./configure --without-mysql"
+    echo "  > ./make"
+    echo "- binary should be in ./src"
 
-  curl -sSL -o sysbench-1.0.20.tar.gz https://github.com/akopytov/sysbench/archive/refs/tags/1.0.20.tar.gz && \
-  tar xzf sysbench-1.0.20.tar.gz && \
-  rm -fv sysbench-1.0.20.tar.gz && \
-  cd sysbench-1.0.20 && \
-  ./autogen.sh && \
-  ./configure --without-mysql && \
-  make
+    [ -x /usr/bin/yum ] && sudo yum install -qq -y libtool
 
+    curl -sSL -o sysbench-1.0.20.tar.gz https://github.com/akopytov/sysbench/archive/refs/tags/1.0.20.tar.gz && \
+    tar xzf sysbench-1.0.20.tar.gz && \
+    rm -fv sysbench-1.0.20.tar.gz && \
+    cd sysbench-1.0.20 && \
+    ./autogen.sh && \
+    ./configure --without-mysql && \
+    make
+  fi
+fi
+
+# do we now have it?
+if ! which sysbench >&/dev/null; then
+  echo "$PROG: --FATAL: you still don't have \`sysbench' installed; can't do any CPU performance testing!" >&2
   exit 2
 fi
 
