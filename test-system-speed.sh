@@ -4,6 +4,7 @@
 #
 # OPTIONS:
 # -install <-- tries to install `sysbench' if not installed
+# -cpu     <-- just the CPU testing
 # -ssd     <-- checks if a disk is SSD by running a quick IO test
 # -hdparm  <-- adds a hdparm test at the end
 #
@@ -149,15 +150,20 @@ if [ "$1" = "-1GB" ]; then
 fi
 
 # check for space
-SPACE_LEFT=`df -m . | awk '/^\/|^overlay/{print $4}'`
-if [ -z "$SPACE_LEFT" ]; then
-  echo "$PROG: can't calculate space left in current dir - via: \`df -m .'" >&2
-  echo "--WARN: skipping HD tests"
-elif [ $SPACE_LEFT -lt $MIN_SPACE_NEEDED ]; then
-  echo -e "$PROG: FATAL: not enough space left in current dir - seeing $SPACE_LEFT MB, needs at least $MIN_SPACE_NEEDED MB - see below:" >&2
-  df -h .
-  echo -e "\nNOTE: can use \"-1GB\" param to reduce the requirements..." >&2
-  exit 99
+if [ "$1" = "-cpu" -o "$1" = "-CPU" ]; then
+  echo "$PROG: just CPU testing..."
+  SPACE_LEFT=
+else
+  SPACE_LEFT=`df -m . | awk '/^\/|^overlay/{print $4}'`
+  if [ -z "$SPACE_LEFT" ]; then
+    echo "$PROG: can't calculate space left in current dir - via: \`df -m .'" >&2
+    echo "--WARN: skipping HD tests"
+  elif [ $SPACE_LEFT -lt $MIN_SPACE_NEEDED ]; then
+    echo -e "$PROG: FATAL: not enough space left in current dir - seeing $SPACE_LEFT MB, needs at least $MIN_SPACE_NEEDED MB - see below:" >&2
+    df -h .
+    echo -e "\nNOTE: can use \"-1GB\" param to reduce the requirements..." >&2
+    exit 99
+  fi
 fi
 
 ##################
@@ -184,7 +190,7 @@ HOST=`hostname 2>/dev/null`
 #
 # CPU TEST
 #
-if [ "$1" = "-cpu" -o -z "$1" ]; then
+if [ "$1" = "-cpu" -o "$1" = "-CPU" -o -z "$1" ]; then
   # work out how many CPUs (threads) we have?
   THREADS=`lscpu 2>/dev/null |awk '/^CPU\(s\):/{print $NF}'`
   if [ -z "$THREADS" ]; then
