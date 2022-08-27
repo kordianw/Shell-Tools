@@ -98,6 +98,7 @@ if [ "$1" = "--install" ]; then
     # quick install...
     if [ -x /usr/bin/apt ]; then
       echo "- trying to install sysbench via apt:"
+      sudo apt update -qq
       sudo apt install -y -qq sysbench
     else
       echo "- trying to download & build from source, see if we can install:"
@@ -173,7 +174,7 @@ if `sysbench --version | grep -q "sysbench 0\."`; then
 fi
 
 # set hostname
-HOST=`hostname 2>&/dev/null`
+HOST=`hostname 2>/dev/null`
 [ -z "$HOST" ] && HOST=`uname -n`
 
 #
