@@ -110,19 +110,23 @@ if [ "$1" = "--install" ]; then
 
       [ -x /usr/bin/yum ] && sudo yum install -qq -y libtool pkgconfig
       [ -x /usr/bin/yum ] && sudo yum install -qq -y pkgconfig
+      [ -x /usr/bin/yum ] && sudo yum install -qq -y make
 
+      set -x
       curl -sSL -o sysbench-1.0.20.tar.gz https://github.com/akopytov/sysbench/archive/refs/tags/1.0.20.tar.gz && \
       tar xzf sysbench-1.0.20.tar.gz && \
       rm -fv sysbench-1.0.20.tar.gz && \
       cd sysbench-1.0.20 && \
       ./autogen.sh && \
       ./configure --without-mysql && \
-      make
+      make && \
+      mv -v src/sysbench ~/bin
+      set +x
     fi
+  else
+    echo "$PROG: sysbench seems already installed:"
+    which sysbench
   fi
-else
-  echo "$PROG: sysbench seems already installed:"
-  which sysbench
 fi
 
 # do we now have it?
