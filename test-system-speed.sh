@@ -5,6 +5,7 @@
 # OPTIONS:
 # -install <-- tries to install `sysbench' if not installed
 # -cpu     <-- just the CPU testing
+# -memory  <-- memory testing included
 # -ssd     <-- checks if a disk is SSD by running a quick IO test
 # -hdparm  <-- adds a hdparm test at the end
 #
@@ -29,8 +30,8 @@ if [ ! -w . ]; then
   exit 1
 fi
 
-# check SSD speed - crude way ...
-if [ "$1" = "-ssd" ]; then
+# check SSD/HDD speed - crude way ...
+if [ "$1" = "-ssd" -o "$1" = "--ssd" ]; then
 
   COUNT=2000
 
@@ -152,7 +153,7 @@ if [ "$1" = "-1GB" ]; then
 fi
 
 # check for space
-if [ "$1" = "-cpu" -o "$1" = "-CPU" ]; then
+if [ "$1" = "-cpu" -o "$1" = "-CPU" -o "$1" = "--cpu" ]; then
   echo "$PROG: just CPU testing..."
   SPACE_LEFT=
 else
@@ -192,7 +193,7 @@ HOST=`hostname 2>/dev/null`
 #
 # CPU TEST
 #
-if [ "$1" = "-cpu" -o "$1" = "-CPU" -o -z "$1" ]; then
+if [ "$1" = "-cpu" -o "$1" = "-CPU" -o "$1" = "--cpu" -o -z "$1" ]; then
   # work out how many CPUs (threads) we have?
   THREADS=`lscpu 2>/dev/null |awk '/^CPU\(s\):/{print $NF}'`
   if [ -z "$THREADS" ]; then
@@ -217,7 +218,7 @@ fi
 #
 # MEMORY TEST
 #
-if [ "$1" = "-memory" -o -z "$1" ]; then
+if [ "$1" = "-memory" -o "$1" = "--memory" -o -z "$1" ]; then
   echo && echo "* [$HOST] Memory Benchmark: 2GB (read & write)"
   sleep 2
 
