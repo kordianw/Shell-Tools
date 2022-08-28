@@ -92,7 +92,7 @@ if [ "$1" = "-ssd" ]; then
   exit 0
 fi
 
-if [ "$1" = "--install" ]; then
+if [ "$1" = "-install" ]; then
   if ! which sysbench >&/dev/null; then
     echo "$PROG: trying to install \`sysbench' ..." >&2
 
@@ -107,12 +107,14 @@ if [ "$1" = "--install" ]; then
       echo "  > ./autogen.sh"
       echo "  > ./configure --without-mysql"
       echo "  > ./make"
-      echo "- binary should be in ./src"
+      echo "- binary should be in ./src, & copied to ~/bin"
 
+      echo "Step 1 is to intall some packages via YUM INSTALL:"
       [ -x /usr/bin/yum ] && sudo yum install -qq -y libtool pkgconfig
       [ -x /usr/bin/yum ] && sudo yum install -qq -y pkgconfig
       [ -x /usr/bin/yum ] && sudo yum install -qq -y make
 
+      echo "Step 2 is to download & build:"
       set -x
       curl -sSL -o sysbench-1.0.20.tar.gz https://github.com/akopytov/sysbench/archive/refs/tags/1.0.20.tar.gz && \
       tar xzf sysbench-1.0.20.tar.gz && \
@@ -133,7 +135,7 @@ fi
 # do we now have it?
 if ! which sysbench >&/dev/null; then
   echo "$PROG: --FATAL: you don't have \`sysbench' installed; can't do any CPU performance testing, you can install:" >&2
-  echo "----> TRY: $ $0 --install"
+  echo -e "----> TRY:\n$ $0 -install"
   exit 2
 fi
 
