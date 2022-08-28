@@ -627,9 +627,9 @@ Usage: $PROG <options> [param]
         -gcp_setup  sets-up GCP Cloud Shell VM
                     * runs: ./$BACKUP_HELPER_SCRIPT -dlupd && -setup
                     * creates/updates ~/.customize_environment
-                    * [if needed ] installs ZSH, SCREEN, SSHPASS, sets ZSH as default shell
-                    * [if needed ] stops memory hungry process if <4GB RAM: docker,snapd
-                    * [if needed ] updates Dynamic DNS
+                    * [if needed] installs ZSH, SCREEN, SSHPASS, sets ZSH as default shell
+                    * [if needed] stops memory hungry process if <4GB RAM: docker,snapd
+                    * [if needed] updates Dynamic DNS
                     NOTE: Most of this should already be handled by ~/.customize_environment
 
         -c9_setup   sets-up AWS Cloud9 [paid] VM
