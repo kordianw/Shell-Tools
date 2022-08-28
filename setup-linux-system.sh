@@ -186,6 +186,7 @@ function install_general_packages
   $INSTALL_CMD jq            # lightweight and flexible command-line JSON processor
   $INSTALL_CMD s3cmd         # S3 client
   $INSTALL_CMD rclone        # cloud upload/download client
+  $INSTALL_CMD awscli        # AWS CLI
   
   # GENPKG: compiling / gcc
   $INSTALL_CMD build-essential
@@ -785,6 +786,7 @@ function install_rhel()
   # RHEL: MAJOR packages
   sudo yum -y install ansible                # Ansible
   sudo yum -y install s3cmd.noarch           # S3CMD - S3 CLI
+  sudo yum -y install awscli
 
   # RHEL: TERMINAL
   sudo yum -y install screen                 # GNU screen
