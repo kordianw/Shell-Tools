@@ -1133,11 +1133,11 @@ function change_hostname()
 
       if [ -n "$OLD_HOSTNAME" -a "$OLD_HOSTNAME" != "$HOSTNAME" ]; then
         $SUDO sed -i "s/^127.0.0.1 localhost $OLD_HOSTNAME$/127.0.0.1 localhost $HOSTNAME/" /etc/hosts
-        $SUDO sed -i "s/^127.0.0.1 localhost.localdomain localhost4 localhost4.localdomain4 $OLD_HOSTNAME$/127.0.0.1 localhost.localdomain localhost4 localhost4.localdomain4 $HOSTNAME/" /etc/hosts
+        $SUDO sed -i "s/^127.0.0.1   localhost.localdomain localhost4 localhost4.localdomain4 $OLD_HOSTNAME$/127.0.0.1    localhost.localdomain localhost4 localhost4.localdomain4 $HOSTNAME/" /etc/hosts
       fi
 
       $SUDO sed -i "s/^127.0.0.1 localhost$/127.0.0.1 localhost $HOSTNAME/" /etc/hosts
-      $SUDO sed -i "s/^127.0.0.1 localhost.localdomain localhost4 localhost4.localdomain4$/127.0.0.1 localhost.localdomain localhost4 localhost4.localdomain4 $HOSTNAME/" /etc/hosts
+      $SUDO sed -i "s/^127.0.0.1    localhost.localdomain localhost4 localhost4.localdomain4$/127.0.0.1    localhost.localdomain localhost4 localhost4.localdomain4 $HOSTNAME/" /etc/hosts
 
       cat /etc/hosts
     else
@@ -1149,7 +1149,7 @@ function change_hostname()
   # cloud hosts have a preserve_hostname setting
   if [ -s /etc/cloud/cloud.cfg -o -n "$AWS" -o -n "$GCP" ]; then
     echo && echo "***NB****: note that on Public Cloud hosts need to change /etc/cloud/cloud.cfg to preserve_hostname across reboots:"
-    grep preserve_hostname /etc/cloud/cloud.cfg
+    grep -i preserve_hostname /etc/cloud/cloud.cfg
     sleep 1
   fi
 
