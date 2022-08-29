@@ -1132,12 +1132,12 @@ function change_hostname()
       echo && echo "* [`date +%H:%M`] updating /etc/hosts with $HOSTNAME"
 
       if [ -n "$OLD_HOSTNAME" -a "$OLD_HOSTNAME" != "$HOSTNAME" ]; then
-        $SUDO sed -i "s/^127.0.0.1 localhost $OLD_HOSTNAME$/127.0.0.1 localhost $HOSTNAME/" /etc/hosts
-        $SUDO sed -i "s/^127.0.0.1   localhost.localdomain localhost4 localhost4.localdomain4 $OLD_HOSTNAME$/127.0.0.1    localhost.localdomain localhost4 localhost4.localdomain4 $HOSTNAME/" /etc/hosts
+        $SUDO sed -i "s/^127.0.0.1\( *\)localhost $OLD_HOSTNAME$/127.0.0.1\1localhost $HOSTNAME/" /etc/hosts
+        $SUDO sed -i "s/^127.0.0.1\( *\)localhost.localdomain localhost4 localhost4.localdomain4 $OLD_HOSTNAME$/127.0.0.1\1localhost.localdomain localhost4 localhost4.localdomain4 $HOSTNAME/" /etc/hosts
       fi
 
-      $SUDO sed -i "s/^127.0.0.1 localhost$/127.0.0.1 localhost $HOSTNAME/" /etc/hosts
-      $SUDO sed -i "s/^127.0.0.1    localhost.localdomain localhost4 localhost4.localdomain4$/127.0.0.1    localhost.localdomain localhost4 localhost4.localdomain4 $HOSTNAME/" /etc/hosts
+      $SUDO sed -i "s/^127.0.0.1\( *\)localhost$/127.0.0.1\1localhost $HOSTNAME/" /etc/hosts
+      $SUDO sed -i "s/^127.0.0.1\( *\)localhost.localdomain localhost4 localhost4.localdomain4$/127.0.0.1\1localhost.localdomain localhost4 localhost4.localdomain4 $HOSTNAME/" /etc/hosts
 
       cat /etc/hosts
     else
