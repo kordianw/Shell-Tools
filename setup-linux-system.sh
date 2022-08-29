@@ -1099,9 +1099,15 @@ function change_hostname()
   elif echo "`uname -n`" |grep -q "^ip-[0-9][0-9-]*[0-9]$"; then
     AWS=1
     HOSTNAME="ec2-$HOSTNAME"
-  elif "`uname -r`" | egrep -q ".(-aws|-amazon)$"; then
+  elif echo "`uname -r`" | egrep -q ".(-aws|-amazon)$"; then
     AWS=1
     HOSTNAME="ec2-$HOSTNAME"
+  fi
+
+  # is this GCP?
+  if echo "`uname -r`" | egrep -q ".(-gcp|-google)$"; then
+    GCP=1
+    HOSTNAME="gcp-$HOSTNAME"
   fi
 
   # auto-change: did we get something?
@@ -1115,26 +1121,42 @@ function change_hostname()
   #
   # EXEC
   #
-  $SUDO hostnamectl set-hostname --static $HOSTNAME
-  RC=$?
+  if [ "$HOSTNAME" != "localhost" -o -n "$1" ]; then
+    OLD_HOSTNAME=`hostname`
 
-  # update /etc/hosts
-  if [ "$RC" -eq 0 ]; then
-    echo && echo "* [`date +%H:%M`] updating /etc/hosts with $HOSTNAME"
-    $SUDO sed -i "s/^127.0.0.1 localhost$/127.0.0.1 localhost $HOSTNAME/" /etc/hosts
+    $SUDO hostnamectl set-hostname --static $HOSTNAME
+    RC=$?
+
+    # update /etc/hosts
+    if [ "$RC" -eq 0 ]; then
+      echo && echo "* [`date +%H:%M`] updating /etc/hosts with $HOSTNAME"
+
+      if [ -n "$OLD_HOSTNAME" -a "$OLD_HOSTNAME" != "$HOSTNAME" ]; then
+        $SUDO sed -i "s/^127.0.0.1 localhost $OLD_HOSTNAME$/127.0.0.1 localhost $HOSTNAME/" /etc/hosts
+        $SUDO sed -i "s/^127.0.0.1 localhost.localdomain localhost4 localhost4.localdomain4 $OLD_HOSTNAME$/127.0.0.1 localhost.localdomain localhost4 localhost4.localdomain4 $HOSTNAME/" /etc/hosts
+      fi
+
+      $SUDO sed -i "s/^127.0.0.1 localhost$/127.0.0.1 localhost $HOSTNAME/" /etc/hosts
+      $SUDO sed -i "s/^127.0.0.1 localhost.localdomain localhost4 localhost4.localdomain4$/127.0.0.1 localhost.localdomain localhost4 localhost4.localdomain4 $HOSTNAME/" /etc/hosts
+
+      cat /etc/hosts
+    else
+      echo "--FATAL: ERROR RC=$RC running: $SUDO hostnamectl set-hostname --static $HOSTNAME" >&2
+      exit 99
+    fi
   fi
 
-  # EC2 has a preserve_hostname setting
-  if [ -n "$AWS" ]; then
-    echo && echo "***NB****: note that on EC2 AWS need to change /etc/cloud/cloud.cfg to preserve_hostname across reboots:"
+  # cloud hosts have a preserve_hostname setting
+  if [ -s /etc/cloud/cloud.cfg -o -n "$AWS" -o -n "$GCP" ]; then
+    echo && echo "***NB****: note that on Public Cloud hosts need to change /etc/cloud/cloud.cfg to preserve_hostname across reboots:"
     grep preserve_hostname /etc/cloud/cloud.cfg
     sleep 1
   fi
 
   # recommended: perform apt update
-  echo "- [optional] perform apt update/upgrade on $HOSTNAME"
+  echo && echo "* [`date +%H:%M`] /OPTIONAL/ perform apt update/upgrade on $HOSTNAME, hit Ctrl-C to cancel"
   if which apt >&/dev/null; then
-    $SUDO apt update -q && $SUDO apt upgrade -yq
+    $SUDO nice apt update -qq && $SUDO nice apt upgrade -yq
   fi
 
   # reload the shell
