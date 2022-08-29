@@ -1110,6 +1110,12 @@ function change_hostname()
     HOSTNAME="gcp-$HOSTNAME"
   fi
 
+  # is this AZURE?
+  if echo "`uname -r`" | egrep -q ".(-azure)$"; then
+    AZURE=1
+    HOSTNAME="az-$HOSTNAME"
+  fi
+
   # auto-change: did we get something?
   if [ "$1" ]; then
     echo "- setting hostname to: << $1 >> - auto-worked out hostname is $HOSTNAME"
