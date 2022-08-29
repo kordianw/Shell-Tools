@@ -1195,10 +1195,10 @@ Usage: $PROG <options> [param]
         -RH     install yum  pkgs: RHEL Red Hat Linux (uses yum)
         -PI     install apt  pkgs: Raspbian PI Linux (uses apt)
 
-        -SSH_CONF  sets-up fail2ban (useful when SSH on public Internet)
-                   * also confirms SSHD config
-        -HOSTNAME  change hostname to something more meaningful
-                   * optional param with the new hostname
+        -SSH_CONF         sets-up SSHD & fail2ban (useful when SSH on public Internet)
+                          * also confirms current SSHD config
+        -HOSTNAME [name]  change hostname to something more meaningful
+                          * optional param with the new hostname
 
         -h      this screen
 !
@@ -1216,9 +1216,9 @@ elif [ "$1" = "-SSH0" ]; then
   disable_ssh;
 elif [ "$1" = "-BREW" ]; then
   install_brew;
-elif [ "$1" = "-SSH_CONF" ]; then
+elif [ "$1" = "-SSH_CONF" -o "$1" = "-sshconf" ]; then
   ssh_conf;
-elif [ "$1" = "-HOSTNAME" ]; then
+elif [ "$1" = "-HOSTNAME" -o "$1" = "-hostname" ]; then
   change_hostname $2;
 elif [ "$1" = "-PI" ]; then
   install_pi;
