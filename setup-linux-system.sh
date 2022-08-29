@@ -1087,17 +1087,52 @@ function change_hostname()
   OS_RELEASE=`grep "VERSION_ID=" /etc/os-release | sed 's/.*="\([0-9]*\).*/\1/; s/"//g'`
   [ -n "$OS_NAME" ] && HOSTNAME=$OS_NAME
   [ -n "$OS_RELEASE" ] && HOSTNAME="$HOSTNAME$OS_RELEASE"
+
+  # is this LINODE?
   [ -n "$LINODE_DATACENTERID" -a "$LINODE_DATACENTERID" = 6 ]  && HOSTNAME="nj-$HOSTNAME"
   [ -n "$LINODE_DATACENTERID" -a "$LINODE_DATACENTERID" = 15 ] && HOSTNAME="tor-$HOSTNAME"
 
-  # did we get something?
-  if [ "$HOSTNAME" != "localhost" ]; then
-    echo "- setting hostname to: $HOSTNAME"
-    $SUDO hostnamectl set-hostname $HOSTNAME
+  # is this AWS EC2?
+  if [ "$USER" = "ec2-user" ]; then
+    AWS=1
+    HOSTNAME="ec2-$HOSTNAME"
+  elif echo "`uname -n`" |grep -q "^ip-[0-9][0-9-]*[0-9]$"; then
+    AWS=1
+    HOSTNAME="ec2-$HOSTNAME"
+  elif "`uname -r`" | egrep -q ".(-aws|-amazon)$"; then
+    AWS=1
+    HOSTNAME="ec2-$HOSTNAME"
+  fi
+
+  # auto-change: did we get something?
+  if [ "$1" ]; then
+    echo "- setting hostname to: << $1 >> - auto-worked out hostname is $HOSTNAME"
+    HOSTNAME=$1
+  elif [ "$HOSTNAME" != "localhost" ]; then
+    echo "- setting hostname to: << $HOSTNAME >>"
+  fi
+
+  #
+  # EXEC
+  #
+  $SUDO hostnamectl set-hostname --static $HOSTNAME
+  RC=$?
+
+  # update /etc/hosts
+  if [ "$RC" -eq 0 ]; then
+    echo && echo "* [`date +%H:%M`] updating /etc/hosts with $HOSTNAME"
+    $SUDO sed -i "s/^127.0.0.1 localhost$/127.0.0.1 localhost $HOSTNAME/" /etc/hosts
+  fi
+
+  # EC2 has a preserve_hostname setting
+  if [ -n "$AWS" ]; then
+    echo && echo "***NB****: note that on EC2 AWS need to change /etc/cloud/cloud.cfg to preserve_hostname across reboots:"
+    grep preserve_hostname /etc/cloud/cloud.cfg
+    sleep 1
   fi
 
   # recommended: perform apt update
-  echo "- perform apt update/upgrade on $HOSTNAME"
+  echo "- [optional] perform apt update/upgrade on $HOSTNAME"
   if which apt >&/dev/null; then
     $SUDO apt update -q && $SUDO apt upgrade -yq
   fi
@@ -1135,6 +1170,7 @@ Usage: $PROG <options> [param]
         -SSH_CONF  sets-up fail2ban (useful when SSH on public Internet)
                    * also confirms SSHD config
         -HOSTNAME  change hostname to something more meaningful
+                   * optional param with the new hostname
 
         -h      this screen
 !
@@ -1155,7 +1191,7 @@ elif [ "$1" = "-BREW" ]; then
 elif [ "$1" = "-SSH_CONF" ]; then
   ssh_conf;
 elif [ "$1" = "-HOSTNAME" ]; then
-  change_hostname;
+  change_hostname $2;
 elif [ "$1" = "-PI" ]; then
   install_pi;
 elif [ "$1" = "-RH" ]; then
