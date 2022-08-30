@@ -12,7 +12,7 @@ PERL="/usr/bin/perl"
 
 
 ####################
-PROG=`basename $0`
+PROG=$(basename $0)
 if [ $# -eq 0 -o "$1" = "-h" ]; then
   cat <<! >&2
 $PROG: Script to create a new script template in current dir ...
@@ -21,7 +21,7 @@ Usage: $PROG <script.sh>
 	  -h 	this screen
 !
 else
-  DATE=`date "+%B %Y"`
+  DATE=$(date "+%B %Y")
   FILE="$1"
 
   # some processing and ensuring it can be done & all is OK
@@ -42,7 +42,7 @@ else
 #
 
 ####################
-PROG=\`basename \$0\`
+PROG=\$(basename \$0)
 if [ \$# -eq 0 -o "\$1" = "-h" -o "\$1" = "--help" ]; then
   cat <<! >&2
 \$PROG: Script to ...

@@ -19,7 +19,8 @@ function setup()
 {
   # what is the package manager to choose?
   if [ -x /usr/bin/apt -a -x /usr/bin/yum ]; then
-    echo "$PROG: both \`apt' and \`get' are installed! can't choose the package manager!" >&2; exit 99
+    echo "$PROG: both \`apt' and \`get' are installed! can't choose the package manager!" >&2
+    exit 99
   elif [ -x /usr/bin/apt ]; then
     PKG=apt
   elif [ -x /usr/bin/yum ]; then
@@ -27,7 +28,8 @@ function setup()
   elif [ -x /usr/bin/zypper ]; then
     PKG=zypper
   else
-    echo "$PROG: neither \`apt' or \`get' or \`zypper' are installed! can't choose the package manager!" >&2; exit 99
+    echo "$PROG: neither \`apt' or \`get' or \`zypper' are installed! can't choose the package manager!" >&2
+    exit 99
   fi
 
   # do we need sudo?
@@ -106,10 +108,16 @@ function install_general_packages
   #
 
   # record start-time
-  START_TIME=`date "+%s"`
+  START_TIME=$(date "+%s")
 
-  [ "$OSTYPE" != "linux-gnu" -a "$OSTYPE" != "linux" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
-  [ ! -r /etc/os-release ] && { echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2; exit 3; }
+  [ "$OSTYPE" != "linux-gnu" -a "$OSTYPE" != "linux" ] && {
+    echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2
+    exit 2
+  }
+  [ ! -r /etc/os-release ] && {
+    echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2
+    exit 3
+  }
 
   # setup program & vars
   setup
@@ -138,11 +146,11 @@ function install_general_packages
   echo && echo "* GENPKG: installing packages..."
 
   # GENPKG: major packages - CLI & GUI
-  $INSTALL_CMD vim           # VIM: improved vi (VI iMproved)
-  $INSTALL_CMD zsh           # the Z Shell (more powerful than bash)
+  $INSTALL_CMD vim # VIM: improved vi (VI iMproved)
+  $INSTALL_CMD zsh # the Z Shell (more powerful than bash)
 
   # GENPKG: GUI Packages
-  if who | grep $USER |grep tty | grep -q ":0"; then
+  if who | grep $USER | grep tty | grep -q ":0"; then
     echo -e "\n***\n*** GENPKG: INSTALLING GUI PKGS\n***\n"
     $INSTALL_CMD chromium-browser
     $INSTALL_CMD vlc
@@ -150,18 +158,18 @@ function install_general_packages
     $INSTALL_CMD remmina-plugin-rdp
     $INSTALL_CMD remmina-plugin-vnc
     $INSTALL_CMD xdotool
-    $INSTALL_CMD boot-repair   # Graphical tool to repair boot problems
+    $INSTALL_CMD boot-repair # Graphical tool to repair boot problems
   fi
 
   # GENPKG: Laptop specific tools
   if [ -f /sys/module/battery/initstate -o -d /proc/acpi/battery/BAT0 -o -L /sys/class/power_supply/BAT0 ]; then
     echo -e "\n***\n*** GENPKG: INSTALLING LAPTOP PKGS\n***\n"
-    $INSTALL_CMD acpi          # view battery/ACPI information (LAPTOPS)
-    $INSTALL_CMD acpitool      # view battery/ACPI information (LAPTOPS)
-    $INSTALL_CMD wavemon       # wireless Device Monitoring Application (LAPTOPS)
-    $INSTALL_CMD powertop      # diagnose issues with power consumption and management (LAPTOPS)
-    $INSTALL_CMD cpufrequtils  # utilities to deal with the cpufreq Linux kernel feature
-    $INSTALL_CMD caffeine      # prevent the desktop becoming idle in full-screen mode
+    $INSTALL_CMD acpi         # view battery/ACPI information (LAPTOPS)
+    $INSTALL_CMD acpitool     # view battery/ACPI information (LAPTOPS)
+    $INSTALL_CMD wavemon      # wireless Device Monitoring Application (LAPTOPS)
+    $INSTALL_CMD powertop     # diagnose issues with power consumption and management (LAPTOPS)
+    $INSTALL_CMD cpufrequtils # utilities to deal with the cpufreq Linux kernel feature
+    $INSTALL_CMD caffeine     # prevent the desktop becoming idle in full-screen mode
   fi
 
   # GENPKG: Mail
@@ -172,30 +180,30 @@ function install_general_packages
   #$INSTALL_CMD libsasl2-modules  # needed for sendgrid/external SMTP
 
   # GENPKG: terminal multipliers
-  $INSTALL_CMD screen        # GNU screen
-  $INSTALL_CMD tmux          # GNU tmux
+  $INSTALL_CMD screen # GNU screen
+  $INSTALL_CMD tmux   # GNU tmux
 
   # text-based browsers
-  $INSTALL_CMD lynx          # classic non-graphical (text-mode) web browser
-  $INSTALL_CMD links         # Web browser running in text mode
+  $INSTALL_CMD lynx  # classic non-graphical (text-mode) web browser
+  $INSTALL_CMD links # Web browser running in text mode
   #$INSTALL_CMD w3m           # WWW browsable pager with excellent tables/frames support
 
   # GENPKG: development
-  $INSTALL_CMD git           # github/git
-  $INSTALL_CMD jq            # lightweight and flexible command-line JSON processor
+  $INSTALL_CMD git # github/git
+  $INSTALL_CMD jq  # lightweight and flexible command-line JSON processor
   #$INSTALL_CMD s3cmd         # S3 client
   #$INSTALL_CMD rclone        # cloud upload/download client
   #$INSTALL_CMD ansible       # Ansible
   #$INSTALL_CMD awscli        # AWS CLI
-  
+
   # GENPKG: compiling / gcc
   $INSTALL_CMD build-essential
-  $INSTALL_CMD gcc           # GNU compiler
-  $INSTALL_CMD libc6-dev     # LIBC dev headers
-  $INSTALL_CMD automake      # automake
-  $INSTALL_CMD pkg-config    # pkg-config
-  $INSTALL_CMD openssl       # SSL
-  $INSTALL_CMD libssl-dev    # SSL libraries
+  $INSTALL_CMD gcc        # GNU compiler
+  $INSTALL_CMD libc6-dev  # LIBC dev headers
+  $INSTALL_CMD automake   # automake
+  $INSTALL_CMD pkg-config # pkg-config
+  $INSTALL_CMD openssl    # SSL
+  $INSTALL_CMD libssl-dev # SSL libraries
   $INSTALL_CMD libncurses5-dev libncursesw5-dev
 
   # GENPKG: additional perl modules
@@ -216,7 +224,7 @@ function install_general_packages
   # GENPKG: system utils (may require cron-entries)
   #$INSTALL_CMD sysstat       # install stat utils such as sar, iostat, etc
   #$INSTALL_CMD mlocate       # quickly find files on the filesystem based on their name
-  [ -x /usr/bin/apt ] && $INSTALL_CMD apt-file      # search for files within Debian packages (CLI)
+  [ -x /usr/bin/apt ] && $INSTALL_CMD apt-file # search for files within Debian packages (CLI)
 
   # GENPKG: system utils (do not require cron)
   #$INSTALL_CMD neofetch      # Shows Linux System Information with Distribution Logo
@@ -224,32 +232,32 @@ function install_general_packages
   #$INSTALL_CMD lshw          # information about hardware configuration, incl. lspci
   #$INSTALL_CMD hwinfo        # Hardware identification system
   #$INSTALL_CMD cpuid         # tool to dump x86 CPUID information about the CPU(s)
-  $INSTALL_CMD dmidecode     # active/passive network address scanner using ARP requests
+  $INSTALL_CMD dmidecode # active/passive network address scanner using ARP requests
   #$INSTALL_CMD hdparm        # tune hard disk parameters for high performance
-  $INSTALL_CMD sysbench      # multi-threaded benchmark tool
-  $INSTALL_CMD lsof          # Utility to list open files
-  $INSTALL_CMD ncdu          # Disk usage analysis
-  $INSTALL_CMD bind-utils    # tools such as `dig'
+  $INSTALL_CMD sysbench   # multi-threaded benchmark tool
+  $INSTALL_CMD lsof       # Utility to list open files
+  $INSTALL_CMD ncdu       # Disk usage analysis
+  $INSTALL_CMD bind-utils # tools such as `dig'
 
   # GENPKG: network & security tools
-  $INSTALL_CMD telnet        # telnet for checking connectivity
-  $INSTALL_CMD dnsutils      # provides dig+nslookup
+  $INSTALL_CMD telnet   # telnet for checking connectivity
+  $INSTALL_CMD dnsutils # provides dig+nslookup
   #$INSTALL_CMD netcat        # TCP/IP swiss army knife
-  $INSTALL_CMD nmap          # The Network Mapper/Scanner
+  $INSTALL_CMD nmap # The Network Mapper/Scanner
   #$INSTALL_CMD sshfs         # filesystem client based on SSH File Transfer Protocol
   #$INSTALL_CMD netdiscover   # SMBIOS/DMI table decoder
-  $INSTALL_CMD ntpdate       # one-off synchronize clock with a remote NTP server
-  $INSTALL_CMD ntpstat       # show network time protocol (ntp) status
+  $INSTALL_CMD ntpdate # one-off synchronize clock with a remote NTP server
+  $INSTALL_CMD ntpstat # show network time protocol (ntp) status
   #$INSTALL_CMD ethtool       # display or change Ethernet device settings
   #$INSTALL_CMD aircrack-ng   # wireless WEP/WPA cracking utilities
-  $INSTALL_CMD sshpass       # Non-interactive ssh password authentication
+  $INSTALL_CMD sshpass # Non-interactive ssh password authentication
 
   # GENPKG: small utils (just helper utils)
-  $INSTALL_CMD tofrodos      # unix2dos, dos2unix
-  $INSTALL_CMD bc            # CLI calculator
+  $INSTALL_CMD tofrodos # unix2dos, dos2unix
+  $INSTALL_CMD bc       # CLI calculator
   #$INSTALL_CMD par           # advanced Paragraph reformatter (can be used inside vim)
   #$INSTALL_CMD pydf          # colourised df(1)-clone
-  $INSTALL_CMD htop          # improved `top'
+  $INSTALL_CMD htop # improved `top'
 
   if [ "$PKG" = "apt" ]; then
     # update the apt-file utility
@@ -258,16 +266,16 @@ function install_general_packages
 
     # store a backup of currently installed packages
     echo && echo "* GENPKG: storing a backup of all installed packages..."
-    DIR=`dirname "$0"`
-    dpkg -l > $DIR/pkg-installed-list.txt
+    DIR=$(dirname "$0")
+    dpkg -l >$DIR/pkg-installed-list.txt
   fi
 
   # GENPKG: show end time
-  END_TIME=`date +%s`
-  TIME_TAKEN=$(( $END_TIME - $START_TIME ))
+  END_TIME=$(date +%s)
+  TIME_TAKEN=$(($END_TIME - $START_TIME))
   if [ $TIME_TAKEN -gt 60 ]; then
-    TIME_TAKEN=`echo "($END_TIME - $START_TIME) / 60" | bc -l | sed 's/\(...\).*/\1/'`
-    echo "  <<< Time taken: $TIME_TAKEN min(s) @ `date +%H:%M` >>>" 1>&2
+    TIME_TAKEN=$(echo "($END_TIME - $START_TIME) / 60" | bc -l | sed 's/\(...\).*/\1/')
+    echo "  <<< Time taken: $TIME_TAKEN min(s) @ $(date +%H:%M) >>>" 1>&2
   fi
 }
 
@@ -278,11 +286,15 @@ function change_timezone()
   check_root
 
   # check we know what TZ we're going to
-  [ -z "$TZ" ] && { echo "$PROG: no TZ variable set!" >&2; exit 1; }
+  [ -z "$TZ" ] && {
+    echo "$PROG: no TZ variable set!" >&2
+    exit 1
+  }
 
   # check that TZ selected exists
   if ! ls -l /usr/share/zoneinfo/$TZ; then
-    echo "$PROG: the TZ \'$TZ' doesn't seem to exist?" >&2; exit 3
+    echo "$PROG: the TZ \'$TZ' doesn't seem to exist?" >&2
+    exit 3
   fi
 
   # check for /etc/timezone, unless on Fedora
@@ -291,24 +303,37 @@ function change_timezone()
   else
     # this system has no /etc/timezone - not sure if this process would work
     if [ ! -e /etc/timezone ]; then
-      echo "$PROG: this system has no \`/etc/timezone' - not sure that this process would work?" >&2; exit 2
+      echo "$PROG: this system has no \`/etc/timezone' - not sure that this process would work?" >&2
+      exit 2
     fi
 
     # not supporting certain set-ups
-    [ -L /etc/timezone ] && { echo "$PROG: not supporting linked /etc/timezone!" >&2; exit 1; }
+    [ -L /etc/timezone ] && {
+      echo "$PROG: not supporting linked /etc/timezone!" >&2
+      exit 1
+    }
 
     echo "* viewing contents of current /etc/timezone:"
     cat /etc/timezone || exit 1
   fi
 
   echo "* viewing contents of current /etc/timezone and /etc/localtime link:"
-  [ ! -e /etc/localtime ] && { echo "$PROG: not supporting absense of /etc/localtime!" >&2; exit 1; }
+  [ ! -e /etc/localtime ] && {
+    echo "$PROG: not supporting absense of /etc/localtime!" >&2
+    exit 1
+  }
 
-  # special case for Amazon Linux 
+  # special case for Amazon Linux
   if grep -q "Amazon Linux" /etc/os-release; then
-    [ -f /etc/localtime ] || { echo "$PROG: not supporting non-existing file /etc/localtime on Amazon Linux!" >&2; exit 1; }
+    [ -f /etc/localtime ] || {
+      echo "$PROG: not supporting non-existing file /etc/localtime on Amazon Linux!" >&2
+      exit 1
+    }
   else
-    [ -L /etc/localtime ] || { echo "$PROG: not supporting non-linked /etc/localtime!" >&2; exit 1; }
+    [ -L /etc/localtime ] || {
+      echo "$PROG: not supporting non-linked /etc/localtime!" >&2
+      exit 1
+    }
   fi
   ls -l /etc/localtime || exit 2
 
@@ -343,8 +368,8 @@ function change_timezone()
 
       exit 0
     fi
-  echo
-    echo "** no /etc/timezone exists on this system ..." 1>&2;
+    echo
+    echo "** no /etc/timezone exists on this system ..." 1>&2
   fi
 
   # additional checks using timedatectl
@@ -354,13 +379,17 @@ function change_timezone()
     timedatectl list-timezones >&/dev/null
     if [ $? -eq 0 ]; then
       # check that valid
-      if [ `timedatectl list-timezones |grep -c $TZ` -ne 1 ]; then
-        echo "$PROG: the TZ \'$TZ' doesn't seem to be valid?" >&2; exit 4
+      if [ $(timedatectl list-timezones | grep -c $TZ) -ne 1 ]; then
+        echo "$PROG: the TZ \'$TZ' doesn't seem to be valid?" >&2
+        exit 4
       fi
 
       # check whether we're already there...
-      CURRENT_TZ=`timedatectl status | awk '/Time zone/{print $3}'`
-      [ -z "$CURRENT_TZ" ] && { echo "$PROG: can't get current system's TZ via timedatectl status!" >&2; exit 1; }
+      CURRENT_TZ=$(timedatectl status | awk '/Time zone/{print $3}')
+      [ -z "$CURRENT_TZ" ] && {
+        echo "$PROG: can't get current system's TZ via timedatectl status!" >&2
+        exit 1
+      }
 
       if [ "$CURRENT_TZ" = "$TZ" ]; then
         echo "$PROG: according to \`timedatectl -status', this system TZ is already set to $TZ - nothing to do." >&2
@@ -379,7 +408,7 @@ function change_timezone()
     #
     # CHANGE
     #
-    echo -e "\n*** changing system's timezone to: $TZ\n- before: `date`"
+    echo -e "\n*** changing system's timezone to: $TZ\n- before: $(date)"
     #set -x
     #echo "$TZ" | $SUDO tee /etc/timezone || exit 1
     #sudo dpkg-reconfigure --frontend noninteractive tzdata
@@ -406,7 +435,7 @@ function change_timezone()
     fi
 
     # confirm
-    echo "- now:   `date`"
+    echo "- now:   $(date)"
 
   elif which timedatectl >&/dev/null; then
     #
@@ -417,7 +446,8 @@ function change_timezone()
     $SUDO timedatectl set-timezone $TZ
 
   else
-    echo "$PROG: no \`timedatectl' and no \`dpkg-reconfigure' binary on the current system - can't change timezone" >&2; exit 1
+    echo "$PROG: no \`timedatectl' and no \`dpkg-reconfigure' binary on the current system - can't change timezone" >&2
+    exit 1
   fi
 
   # confirm
@@ -444,12 +474,13 @@ function enable_setup_zsh()
 
   # make sure we have USER defined
   if [ -z "$USER" ]; then
-    echo "$PROG: can't work out the current USER via USER shell var!" >&2; exit 1
+    echo "$PROG: can't work out the current USER via USER shell var!" >&2
+    exit 1
   fi
 
   # check for ZSH
-  ZSH=`chsh -l 2>/dev/null | grep zsh | tail -1`
-  [ -z "$ZSH" ] && ZSH=`which zsh 2>/dev/null`
+  ZSH=$(chsh -l 2>/dev/null | grep zsh | tail -1)
+  [ -z "$ZSH" ] && ZSH=$(which zsh 2>/dev/null)
   [ "$ZSH" = "/usr/bin/zsh" -a -x "/bin/zsh" ] && ZSH="/bin/zsh"
 
   # is ZSH available?
@@ -486,14 +517,14 @@ function enable_setup_zsh()
 
         exit 4
       fi
-    fi 
+    fi
   else
     echo "$PROG: Found the ZSH as \`$ZSH' ..." >&2
   fi
 
   # after potential installation - check for ZSH
-  ZSH=`chsh -l 2>/dev/null | grep zsh | tail -1`
-  [ -z "$ZSH" ] && ZSH=`which zsh 2>/dev/null`
+  ZSH=$(chsh -l 2>/dev/null | grep zsh | tail -1)
+  [ -z "$ZSH" ] && ZSH=$(which zsh 2>/dev/null)
 
   # Failure...
   if [ -z "$ZSH" ]; then
@@ -503,12 +534,14 @@ function enable_setup_zsh()
 
   # do we already have it set?
   if getent passwd $USER | grep -q ":$ZSH"; then
-    echo "$PROG: your user's < $USER > shell is already: $ZSH - nothing to do!" >&2; exit 0
+    echo "$PROG: your user's < $USER > shell is already: $ZSH - nothing to do!" >&2
+    exit 0
   fi
 
   # make sure it's in /etc/shells
   if ! grep -q "^$ZSH$" /etc/shells; then
-    echo "$PROG: the shell \`$ZSH' - is not in /etc/shells - this means can't change!" >&2; exit 6
+    echo "$PROG: the shell \`$ZSH' - is not in /etc/shells - this means can't change!" >&2
+    exit 6
   fi
 
   # don't change shell for `root'
@@ -519,16 +552,17 @@ function enable_setup_zsh()
 
   # make sure we have ZSHRC installed
   if [ ! -r $HOME/.zshrc ]; then
-    echo "$PROG: create a \`$HOME/.zshrc' file before changing the shell!" >&2; exit 7
+    echo "$PROG: create a \`$HOME/.zshrc' file before changing the shell!" >&2
+    exit 7
   else
-    echo "$PROG: found \`$HOME/.zshrc', proceeding to change shell to: $ZSH..." >&2;
+    echo "$PROG: found \`$HOME/.zshrc', proceeding to change shell to: $ZSH..." >&2
   fi
 
   # is chsh available? (not available on Amazon Linux)
   if ! which chsh >&/dev/null; then
     echo "$PROG: \`chsh' is not available on this system ... trying to install" 1>&2
     check_root
-    OS=`awk -F= '/^NAME=/{print $NF}' /etc/os-release`
+    OS=$(awk -F= '/^NAME=/{print $NF}' /etc/os-release)
 
     # various Linux -> installs csh
     if echo "$OS" | egrep -q "Amazon Linux|Fedora|CentOS|RHEL|Rocky"; then
@@ -554,9 +588,18 @@ function enable_ssh()
 {
   check_root
 
-  [ "$OSTYPE" != "linux-gnu" -a "$OSTYPE" != "linux" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
-  [ ! -r /etc/os-release ] && { echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2; exit 3; }
-  [ ! -x /usr/bin/apt ] && { echo "$PROG: can't find/exec APT!" >&2; exit 4; }
+  [ "$OSTYPE" != "linux-gnu" -a "$OSTYPE" != "linux" ] && {
+    echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2
+    exit 2
+  }
+  [ ! -r /etc/os-release ] && {
+    echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2
+    exit 3
+  }
+  [ ! -x /usr/bin/apt ] && {
+    echo "$PROG: can't find/exec APT!" >&2
+    exit 4
+  }
 
   # do we need to install it? maybe it's already installed...
   if [ -e /usr/sbin/sshd -a -e /etc/init.d/ssh ]; then
@@ -589,9 +632,18 @@ function disable_ssh()
 {
   check_root
 
-  [ "$OSTYPE" != "linux-gnu" -a "$OSTYPE" != "linux" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
-  [ ! -r /etc/os-release ] && { echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2; exit 3; }
-  [ ! -x /usr/bin/apt ] && { echo "$PROG: can't find/exec APT!" >&2; exit 4; }
+  [ "$OSTYPE" != "linux-gnu" -a "$OSTYPE" != "linux" ] && {
+    echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2
+    exit 2
+  }
+  [ ! -r /etc/os-release ] && {
+    echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2
+    exit 3
+  }
+  [ ! -x /usr/bin/apt ] && {
+    echo "$PROG: can't find/exec APT!" >&2
+    exit 4
+  }
 
   echo "* disabling: ssh from auto-restarting"
   $SUDO systemctl disable ssh.service
@@ -621,7 +673,7 @@ function install_brew()
     echo "$PROG: installing \`brew.sh' - enter sudo password:"
     sleep 1
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
-    
+
     if [ $? -ne 0 ]; then
       echo "--FATAL: issue installing brew!" >&2
     fi
@@ -676,9 +728,18 @@ function install_pi()
   # RASPBIAN PI
 
   check_root
-  [ "$OSTYPE" != "linux-gnu" -a "$OSTYPE" != "linux" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnueabihf >>!" >&2; exit 2; }
-  [ ! -r /etc/os-release ] && { echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2; exit 3; }
-  [ ! -x /usr/bin/apt ] && { echo "$PROG: can't find/exec APT!" >&2; exit 4; }
+  [ "$OSTYPE" != "linux-gnu" -a "$OSTYPE" != "linux" ] && {
+    echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnueabihf >>!" >&2
+    exit 2
+  }
+  [ ! -r /etc/os-release ] && {
+    echo "$PROG: no /etc/os-release file, is this really Linux ?" >&2
+    exit 3
+  }
+  [ ! -x /usr/bin/apt ] && {
+    echo "$PROG: can't find/exec APT!" >&2
+    exit 4
+  }
 
   # -y=yes, -q=quiet
   INSTALL_CMD="sudo apt-get install -qq -y"
@@ -691,21 +752,21 @@ function install_pi()
   echo && echo "* PI: installing packages..."
 
   # PI: major packages
-  $INSTALL_CMD vim           # VIM: improved vi (VI iMproved)
-  $INSTALL_CMD zsh           # the Z Shell (more powerful than bash)
+  $INSTALL_CMD vim # VIM: improved vi (VI iMproved)
+  $INSTALL_CMD zsh # the Z Shell (more powerful than bash)
 
   # PI: terminal multipliers
-  $INSTALL_CMD screen        # GNU screen
-  $INSTALL_CMD tmux          # GNU tmux
+  $INSTALL_CMD screen # GNU screen
+  $INSTALL_CMD tmux   # GNU tmux
 
   # PI: text-based browsers
-  $INSTALL_CMD lynx          # classic non-graphical (text-mode) web browser
-  $INSTALL_CMD links         # Web browser running in text mode
+  $INSTALL_CMD lynx  # classic non-graphical (text-mode) web browser
+  $INSTALL_CMD links # Web browser running in text mode
   #$INSTALL_CMD w3m           # WWW browsable pager with excellent tables/frames support
 
   # development
-  $INSTALL_CMD git           # github/git
-  $INSTALL_CMD jq            # lightweight and flexible command-line JSON processor
+  $INSTALL_CMD git # github/git
+  $INSTALL_CMD jq  # lightweight and flexible command-line JSON processor
 
   # PI: additional perl modules
   #$INSTALL_CMD libjson-perl  # JSON.pm
@@ -720,9 +781,9 @@ function install_pi()
   #$INSTALL_CMD python-boto
 
   # PI: system utils (may require cron-entries)
-  $INSTALL_CMD apt-file      # search for files within Debian packages (CLI)
-  $INSTALL_CMD sysstat       # install stat utils such as sar, iostat, etc
-  $INSTALL_CMD mlocate       # quickly find files on the filesystem based on their name
+  $INSTALL_CMD apt-file # search for files within Debian packages (CLI)
+  $INSTALL_CMD sysstat  # install stat utils such as sar, iostat, etc
+  $INSTALL_CMD mlocate  # quickly find files on the filesystem based on their name
 
   # PI: system utils (do not require cron)
   #$INSTALL_CMD neofetch      # Shows Linux System Information with Distribution Logo
@@ -730,32 +791,32 @@ function install_pi()
   #$INSTALL_CMD lshw          # information about hardware configuration, incl. lspci
   #$INSTALL_CMD hwinfo        # Hardware identification system
   #$INSTALL_CMD cpuid         # tool to dump x86 CPUID information about the CPU(s)
-  $INSTALL_CMD dmidecode     # active/passive network address scanner using ARP requests
+  $INSTALL_CMD dmidecode # active/passive network address scanner using ARP requests
   #$INSTALL_CMD hdparm        # tune hard disk parameters for high performance
-  $INSTALL_CMD sysbench      # multi-threaded benchmark tool
-  $INSTALL_CMD lsof          # Utility to list open files
-  $INSTALL_CMD ncdu          # Disk usage analysis
-  $INSTALL_CMD bind-utils    # tools such as `dig'
+  $INSTALL_CMD sysbench   # multi-threaded benchmark tool
+  $INSTALL_CMD lsof       # Utility to list open files
+  $INSTALL_CMD ncdu       # Disk usage analysis
+  $INSTALL_CMD bind-utils # tools such as `dig'
 
   # PI: network & security tools
-  $INSTALL_CMD telnet        # telnet for checking connectivity
-  $INSTALL_CMD dnsutils      # provides dig+nslookup
+  $INSTALL_CMD telnet   # telnet for checking connectivity
+  $INSTALL_CMD dnsutils # provides dig+nslookup
   #$INSTALL_CMD netcat        # TCP/IP swiss army knife
-  $INSTALL_CMD nmap          # The Network Mapper/Scanner
-  $INSTALL_CMD sshfs         # filesystem client based on SSH File Transfer Protocol
-  $INSTALL_CMD netdiscover   # SMBIOS/DMI table decoder
-  $INSTALL_CMD ntpdate       # one-off synchronize clock with a remote NTP server
-  $INSTALL_CMD ntpstat       # show network time protocol (ntp) status
+  $INSTALL_CMD nmap        # The Network Mapper/Scanner
+  $INSTALL_CMD sshfs       # filesystem client based on SSH File Transfer Protocol
+  $INSTALL_CMD netdiscover # SMBIOS/DMI table decoder
+  $INSTALL_CMD ntpdate     # one-off synchronize clock with a remote NTP server
+  $INSTALL_CMD ntpstat     # show network time protocol (ntp) status
   #$INSTALL_CMD ethtool       # display or change Ethernet device settings
   #$INSTALL_CMD aircrack-ng   # wireless WEP/WPA cracking utilities
-  $INSTALL_CMD sshpass       # Non-interactive ssh password authentication
+  $INSTALL_CMD sshpass # Non-interactive ssh password authentication
 
   # PI: small utils (just helper utils)
-  $INSTALL_CMD tofrodos      # unix2dos, dos2unix
-  $INSTALL_CMD bc            # CLI calculator
-  $INSTALL_CMD par           # advanced Paragraph reformatter (can be used inside vim)
+  $INSTALL_CMD tofrodos # unix2dos, dos2unix
+  $INSTALL_CMD bc       # CLI calculator
+  $INSTALL_CMD par      # advanced Paragraph reformatter (can be used inside vim)
   #$INSTALL_CMD pydf          # colourised df(1)-clone
-  $INSTALL_CMD htop          # improved `top'
+  $INSTALL_CMD htop # improved `top'
 
   # update the apt-file utility
   echo && echo "* updating the apt-file cache..."
@@ -763,8 +824,8 @@ function install_pi()
 
   # store a backup of currently installed packages
   echo && echo "* storing a backup of all installed packages..."
-  DIR=`dirname "$0"`
-  dpkg -l > $DIR/pkg-installed-list.txt
+  DIR=$(dirname "$0")
+  dpkg -l >$DIR/pkg-installed-list.txt
 }
 
 function install_rhel()
@@ -774,79 +835,88 @@ function install_rhel()
   check_root
 
   # record start-time
-  START_TIME=`date "+%s"`
+  START_TIME=$(date "+%s")
 
-  [ "$OSTYPE" != "linux-gnu" -a "$OSTYPE" != "linux" ] && { echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2; exit 2; }
-  [ ! -r /etc/redhat-release ] && { echo "$PROG: no /etc/redhat-release file, is this really RHEL ?" >&2; exit 3; }
-  [ ! -x /usr/bin/yum ] && { echo "$PROG: can't find/exec YUM, eg for: yum install!" >&2; exit 4; }
+  [ "$OSTYPE" != "linux-gnu" -a "$OSTYPE" != "linux" ] && {
+    echo "$PROG: invalid arch << $OSTYPE >>, expecting << linux-gnu >>!" >&2
+    exit 2
+  }
+  [ ! -r /etc/redhat-release ] && {
+    echo "$PROG: no /etc/redhat-release file, is this really RHEL ?" >&2
+    exit 3
+  }
+  [ ! -x /usr/bin/yum ] && {
+    echo "$PROG: can't find/exec YUM, eg for: yum install!" >&2
+    exit 4
+  }
 
   # RHEL: prepare
   sudo yum makecache
 
   # RHEL: MAJOR packages
-  sudo yum -y install s3cmd.noarch           # S3CMD - S3 CLI
+  sudo yum -y install s3cmd.noarch # S3CMD - S3 CLI
   #sudo yum -y install ansible                # Ansible
   #sudo yum -y install awscli
 
   # RHEL: TERMINAL
-  sudo yum -y install screen                 # GNU screen
-  sudo yum -y install tmux                   # TMUX
+  sudo yum -y install screen # GNU screen
+  sudo yum -y install tmux   # TMUX
 
   # RHEL: WEB BROWSING
-  sudo yum -y install links                  # text-based web-browser #1
-  sudo yum -y install lynx                   # text-based web-browser #2
+  sudo yum -y install links # text-based web-browser #1
+  sudo yum -y install lynx  # text-based web-browser #2
 
   # RHEL: MAIL
-  sudo yum -y install mutt                   # allow better command line mail
-  sudo yum -y install mailx                  # send cmd line mail
+  sudo yum -y install mutt  # allow better command line mail
+  sudo yum -y install mailx # send cmd line mail
 
   # RHEL: DEVEL
-  sudo yum -y install vim                    # editor of choice
+  sudo yum -y install vim # editor of choice
   sudo yum -y install perl
   sudo yum -y install python
   sudo yum -y install python-pip
   sudo yum -y install python3
   sudo yum -y install python3-pip
-  sudo yum -y install git                    # GIT/GITHUB access
-  sudo yum -y install jq                     # lightweight and flexible command-line JSON processor
-  sudo yum -y install strace                 # debug running processes
+  sudo yum -y install git    # GIT/GITHUB access
+  sudo yum -y install jq     # lightweight and flexible command-line JSON processor
+  sudo yum -y install strace # debug running processes
   sudo yum -y install wget
 
   # RHEL: COMPILING
-  sudo yum -y install gcc                    # GNU compiler
-  sudo yum -y install automake               # automake
-  sudo yum -y install openssl                # SSL
-  sudo yum -y install openssl-devel          # SSL libraries
-  sudo yum -y install libtool                # libtool
-  sudo yum -y install pkgconfig              # pkgconfig
+  sudo yum -y install gcc           # GNU compiler
+  sudo yum -y install automake      # automake
+  sudo yum -y install openssl       # SSL
+  sudo yum -y install openssl-devel # SSL libraries
+  sudo yum -y install libtool       # libtool
+  sudo yum -y install pkgconfig     # pkgconfig
 
   # RHEL: SHELLS
-  sudo yum -y install zsh                    # Z-Shell: my favourite shell
-  sudo yum -y install tcsh                   # allow CSH for copy/paste purposes
+  sudo yum -y install zsh  # Z-Shell: my favourite shell
+  sudo yum -y install tcsh # allow CSH for copy/paste purposes
 
   # RHEL: UTILS
-  sudo yum -y install nfs-utils              # NFS mount, showmount, etc
+  sudo yum -y install nfs-utils # NFS mount, showmount, etc
   sudo yum -y install wget
   sudo yum -y install curl
-  sudo yum -y install zip                    # installs ZIP support
-  sudo yum -y install tar                    # installs tar support
-  sudo yum -y install unzip                  # installs ZIP support (unzip)
-  sudo yum -y install bzip2                  # installs bzip2 support
-  sudo yum -y install rsync                  # GNU rsync
-  sudo yum -y install tofrodos               # installs unix2dos/dos2unix
-  sudo yum -y install bind-utils             # nslookup/host/git/dig
+  sudo yum -y install zip        # installs ZIP support
+  sudo yum -y install tar        # installs tar support
+  sudo yum -y install unzip      # installs ZIP support (unzip)
+  sudo yum -y install bzip2      # installs bzip2 support
+  sudo yum -y install rsync      # GNU rsync
+  sudo yum -y install tofrodos   # installs unix2dos/dos2unix
+  sudo yum -y install bind-utils # nslookup/host/git/dig
   sudo yum -y install telnet
-  sudo yum -y install nc                     # ncat/netcat
-  sudo yum -y install bc                     # calculator
-  sudo yum -y install sharutils              # uuencode/uudecode
-  sudo yum -y install finger                 # allow: finger username
-  sudo yum -y install words                  # database of common English words
-  sudo yum -y install sshpass                # non-interactive SSH
-  sudo yum -y install mlocate                # locate DB (fast `find')
-  sudo yum -y install lshw                   # HW list + monitor
-  sudo yum -y install hwinfo                 # HW list + monitor
-  sudo yum -y install cpuid                  # HW list + monitor
-  sudo yum -y install inxi                   # HW list + monitor
+  sudo yum -y install nc        # ncat/netcat
+  sudo yum -y install bc        # calculator
+  sudo yum -y install sharutils # uuencode/uudecode
+  sudo yum -y install finger    # allow: finger username
+  sudo yum -y install words     # database of common English words
+  sudo yum -y install sshpass   # non-interactive SSH
+  sudo yum -y install mlocate   # locate DB (fast `find')
+  sudo yum -y install lshw      # HW list + monitor
+  sudo yum -y install hwinfo    # HW list + monitor
+  sudo yum -y install cpuid     # HW list + monitor
+  sudo yum -y install inxi      # HW list + monitor
   sudo yum -y install neofetch
   sudo yum -y install bind-utils
 
@@ -855,17 +925,17 @@ function install_rhel()
   #wget http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-10.noarch.rpm
   #sudo rpm -ihv epel-release-7-10.noarch.rpm
 
-  sudo yum -y install htop                   # better version of `top'
-  sudo yum -y install sysbench               # basic system benchmark
+  sudo yum -y install htop     # better version of `top'
+  sudo yum -y install sysbench # basic system benchmark
 
   # PERL: additional Perl modules (if working with Perl a lot)
   sudo yum -y install perl-LWP-UserAgent-Determined
 
-  sudo yum -y install perl-XML-Simple        # for XML parsing
-  sudo yum -y install perl-JSON              # for JSON parsing
+  sudo yum -y install perl-XML-Simple # for XML parsing
+  sudo yum -y install perl-JSON       # for JSON parsing
   # need to have XML::SAX & XML::Parser installed, and ParserDetails.ini needs to exist
-  sudo yum -y install libxml-sax-perl        # for XML parsing (faster)
-  sudo yum -y install libxml-parser-perl     # for XML parsing (faster)
+  sudo yum -y install libxml-sax-perl    # for XML parsing (faster)
+  sudo yum -y install libxml-parser-perl # for XML parsing (faster)
 
   sudo yum -y install perl-DBI
   sudo yum -y install perl-DBD-MySQL
@@ -875,7 +945,7 @@ function install_rhel()
   sudo yum -y install perl-Mail-Sender
   sudo yum -y install perl-DateTime
   sudo yum -y install perl-Date-Calc
-  sudo yum -y install perl-Mozilla-CA        # for SSL handling
+  sudo yum -y install perl-Mozilla-CA # for SSL handling
 
   # do we have hostname?
   if ! which hostname >&/dev/null; then
@@ -891,18 +961,18 @@ function install_rhel()
   fi
 
   # show end time
-  END_TIME=`date +%s`
-  TIME_TAKEN=$(( $END_TIME - $START_TIME ))
+  END_TIME=$(date +%s)
+  TIME_TAKEN=$(($END_TIME - $START_TIME))
   if [ $TIME_TAKEN -gt 60 ]; then
-    TIME_TAKEN=`echo "($END_TIME - $START_TIME) / 60" | bc -l | sed 's/\(...\).*/\1/'`
-    echo "  <<< Time taken: $TIME_TAKEN min(s) @ `date +%H:%M` >>>" 1>&2
+    TIME_TAKEN=$(echo "($END_TIME - $START_TIME) / 60" | bc -l | sed 's/\(...\).*/\1/')
+    echo "  <<< Time taken: $TIME_TAKEN min(s) @ $(date +%H:%M) >>>" 1>&2
   fi
 }
 
 function create_user()
 {
-  setup;
-  check_root;
+  setup
+  check_root
 
   USER="$1"
   if [ -n "$USER" ]; then
@@ -945,8 +1015,8 @@ function create_user()
     fi
 
     # set shell
-    ZSH=`chsh -l 2>/dev/null | grep zsh | tail -1`
-    [ -z "$ZSH" ] && ZSH=`which zsh 2>/dev/null`
+    ZSH=$(chsh -l 2>/dev/null | grep zsh | tail -1)
+    [ -z "$ZSH" ] && ZSH=$(which zsh 2>/dev/null)
     [ "$ZSH" = "/usr/bin/zsh" -a -x "/bin/zsh" ] && ZSH="/bin/zsh"
 
     # only change the user's shell to ZSH:
@@ -958,7 +1028,7 @@ function create_user()
       [ ! -r $ZSHRC -a -r "./playground/Config-Files/.zshrc" ] && ZSHRC="./playground/Config-Files/.zshrc"
       [ ! -r $ZSHRC -a -r "~/src/Config-Files/.zshrc" ] && ZSHRC="~/src/Config-Files/.zshrc"
       [ ! -r $ZSHRC -a -r "~/playground/Config-Files/.zshrc" ] && ZSHRC="~/playground/Config-Files/.zshrc"
-      CONFIG_BASE=`dirname $ZSHRC`
+      CONFIG_BASE=$(dirname $ZSHRC)
 
       if [ ! -d /home/$USER ]; then
         echo "--FATAL: /home/$USER doesn't exist?!" >&2
@@ -975,7 +1045,7 @@ function create_user()
           if ! which chsh >&/dev/null; then
             echo "**** \`chsh' is not available on this system ... trying to install" 1>&2
             check_root
-            OS=`awk -F= '/^NAME=/{print $NF}' /etc/os-release`
+            OS=$(awk -F= '/^NAME=/{print $NF}' /etc/os-release)
 
             # various Linux -> installs csh
             if echo "$OS" | egrep -q "Amazon Linux|Fedora|CentOS|Rocky"; then
@@ -1042,10 +1112,10 @@ function create_user()
 
 function ssh_conf()
 {
-  setup;
-  check_root;
+  setup
+  check_root
 
-  echo && echo "* [`date +%H:%M`] current SSHD_CONFIG:"
+  echo && echo "* [$(date +%H:%M)] current SSHD_CONFIG:"
   echo "- ACTIVE settings:"
   egrep '^#?(Port|PermitRootLogin|PubkeyAuthentication|PermitEmptyPasswords|PasswordAuthentication|AllowUsers)' /etc/ssh/sshd_config | grep -v '^#'
   echo "- COMMENTED OUT:"
@@ -1053,7 +1123,7 @@ function ssh_conf()
   sleep 1
 
   # To directly modify sshd_config.
-  echo && echo "* [`date +%H:%M`] modifying SSHD_CONFIG:"
+  echo && echo "* [$(date +%H:%M)] modifying SSHD_CONFIG:"
   echo sed -i 's/#\?\(Port\s*\).*$/\1 2231/' /etc/ssh/sshd_config
   echo sed -i 's/#\?\(PermitRootLogin\s*\).*$/\1 no/' /etc/ssh/sshd_config
   echo sed -i 's/#\?\(PubkeyAuthentication\s*\).*$/\1 yes/' /etc/ssh/sshd_config
@@ -1061,7 +1131,7 @@ function ssh_conf()
   echo sed -i 's/#\?\(PasswordAuthentication\s*\).*$/\1 no/' /etc/ssh/sshd_config
 
   # install fail2ban - to increase SSH security
-  echo && echo "* [`date +%H:%M`] install+setup: fail2ban"
+  echo && echo "* [$(date +%H:%M)] install+setup: fail2ban"
   $SUDO apt-get install -qq -y fail2ban
   $SUDO systemctl enable fail2ban
   $SUDO systemctl start fail2ban
@@ -1076,42 +1146,42 @@ function ssh_conf()
 
 function change_hostname()
 {
-  setup;
-  check_root;
+  setup
+  check_root
 
-  echo && echo "* [`date +%H:%M`] setting a hostname to something non-default"
+  echo && echo "* [$(date +%H:%M)] setting a hostname to something non-default"
 
   # default
   HOSTNAME=localhost
-  OS_NAME=`awk -F= '/^ID=/{print $2}' /etc/os-release| sed 's/"//g'`
-  OS_RELEASE=`grep "VERSION_ID=" /etc/os-release | sed 's/.*="\([0-9]*\).*/\1/; s/"//g'`
+  OS_NAME=$(awk -F= '/^ID=/{print $2}' /etc/os-release | sed 's/"//g')
+  OS_RELEASE=$(grep "VERSION_ID=" /etc/os-release | sed 's/.*="\([0-9]*\).*/\1/; s/"//g')
   [ -n "$OS_NAME" ] && HOSTNAME=$OS_NAME
   [ -n "$OS_RELEASE" ] && HOSTNAME="$HOSTNAME$OS_RELEASE"
 
   # is this LINODE?
-  [ -n "$LINODE_DATACENTERID" -a "$LINODE_DATACENTERID" = 6 ]  && HOSTNAME="nj-$HOSTNAME"
+  [ -n "$LINODE_DATACENTERID" -a "$LINODE_DATACENTERID" = 6 ] && HOSTNAME="nj-$HOSTNAME"
   [ -n "$LINODE_DATACENTERID" -a "$LINODE_DATACENTERID" = 15 ] && HOSTNAME="tor-$HOSTNAME"
 
   # is this AWS EC2?
   if [ "$USER" = "ec2-user" ]; then
     AWS=1
     HOSTNAME="ec2-$HOSTNAME"
-  elif echo "`uname -n`" |grep -q "^ip-[0-9][0-9-]*[0-9]$"; then
+  elif echo "$(uname -n)" | grep -q "^ip-[0-9][0-9-]*[0-9]$"; then
     AWS=1
     HOSTNAME="ec2-$HOSTNAME"
-  elif echo "`uname -r`" | egrep -q ".(-aws|-amazon)$"; then
+  elif echo "$(uname -r)" | egrep -q ".(-aws|-amazon)$"; then
     AWS=1
     HOSTNAME="ec2-$HOSTNAME"
   fi
 
   # is this GCP?
-  if echo "`uname -r`" | egrep -q ".(-gcp|-google)$"; then
+  if echo "$(uname -r)" | egrep -q ".(-gcp|-google)$"; then
     GCP=1
     HOSTNAME="gcp-$HOSTNAME"
   fi
 
   # is this AZURE?
-  if echo "`uname -r`" | egrep -q ".(-azure)$"; then
+  if echo "$(uname -r)" | egrep -q ".(-azure)$"; then
     AZURE=1
     HOSTNAME="az-$HOSTNAME"
   fi
@@ -1128,14 +1198,14 @@ function change_hostname()
   # EXEC
   #
   if [ "$HOSTNAME" != "localhost" -o -n "$1" ]; then
-    OLD_HOSTNAME=`hostname`
+    OLD_HOSTNAME=$(hostname)
 
     $SUDO hostnamectl set-hostname --static $HOSTNAME
     RC=$?
 
     # update /etc/hosts
     if [ "$RC" -eq 0 ]; then
-      echo && echo "* [`date +%H:%M`] updating /etc/hosts with $HOSTNAME"
+      echo && echo "* [$(date +%H:%M)] updating /etc/hosts with $HOSTNAME"
 
       if [ -n "$OLD_HOSTNAME" -a "$OLD_HOSTNAME" != "$HOSTNAME" ]; then
         $SUDO sed -i "s/^127.0.0.1\( *\)localhost $OLD_HOSTNAME$/127.0.0.1\1localhost $HOSTNAME/" /etc/hosts
@@ -1160,7 +1230,7 @@ function change_hostname()
   fi
 
   # recommended: perform apt update
-  echo && echo "* [`date +%H:%M`] /OPTIONAL/ perform apt update/upgrade on $HOSTNAME, hit Ctrl-C to cancel"
+  echo && echo "* [$(date +%H:%M)] /OPTIONAL/ perform apt update/upgrade on $HOSTNAME, hit Ctrl-C to cancel"
   if which apt >&/dev/null; then
     $SUDO nice apt update -qq && $SUDO nice apt upgrade -yq
   fi
@@ -1175,7 +1245,7 @@ function change_hostname()
 #
 
 ####################
-PROG=`basename $0`
+PROG=$(basename $0)
 if [ $# -eq 0 -o "$1" = "-h" -o "$1" = "--help" ]; then
   cat <<! >&2
 $PROG: Script to setup a new Linux system, eg: install packages via \`yum/apt'
@@ -1203,27 +1273,27 @@ Usage: $PROG <options> [param]
         -h      this screen
 !
 elif [ "$1" = "-GENPKG" ]; then
-  install_general_packages;
+  install_general_packages
 elif [ "$1" = "-TZ" ]; then
-  change_timezone;
+  change_timezone
 elif [ "$1" = "-ZSH" ]; then
-  enable_setup_zsh;
+  enable_setup_zsh
 elif [ "$1" = "-USER" ]; then
-  create_user $2;
+  create_user $2
 elif [ "$1" = "-SSH1" ]; then
-  enable_ssh;
+  enable_ssh
 elif [ "$1" = "-SSH0" ]; then
-  disable_ssh;
+  disable_ssh
 elif [ "$1" = "-BREW" ]; then
-  install_brew;
+  install_brew
 elif [ "$1" = "-SSH_CONF" -o "$1" = "-sshconf" ]; then
-  ssh_conf;
+  ssh_conf
 elif [ "$1" = "-HOSTNAME" -o "$1" = "-hostname" ]; then
-  change_hostname $2;
+  change_hostname $2
 elif [ "$1" = "-PI" ]; then
-  install_pi;
+  install_pi
 elif [ "$1" = "-RH" ]; then
-  install_rhel;
+  install_rhel
 else
   echo "$PROG: see usage via \`$PROG --help' ..." 2>&1
   exit 1

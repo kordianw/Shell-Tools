@@ -31,10 +31,10 @@ function check_root()
 function update_scripts()
 {
   if [ ! -d ~/src ]; then
-    echo "--FATAL: the account \`$USER' on \``hostname`' is not a standard setup for this: no ~/src dir!" 1>&2
+    echo "--FATAL: the account \`$USER' on \`$(hostname)' is not a standard setup for this: no ~/src dir!" 1>&2
     exit 98
   elif [ ! -x ~/src/$BACKUP_HELPER_SCRIPT ]; then
-    echo "--FATAL: the account \`$USER' on \``hostname`' is not a standard setup for this: no ~/src/$BACKUP_HELPER_SCRIPT script!" 1>&2
+    echo "--FATAL: the account \`$USER' on \`$(hostname)' is not a standard setup for this: no ~/src/$BACKUP_HELPER_SCRIPT script!" 1>&2
     exit 99
   fi
 
@@ -46,8 +46,8 @@ function update_scripts()
 
 function setup_c9()
 {
-  update_scripts;
-  check_root;
+  update_scripts
+  check_root
 
   # stop services taking up CPU & MEM
   # - can always be switched back on when necessary
@@ -79,10 +79,10 @@ function connect_gcp_cloudshell()
   FORCE_REQUEST="$2"
 
   # is it alive?
-  echo -ne "* [`date +%H:%M`] check if \`$GCP_DNS_ALIAS' (:6000) is alive... " 1>&2
+  echo -ne "* [$(date +%H:%M)] check if \`$GCP_DNS_ALIAS' (:6000) is alive... " 1>&2
   if [ -z "$FORCE_REQUEST" ] && timeout 1 bash -c "cat < /dev/null > /dev/tcp/$GCP_DNS_ALIAS/6000"; then
     echo "yes, connecting!" 1>&2
-    START_TIME=`date "+%s"`
+    START_TIME=$(date "+%s")
 
     #
     # SSH
@@ -93,19 +93,19 @@ function connect_gcp_cloudshell()
     # if the IP was somehow reused and we can't get in...
     if [ $RC -eq 255 ]; then
       # update DYN_DNS - we have to invalidate
-      echo -ne "* [`date +%H:%M`] alive, but can't connect - invalidating \"$GCP_DNS_ALIAS\" Dynamic DNS IP ... " 1>&2
+      echo -ne "* [$(date +%H:%M)] alive, but can't connect - invalidating \"$GCP_DNS_ALIAS\" Dynamic DNS IP ... " 1>&2
       eval $(parse_yaml "google-domains-dyndns-secrets.yaml" "conf_")
       curl -fsSL "https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=1.1.1.1" && echo
 
       # give useful info that it can be force-requested
-      RUN=`echo $0 | sed "s/$HOME/~\//"`
+      RUN=$(echo $0 | sed "s/$HOME/~\//")
       echo && echo "NB: run: \`$RUN -cloudshell $GCP_DNS_ALIAS -force_request' to request new GCP Cloud Shell." 1>&2
       exit 1
     elif [ $RC -ne 0 -a $RC -ne 14 ]; then
       echo "--> error: \`ssh $GCP_DNS_ALIAS' returned non-zero exit code RC=$RC"
     fi
   else
-    echo && echo "* [`date +%H:%M`] it's not alive, requesting new GCP Cloud Shell via \`gcloud'..." 1>&2
+    echo && echo "* [$(date +%H:%M)] it's not alive, requesting new GCP Cloud Shell via \`gcloud'..." 1>&2
 
     # check that we have the SDK
     #if [ ! -d "$GOOGLE_CLOUD_SDK" ]; then
@@ -136,7 +136,7 @@ function connect_gcp_cloudshell()
       exit 99
     fi
 
-    IP=`awk '/ssh.*@/{print $9}' $TMP | sed 's/^[a-z]*@//'`
+    IP=$(awk '/ssh.*@/{print $9}' $TMP | sed 's/^[a-z]*@//')
     if [ -z "$IP" ]; then
       echo "--FATAL: weren't able to get the IP address from the gcloud command!" 1>&2
       exit 99
@@ -146,22 +146,21 @@ function connect_gcp_cloudshell()
     rm -f $TMP
 
     # update DYN_DNS - while we wait for machine to fully come up!
-    echo -ne "* [`date +%H:%M`] updating \"$GCP_DNS_ALIAS\" Dynamic DNS to $IP ... " 1>&2
+    echo -ne "* [$(date +%H:%M)] updating \"$GCP_DNS_ALIAS\" Dynamic DNS to $IP ... " 1>&2
     eval $(parse_yaml "google-domains-dyndns-secrets.yaml" "conf_")
     curl -fsSL "https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=$IP"
 
     # connect via IP while we wait for the DNS to change
-    IP_MASK=`echo $IP | sed 's/^\([0-9][0-9][0-9]*\.[0-9][0-9]*\)\..*/\1/'`
+    IP_MASK=$(echo $IP | sed 's/^\([0-9][0-9][0-9]*\.[0-9][0-9]*\)\..*/\1/')
     if egrep -q "^Host.*shell.* $IP_MASK\.*" ~/.ssh/config; then
-      echo -e "\n* [`date +%H:%M`] IP $IP is in ~/.ssh/config via $IP_MASK.*, waiting 5 secs to connect..." 1>&2
-      sleep 5   # 5-6 secs seems reasonable as the time it takes to install zsh - tweaked based on experience
+      echo -e "\n* [$(date +%H:%M)] IP $IP is in ~/.ssh/config via $IP_MASK.*, waiting 5 secs to connect..." 1>&2
+      sleep 5 # 5-6 secs seems reasonable as the time it takes to install zsh - tweaked based on experience
       GCP_DNS_ALIAS=$IP
     else
       # wait for the DNS to update...
-      echo -ne "\n* [`date +%H:%M`] waiting for \`$GCP_DNS_ALIAS' to be updated with the IP \`$IP' " 1>&2
+      echo -ne "\n* [$(date +%H:%M)] waiting for \`$GCP_DNS_ALIAS' to be updated with the IP \`$IP' " 1>&2
 
-      while ! timeout 1 bash -c "cat < /dev/null > /dev/tcp/$GCP_DNS_ALIAS/6000"
-      do
+      while ! timeout 1 bash -c "cat < /dev/null > /dev/tcp/$GCP_DNS_ALIAS/6000"; do
         echo -ne "."
         sleep 2
       done
@@ -171,8 +170,8 @@ function connect_gcp_cloudshell()
     #
     # SSH
     #
-    START_TIME=`date "+%s"`
-    echo "* [`date +%H:%M`] success: \`ssh $GCP_DNS_ALIAS'..." 1>&2
+    START_TIME=$(date "+%s")
+    echo "* [$(date +%H:%M)] success: \`ssh $GCP_DNS_ALIAS'..." 1>&2
     ssh $GCP_DNS_ALIAS
     RC=$?
 
@@ -183,28 +182,28 @@ function connect_gcp_cloudshell()
   fi
 
   # work out end time
-  END_TIME=`date +%s`
-  TIME_TAKEN=$(( $END_TIME - $START_TIME ))
+  END_TIME=$(date +%s)
+  TIME_TAKEN=$(($END_TIME - $START_TIME))
   if [ $TIME_TAKEN -gt 3600 ]; then
-    TIME_TAKEN=`echo "($END_TIME - $START_TIME) / 60 / 60" | bc -l | sed 's/\(...\).*/\1/; s/\.$//; s/\.0$//'`
+    TIME_TAKEN=$(echo "($END_TIME - $START_TIME) / 60 / 60" | bc -l | sed 's/\(...\).*/\1/; s/\.$//; s/\.0$//')
     TIME_TAKEN="$TIME_TAKEN hours"
   elif [ $TIME_TAKEN -gt 60 ]; then
-    TIME_TAKEN=`echo "($END_TIME - $START_TIME) / 60" | bc -l | sed 's/\(...\).*/\1/; s/\.$//; s/\.[012]$//'`
+    TIME_TAKEN=$(echo "($END_TIME - $START_TIME) / 60" | bc -l | sed 's/\(...\).*/\1/; s/\.$//; s/\.[012]$//')
     TIME_TAKEN="$TIME_TAKEN mins"
   else
     TIME_TAKEN="$TIME_TAKEN secs"
   fi
 
   # final info message
-  echo "... cloudshell session finished at `date +%H:%M` after $TIME_TAKEN." | sed 's/ 1 mins/ 1 min/; s/ 1 hours/ 1 hour/' 1>&2
+  echo "... cloudshell session finished at $(date +%H:%M) after $TIME_TAKEN." | sed 's/ 1 mins/ 1 min/; s/ 1 hours/ 1 hour/' 1>&2
 
   exit $RC
 }
 
 function setup_gcp_shell_VM()
 {
-  update_scripts;
-  check_root;
+  update_scripts
+  check_root
 
   #
   # credentials from Google Domains
@@ -223,7 +222,7 @@ function setup_gcp_shell_VM()
   fi
 
   # set-up ~/.customize_environment
-echo "#!/bin/sh
+  echo "#!/bin/sh
 ##
 ## Kordian's config to customize GCP CloudShell
 ##
@@ -270,7 +269,7 @@ nice ~$conf_google_main_user/bin/scripts/setup-linux-system.sh -GENPKG
 
 echo \"---> \$0: end-run (Phase 2) as \`whoami\`: \`date\`\"
 
-# EOF" > ~/.customize_environment
+# EOF" >~/.customize_environment
   chmod 755 ~/.customize_environment >&/dev/null
 
   # ZSH/SCREEN/SSHPASS
@@ -290,7 +289,7 @@ echo \"---> \$0: end-run (Phase 2) as \`whoami\`: \`date\`\"
 
   # stop some services which take up CPU/memory
   # - only if less than 4GB of RAM remaining
-  FREE_MEM=`free -m | awk '/Mem/{print $NF}'`
+  FREE_MEM=$(free -m | awk '/Mem/{print $NF}')
   if [ $FREE_MEM -lt 4000 ]; then
     echo && echo "** stopping un-needed service: docker,containerd (to reclaim memory)..."
     if ps aux | grep -q "[d]ockerd"; then
@@ -315,7 +314,7 @@ echo \"---> \$0: end-run (Phase 2) as \`whoami\`: \`date\`\"
 
 function install_sw()
 {
-  check_root;
+  check_root
   ~/bin/scripts/setup-linux-system.sh -GENPKG
 }
 
@@ -336,13 +335,13 @@ function backup_cloud_home()
     if echo "$HOST_ADDRESS" | egrep -q 'gcp-shell|^[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$'; then
       SERVICE="gcp-cloudshell"
     else
-      SERVICE=`echo $HOST_ADDRESS | awk -F. '{print $1}'`
+      SERVICE=$(echo $HOST_ADDRESS | awk -F. '{print $1}')
     fi
 
     # construct target dir backup
     TARGET_DIR=$HOME
     [ -d $HOME/Backups ] && TARGET_DIR=$HOME/Backups
-    TARGET_BACKUP="$TARGET_DIR/$SERVICE-bkup-`date +%Y-%m-%d`.tar.gz"
+    TARGET_BACKUP="$TARGET_DIR/$SERVICE-bkup-$(date +%Y-%m-%d).tar.gz"
 
     # status message
     echo "--> backing up to: $TARGET_BACKUP"
@@ -397,10 +396,10 @@ function backup_cloud_home()
 function parse_yaml()
 {
   local prefix=$2
-  local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+  local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @ | tr @ '\034')
 
   # find the location of `Config-Files' where we store all our configs
-  YAML_FILE=$1   # no-path-yet
+  YAML_FILE=$1 # no-path-yet
   [ -r ~/bin/scripts/Config-Files/$1 ] && YAML_FILE=~/bin/scripts/Config-Files/$1
   [ -r ~/src/Config-Files/$1 ] && YAML_FILE=~/src/Config-Files/$1
   [ -r ~/playground/Config-Files/$1 ] && YAML_FILE=~/playground/Config-Files/$1
@@ -410,7 +409,7 @@ function parse_yaml()
   [ -r ../../Config-Files/$1 ] && YAML_FILE=../../Config-Files/$1
   [ -r ../Config-Files/$1 ] && YAML_FILE=../Config-Files/$1
   [ -r ./Config-Files/$1 ] && YAML_FILE=./Config-Files/$1
-  [ -r `dirname $0`/$1 ] && YAML_FILE=`dirname $0`/$1
+  [ -r $(dirname $0)/$1 ] && YAML_FILE=$(dirname $0)/$1
   [ -r ./$1 ] && YAML_FILE=./$1
 
   # check that config file exists
@@ -424,10 +423,9 @@ function parse_yaml()
   fi
 
   sed -ne "s|^\($s\):|\1|" \
-       -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
-       -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $YAML_FILE |
-
-  awk -F$fs '{
+    -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
+    -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p" $YAML_FILE |
+    awk -F$fs '{
      indent = length($1)/2;
      vname[indent] = $2;
      for (i in vname) {if (i > indent) {delete vname[i]}}
@@ -451,20 +449,20 @@ function update_dyn_dns()
   fi
 
   # check HOST variable is set
-  HOST=`hostname`
+  HOST=$(hostname)
   if [ -z "$HOST" ]; then
-    echo "--FATAL: the `hostname` has no HOST variable set!" 1>&2
+    echo "--FATAL: the $(hostname) has no HOST variable set!" 1>&2
     exit 98
   fi
 
   # check that we have dig
   if ! which dig >&/dev/null; then
-    echo "--FATAL: the \`dig' binary is not available on `hostname`!" 1>&2
+    echo "--FATAL: the \`dig' binary is not available on $(hostname)!" 1>&2
     exit 98
   fi
 
   # first, get the IP
-  IP=`dig +short myip.opendns.com @resolver1.opendns.com`
+  IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
   if [ -z "$IP" ]; then
     echo "--FATAL: can't work out the external IP addresss for $HOST!" 1>&2
     exit 99
@@ -472,7 +470,7 @@ function update_dyn_dns()
   echo "* [$HOST] info: current external IP is: $IP"
 
   # get DNS
-  DNS_NAME=`host $IP| awk '!/not found/{print $NF}' | sed 's/\.$//'`
+  DNS_NAME=$(host $IP | awk '!/not found/{print $NF}' | sed 's/\.$//')
   if [ -n "$DNS_NAME" ]; then
     echo "* [$HOST] info: external DNS name is: << $DNS_NAME >>"
   else
@@ -486,7 +484,7 @@ function update_dyn_dns()
   # ->>> NEXUS
   if echo $HOST | grep -q nexus; then
     # is the IP already what it should be?
-    DNS=`host $conf_nexus_dns | awk '{print $NF}'`
+    DNS=$(host $conf_nexus_dns | awk '{print $NF}')
     if [ "$DNS" != "$IP" ]; then
       echo "* [$HOST] action: updating DYN_DNS for $conf_nexus_dns -> $IP"
       curl -fsSL "https://$conf_nexus_user:$conf_nexus_password@domains.google.com/nic/update?hostname=$conf_nexus_dns&myip=$IP"
@@ -500,7 +498,7 @@ function update_dyn_dns()
   # ->>> GCP-SHELL
   elif echo $HOST | egrep -q "^cs-.*default$"; then
     # is the IP already what it should be?
-    DNS=`host $conf_gcp_shell_dns | awk '{print $NF}'`
+    DNS=$(host $conf_gcp_shell_dns | awk '{print $NF}')
     if [ "$DNS" != "$IP" ]; then
       echo "* [$HOST] action: updating DYN_DNS for $conf_gcp_shell_dns -> $IP"
       curl -fsSL "https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=$IP"
@@ -523,8 +521,8 @@ function assume_gcp_shell_setup()
   # double check that this really is a GCP host
   if [ -d ~/src -a -d /google/devshell ]; then
     echo "- assuming GCP DevShell VM - running setup & dyndns update..." 1>&2
-    setup_gcp_shell_VM;
-    update_dyn_dns;
+    setup_gcp_shell_VM
+    update_dyn_dns
   else
     echo "--FATAL: doesn't seem like a Google Cloud Shell server - no ~/src, no /google/devshell..." 1>&2
     echo && echo "$PROG: see usage via \`$PROG --help' ..." 1>&2
@@ -559,7 +557,7 @@ function gcloud_login()
   echo "* GCP: initializing, using \`$GCLOUD' ..." >&2
 
   # are we logged in?
-  GCP_ACCOUNT=`$GCLOUD auth list 2>&1 | egrep "\*" | awk '/@gmail.com/{print $2}'`
+  GCP_ACCOUNT=$($GCLOUD auth list 2>&1 | egrep "\*" | awk '/@gmail.com/{print $2}')
   if [ -n "$GCP_ACCOUNT" ]; then
     echo "* GCP: using account: << $GCP_ACCOUNT >>" >&2
   else
@@ -576,7 +574,7 @@ function gcloud_login()
   fi
 
   # do we have an active project?
-  GCP_PROJECT=`$GCLOUD config get-value core/project`
+  GCP_PROJECT=$($GCLOUD config get-value core/project)
   if [ -n "$GCP_PROJECT" ]; then
     echo "* GCP: using project: << $GCP_PROJECT >>" >&2
   else
@@ -584,18 +582,18 @@ function gcloud_login()
     echo "* GCP: no primary GCP project set, setting to first active one:"
     $GCLOUD projects list --filter="lifecycleState=ACTIVE" | sed 's/^/   /'
 
-    GCP_PROJECT=`$GCLOUD projects list --format=json --filter="lifecycleState=ACTIVE" |awk '/"projectId"/{print $NF}' | head -1 | sed 's/[",]//g'`
+    GCP_PROJECT=$($GCLOUD projects list --format=json --filter="lifecycleState=ACTIVE" | awk '/"projectId"/{print $NF}' | head -1 | sed 's/[",]//g')
     if [ -n "$GCP_PROJECT" ]; then
       echo "* GCP: setting << $GCP_PROJECT >> as active project:"
       $GCLOUD config set project $GCP_PROJECT
       if [ $? -ne 0 ]; then
         echo "--FATAL: error setting default project as << $GCP_PROJECT >>" >&2
-        $GCLOUD config configurations list 
+        $GCLOUD config configurations list
         exit 99
       fi
     else
       echo "--FATAL: no GCP active projects:" >&2
-      $GCLOUD config configurations list 
+      $GCLOUD config configurations list
       exit 99
     fi
   fi
@@ -610,7 +608,7 @@ function gcloud_login()
 #
 
 ####################
-PROG=`basename $0`
+PROG=$(basename $0)
 if [ "$1" = "-h" -o "$1" = "--help" -o "$1" = "-help" ]; then
   cat <<! >&2
 $PROG: Script to aid in working with Public Cloud VMs, ie: GCP, AWS, Azure
@@ -652,28 +650,28 @@ Usage: $PROG <options> [param]
 
 !
 elif [ "$1" = "-c9_setup" ]; then
-  setup_c9;
+  setup_c9
 elif [ "$1" = "-gcp_setup" ]; then
-  setup_gcp_shell_VM;
+  setup_gcp_shell_VM
 elif [ "$1" = "-cloudshell" ]; then
-  connect_gcp_cloudshell $2 $3;
+  connect_gcp_cloudshell $2 $3
 elif [ "$1" = "-sw" ]; then
-  install_sw;
+  install_sw
 elif [ "$1" = "-cloud_bkup" ]; then
-  backup_cloud_home $2;
+  backup_cloud_home $2
 elif [ "$1" = "-dyn_dns" -o "$1" = "-dyn_DNS" -o "$1" = "-dyndns" ]; then
-  update_dyn_dns;
+  update_dyn_dns
 elif [ "$1" = "-glogin" -o "$1" = "-gcp_login" -o "$1" = "-gcloud_login" ]; then
-  gcloud_login;
-elif [ "$1" = "-dlup" -o "$1" = "-dlupd" ]; then 
-  dl_and_update;
-elif echo `hostname` | grep -q "devshell-vm"; then
-  assume_gcp_shell_setup;
+  gcloud_login
+elif [ "$1" = "-dlup" -o "$1" = "-dlupd" ]; then
+  dl_and_update
+elif echo $(hostname) | grep -q "devshell-vm"; then
+  assume_gcp_shell_setup
 elif [ -n "$DEVSHELL_SERVER_URL" -o -n "$DEVSHELL_SERVER_BASE_URL" ]; then
-  assume_gcp_shell_setup;
+  assume_gcp_shell_setup
 elif [ -e $HOME/.c9 ]; then
   echo "- assuming AWS Cloud9 VM..." 1>&2
-  setup_c9;
+  setup_c9
 else
   echo -e "$PROG: see usage via \`$PROG --help':\n" 1>&2
   exec $0 --help

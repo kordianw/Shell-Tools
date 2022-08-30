@@ -10,7 +10,7 @@
 #
 
 ####################
-PROG=`basename $0`
+PROG=$(basename $0)
 if [ "$1" = "-h" -o "$1" = "--help" ]; then
   cat <<! >&2
 $PROG: Script to work out the geo-location of an IP address
@@ -31,14 +31,14 @@ else
       # - whoami.akamai.net
       # - google
       #
-      IP=`timeout 3 dig +short myip.opendns.com @resolver1.opendns.com. | egrep '[0-9]'`
+      IP=$(timeout 3 dig +short myip.opendns.com @resolver1.opendns.com. | egrep '[0-9]')
       if [ $? -ne 0 ]; then
         echo "--WARN: can't work out external/public IP address via cmd (RC=$?): dig +short myip.opendns.com @resolver1.opendns.com." >&2
       fi
 
       # 2nd attempt via another provider
       if [ -z "$IP" ]; then
-        IP=`timeout 3 dig +short whoami.akamai.net @ns1-1.akamaitech.net. | egrep '[0-9]'`
+        IP=$(timeout 3 dig +short whoami.akamai.net @ns1-1.akamaitech.net. | egrep '[0-9]')
         if [ $? -ne 0 ]; then
           echo "--WARN: can't work out external/public IP address via cmd (RC=$?): dig +short whoami.akamai.net." >&2
         fi
@@ -46,7 +46,7 @@ else
 
       # 3rd attempt via another provider
       if [ -z "$IP" ]; then
-        IP=`timeout 3 dig txt o-o.myaddr.test.l.google.com @ns1.google.com. +short | egrep '[0-9]'`
+        IP=$(timeout 3 dig txt o-o.myaddr.test.l.google.com @ns1.google.com. +short | egrep '[0-9]')
         if [ $? -ne 0 ]; then
           echo "--WARN: can't work out external/public IP address via cmd (RC=$?): dig txt o-o.myaddr.test.l.google.com. @ns1.google.com +short.akamai.net" >&2
         fi
@@ -55,16 +55,16 @@ else
       #
       # NSLOOKUP
       #
-      IP=`timeout 3 nslookup myip.opendns.com resolver1.opendns.com 2>/dev/null | cat -v | awk '/Address:/{print $NF}' |sed 's/[^0-9\.]*//g' |egrep '[0-9]' |tail -1`
+      IP=$(timeout 3 nslookup myip.opendns.com resolver1.opendns.com 2>/dev/null | cat -v | awk '/Address:/{print $NF}' | sed 's/[^0-9\.]*//g' | egrep '[0-9]' | tail -1)
       if [ $? -ne 0 ]; then
         echo "--WARN: can't work out external/public IP address via cmd (RC=$?): nslookup myip.opendns.com resolver1.opendns.com" >&2
       fi
     elif which curl >&/dev/null; then
       IP=""
-      [ -z "$IP" ] && IP=`timeout 5 curl -sSL http://ipecho.net/plain 2>/dev/null`
-      [ -z "$IP" ] && IP=`timeout 5 curl -sSL http: ifconfig.me 2>/dev/null`
+      [ -z "$IP" ] && IP=$(timeout 5 curl -sSL http://ipecho.net/plain 2>/dev/null)
+      [ -z "$IP" ] && IP=$(timeout 5 curl -sSL http: ifconfig.me 2>/dev/null)
     else
-      echo "--ERROR: no \`dig', no \`nslookup' and no \`curl' command on `uname -n`:" >&2
+      echo "--ERROR: no \`dig', no \`nslookup' and no \`curl' command on $(uname -n):" >&2
       which dig 1>&2
       which nslookup 1>&2
       which host 1>&2
@@ -75,8 +75,8 @@ else
   if [ -z "$IP" ]; then
     if which curl >&/dev/null; then
       IP=""
-      [ -z "$IP" ] && IP=`timeout 5 curl -sSL http://ipecho.net/plain 2>/dev/null`
-      [ -z "$IP" ] && IP=`timeout 5 curl -sSL http: ifconfig.me 2>/dev/null`
+      [ -z "$IP" ] && IP=$(timeout 5 curl -sSL http://ipecho.net/plain 2>/dev/null)
+      [ -z "$IP" ] && IP=$(timeout 5 curl -sSL http: ifconfig.me 2>/dev/null)
     fi
   fi
 
@@ -100,21 +100,21 @@ else
 
     # IPINFO
     echo && echo "--> IPINFO.IO:"
-    timeout 5 curl -sSL http://ipinfo.io/$IP |egrep -v '^{|^}|"ip":|"readme":|"loc":'
+    timeout 5 curl -sSL http://ipinfo.io/$IP | egrep -v '^{|^}|"ip":|"readme":|"loc":'
 
     # IPLOCATION.NET
     # - via links/lynx/w3m
-    CLI_BROWSER=`which links 2>/dev/null`       # use `links' by default as the text-only browser
+    CLI_BROWSER=$(which links 2>/dev/null) # use `links' by default as the text-only browser
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/links ] && CLI_BROWSER=~/bin/links
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/links-2.12 ] && CLI_BROWSER=~/bin/links-2.12
 
-    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=`which lynx 2>/dev/null`
+    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=$(which lynx 2>/dev/null)
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/lynx ] && CLI_BROWSER=~/bin/lynx
 
-    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=`which lynxlet 2>/dev/null`
+    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=$(which lynxlet 2>/dev/null)
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/lynxlet ] && CLI_BROWSER=~/bin/lynxlet
 
-    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=`which w3m 2>/dev/null`
+    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=$(which w3m 2>/dev/null)
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/w3m ] && CLI_BROWSER=~/bin/w3m
 
     if [ -n "$CLI_BROWSER" -a -x "$CLI_BROWSER" ]; then
@@ -129,9 +129,9 @@ else
       echo && echo "--> IPLOCATION.COM:"
       timeout 5 $CLI_BROWSER -dump https://iplocation.com | egrep 'Country  |Region  |City  |Organization  '
     else
-      echo && echo "--warn: skipping IPLOCATION.NET/COM as `uname -n 2>/dev/null` doesn't have \`links', \`lynx' or \`w3m' text-only browser installed!" >&2
+      echo && echo "--warn: skipping IPLOCATION.NET/COM as $(uname -n 2>/dev/null) doesn't have \`links', \`lynx' or \`w3m' text-only browser installed!" >&2
     fi
-    
+
     # WTFMYIP: bonus category
     # - when getting current IP (no params)
     if [ -z "$1" ]; then
@@ -156,17 +156,17 @@ else
 
     # IPLOCATION.COM/NET
     # - via links/lynx/w3m
-    CLI_BROWSER=`which links 2>/dev/null`       # use `links' by default as the text-only browser
+    CLI_BROWSER=$(which links 2>/dev/null) # use `links' by default as the text-only browser
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/links ] && CLI_BROWSER=~/bin/links
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/links-2.12 ] && CLI_BROWSER=~/bin/links-2.12
 
-    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=`which lynx 2>/dev/null`
+    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=$(which lynx 2>/dev/null)
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/lynx ] && CLI_BROWSER=~/bin/lynx
 
-    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=`which lynxlet 2>/dev/null`
+    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=$(which lynxlet 2>/dev/null)
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/lynxlet ] && CLI_BROWSER=~/bin/lynxlet
 
-    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=`which w3m 2>/dev/null`
+    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=$(which w3m 2>/dev/null)
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/w3m ] && CLI_BROWSER=~/bin/w3m
 
     if [ -n "$CLI_BROWSER" -a -x "$CLI_BROWSER" ]; then
@@ -181,7 +181,7 @@ else
       echo && echo "--> IPLOCATION.COM:"
       timeout 5 $CLI_BROWSER -dump https://iplocation.com | egrep 'Country  |Region  |City  |Organization  '
     else
-      echo && echo "--warn: skipping IPLOCATION.NET/COM as `uname -n 2>/dev/null` doesn't have \`links', \`lynx' or \`w3m' text-only browser installed!" >&2
+      echo && echo "--warn: skipping IPLOCATION.NET/COM as $(uname -n 2>/dev/null) doesn't have \`links', \`lynx' or \`w3m' text-only browser installed!" >&2
     fi
 
     # partial successs
