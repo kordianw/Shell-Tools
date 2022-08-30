@@ -91,8 +91,7 @@ function install_general_packages
   #   * install SSH via this script (CAREFUL)
   # - LOGIN REMOTELY via ssh: ssh t480s
   #   * copy Config files
-  # - chsh
-  #   /bin/zsh
+  # - ZSH -> this script with -ZSH param
   # - install optional packages, such as VLC, Chrome, Remmina
   #   * later, restore Remmina settings/sessions
   #   * in Remmina, add the following 16:9 resolutions: 1440x810 & 1600x900
