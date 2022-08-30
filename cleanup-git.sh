@@ -2,7 +2,7 @@
 # script to clean-up large .git directories, by telling git that your current commit is the initial commit.
 # For that, first checkout to the commit, which you want to make as the initial commit.   Here are the steps
 #
-# By Kordian W. <code [at] kordy.com>, Aug 2022
+# * By Kordian W. <code [at] kordy.com>, Aug 2022
 #
 
 # update everything
