@@ -369,7 +369,7 @@ function change_timezone()
     else
       echo && echo "$PROG: the: \`timedatectl list-timezones' is not working on this host:" >&2
       timedatectl list-timezones
-      echo & echo "...if everything fails, try setting the TZ manually via: \"export TZ=$TZ\"" >&2
+      echo && echo "...if everything fails, try setting the TZ manually via: \"export TZ=$TZ\"" >&2
     fi
 
   fi
