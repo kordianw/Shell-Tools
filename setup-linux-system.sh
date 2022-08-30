@@ -178,13 +178,13 @@ function install_general_packages
   # text-based browsers
   $INSTALL_CMD lynx          # classic non-graphical (text-mode) web browser
   $INSTALL_CMD links         # Web browser running in text mode
-  $INSTALL_CMD w3m           # WWW browsable pager with excellent tables/frames support
+  #$INSTALL_CMD w3m           # WWW browsable pager with excellent tables/frames support
 
   # GENPKG: development
   $INSTALL_CMD git           # github/git
   $INSTALL_CMD jq            # lightweight and flexible command-line JSON processor
-  $INSTALL_CMD s3cmd         # S3 client
-  $INSTALL_CMD rclone        # cloud upload/download client
+  #$INSTALL_CMD s3cmd         # S3 client
+  #$INSTALL_CMD rclone        # cloud upload/download client
   #$INSTALL_CMD ansible       # Ansible
   #$INSTALL_CMD awscli        # AWS CLI
   
@@ -199,10 +199,10 @@ function install_general_packages
   $INSTALL_CMD libncurses5-dev libncursesw5-dev
 
   # GENPKG: additional perl modules
-  $INSTALL_CMD libjson-perl        # JSON.pm
-  $INSTALL_CMD libdate-manip-perl  # DateManip.pm
-  $INSTALL_CMD libxml-sax-perl     # for XML parsing (faster)
-  $INSTALL_CMD libxml-parser-perl  # for XML parsing (faster)
+  #$INSTALL_CMD libjson-perl        # JSON.pm
+  #$INSTALL_CMD libdate-manip-perl  # DateManip.pm
+  #$INSTALL_CMD libxml-sax-perl     # for XML parsing (faster)
+  #$INSTALL_CMD libxml-parser-perl  # for XML parsing (faster)
 
   # GENPKG: PYTHON 3
   $INSTALL_CMD python3
@@ -219,13 +219,13 @@ function install_general_packages
   [ -x /usr/bin/apt ] && $INSTALL_CMD apt-file      # search for files within Debian packages (CLI)
 
   # GENPKG: system utils (do not require cron)
-  $INSTALL_CMD neofetch      # Shows Linux System Information with Distribution Logo
-  $INSTALL_CMD inxi          # full featured system information script
-  $INSTALL_CMD lshw          # information about hardware configuration, incl. lspci
-  $INSTALL_CMD hwinfo        # Hardware identification system
-  $INSTALL_CMD cpuid         # tool to dump x86 CPUID information about the CPU(s)
+  #$INSTALL_CMD neofetch      # Shows Linux System Information with Distribution Logo
+  #$INSTALL_CMD inxi          # full featured system information script
+  #$INSTALL_CMD lshw          # information about hardware configuration, incl. lspci
+  #$INSTALL_CMD hwinfo        # Hardware identification system
+  #$INSTALL_CMD cpuid         # tool to dump x86 CPUID information about the CPU(s)
   $INSTALL_CMD dmidecode     # active/passive network address scanner using ARP requests
-  $INSTALL_CMD hdparm        # tune hard disk parameters for high performance
+  #$INSTALL_CMD hdparm        # tune hard disk parameters for high performance
   $INSTALL_CMD sysbench      # multi-threaded benchmark tool
   $INSTALL_CMD lsof          # Utility to list open files
   $INSTALL_CMD ncdu          # Disk usage analysis
@@ -234,21 +234,21 @@ function install_general_packages
   # GENPKG: network & security tools
   $INSTALL_CMD telnet        # telnet for checking connectivity
   $INSTALL_CMD dnsutils      # provides dig+nslookup
-  $INSTALL_CMD netcat        # TCP/IP swiss army knife
+  #$INSTALL_CMD netcat        # TCP/IP swiss army knife
   $INSTALL_CMD nmap          # The Network Mapper/Scanner
-  $INSTALL_CMD sshfs         # filesystem client based on SSH File Transfer Protocol
-  $INSTALL_CMD netdiscover   # SMBIOS/DMI table decoder
+  #$INSTALL_CMD sshfs         # filesystem client based on SSH File Transfer Protocol
+  #$INSTALL_CMD netdiscover   # SMBIOS/DMI table decoder
   $INSTALL_CMD ntpdate       # one-off synchronize clock with a remote NTP server
   $INSTALL_CMD ntpstat       # show network time protocol (ntp) status
-  $INSTALL_CMD ethtool       # display or change Ethernet device settings
-  $INSTALL_CMD aircrack-ng   # wireless WEP/WPA cracking utilities
+  #$INSTALL_CMD ethtool       # display or change Ethernet device settings
+  #$INSTALL_CMD aircrack-ng   # wireless WEP/WPA cracking utilities
   $INSTALL_CMD sshpass       # Non-interactive ssh password authentication
 
   # GENPKG: small utils (just helper utils)
   $INSTALL_CMD tofrodos      # unix2dos, dos2unix
   $INSTALL_CMD bc            # CLI calculator
-  $INSTALL_CMD par           # advanced Paragraph reformatter (can be used inside vim)
-  $INSTALL_CMD pydf          # colourised df(1)-clone
+  #$INSTALL_CMD par           # advanced Paragraph reformatter (can be used inside vim)
+  #$INSTALL_CMD pydf          # colourised df(1)-clone
   $INSTALL_CMD htop          # improved `top'
 
   if [ "$PKG" = "apt" ]; then
@@ -701,14 +701,14 @@ function install_pi()
   # PI: text-based browsers
   $INSTALL_CMD lynx          # classic non-graphical (text-mode) web browser
   $INSTALL_CMD links         # Web browser running in text mode
-  $INSTALL_CMD w3m           # WWW browsable pager with excellent tables/frames support
+  #$INSTALL_CMD w3m           # WWW browsable pager with excellent tables/frames support
 
   # development
   $INSTALL_CMD git           # github/git
   $INSTALL_CMD jq            # lightweight and flexible command-line JSON processor
 
   # PI: additional perl modules
-  $INSTALL_CMD libjson-perl  # JSON.pm
+  #$INSTALL_CMD libjson-perl  # JSON.pm
 
   # PI: PYTHON 3
   #$INSTALL_CMD python3
@@ -725,13 +725,13 @@ function install_pi()
   $INSTALL_CMD mlocate       # quickly find files on the filesystem based on their name
 
   # PI: system utils (do not require cron)
-  $INSTALL_CMD neofetch      # Shows Linux System Information with Distribution Logo
-  $INSTALL_CMD inxi          # full featured system information script
-  $INSTALL_CMD lshw          # information about hardware configuration, incl. lspci
-  $INSTALL_CMD hwinfo        # Hardware identification system
-  $INSTALL_CMD cpuid         # tool to dump x86 CPUID information about the CPU(s)
+  #$INSTALL_CMD neofetch      # Shows Linux System Information with Distribution Logo
+  #$INSTALL_CMD inxi          # full featured system information script
+  #$INSTALL_CMD lshw          # information about hardware configuration, incl. lspci
+  #$INSTALL_CMD hwinfo        # Hardware identification system
+  #$INSTALL_CMD cpuid         # tool to dump x86 CPUID information about the CPU(s)
   $INSTALL_CMD dmidecode     # active/passive network address scanner using ARP requests
-  $INSTALL_CMD hdparm        # tune hard disk parameters for high performance
+  #$INSTALL_CMD hdparm        # tune hard disk parameters for high performance
   $INSTALL_CMD sysbench      # multi-threaded benchmark tool
   $INSTALL_CMD lsof          # Utility to list open files
   $INSTALL_CMD ncdu          # Disk usage analysis
@@ -740,21 +740,21 @@ function install_pi()
   # PI: network & security tools
   $INSTALL_CMD telnet        # telnet for checking connectivity
   $INSTALL_CMD dnsutils      # provides dig+nslookup
-  $INSTALL_CMD netcat        # TCP/IP swiss army knife
+  #$INSTALL_CMD netcat        # TCP/IP swiss army knife
   $INSTALL_CMD nmap          # The Network Mapper/Scanner
   $INSTALL_CMD sshfs         # filesystem client based on SSH File Transfer Protocol
   $INSTALL_CMD netdiscover   # SMBIOS/DMI table decoder
   $INSTALL_CMD ntpdate       # one-off synchronize clock with a remote NTP server
   $INSTALL_CMD ntpstat       # show network time protocol (ntp) status
-  $INSTALL_CMD ethtool       # display or change Ethernet device settings
-  $INSTALL_CMD aircrack-ng   # wireless WEP/WPA cracking utilities
+  #$INSTALL_CMD ethtool       # display or change Ethernet device settings
+  #$INSTALL_CMD aircrack-ng   # wireless WEP/WPA cracking utilities
   $INSTALL_CMD sshpass       # Non-interactive ssh password authentication
 
   # PI: small utils (just helper utils)
   $INSTALL_CMD tofrodos      # unix2dos, dos2unix
   $INSTALL_CMD bc            # CLI calculator
   $INSTALL_CMD par           # advanced Paragraph reformatter (can be used inside vim)
-  $INSTALL_CMD pydf          # colourised df(1)-clone
+  #$INSTALL_CMD pydf          # colourised df(1)-clone
   $INSTALL_CMD htop          # improved `top'
 
   # update the apt-file utility
