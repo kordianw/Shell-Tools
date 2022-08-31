@@ -7,7 +7,7 @@
 #
 
 ####################
-PROG=`basename $0`
+PROG=$(basename $0)
 if [ "$1" = "-h" ]; then
   cat <<! >&2
 $PROG: Script to fix Cygwin Permissions
@@ -16,11 +16,11 @@ Usage: $PROG <options> [param]
 	-h	this screen
 !
 else
-  USER=`whoami`
-  [ -n "$USER" ] || exit 1 
+  USER=$(whoami)
+  [ -n "$USER" ] || exit 1
 
   # home-dir actions
-  if [ `pwd` = $HOME ]; then
+  if [ $(pwd) = $HOME ]; then
     echo "* securing SSH"
     chown -c $USER $HOME/.ssh
     chown -c $USER $HOME/.ssh/*

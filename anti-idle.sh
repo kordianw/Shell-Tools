@@ -22,41 +22,49 @@ MAX_HOURS=2
 #
 # FUNCTIONS
 #
-function keep_brightness_up()
-{
+function keep_brightness_up() {
   # work out the backlight/display driver
   [ -e /sys/class/backlight/acpi_video0/max_brightness ] && DRIVER=acpi_video0
   [ -e /sys/class/backlight/intel_backlight/max_brightness ] && DRIVER=intel_backlight
-  [ -z "$DRIVER" ] && { echo "$PROG: can't work out the video backlight driver via /sys/class/backlight/*!" >&2; exit 99; }
+  [ -z "$DRIVER" ] && {
+    echo "$PROG: can't work out the video backlight driver via /sys/class/backlight/*!" >&2
+    exit 99
+  }
 
-  MAX_BRIGHTNESS=`cat /sys/class/backlight/$DRIVER/max_brightness 2>/dev/null`
-  [ -z "$MAX_BRIGHTNESS" ] && { echo "$0: can't work out max brightness via /sys/class/backlight/$DRIVER/max_brightness!" >&2; exit 99; }
+  MAX_BRIGHTNESS=$(cat /sys/class/backlight/$DRIVER/max_brightness 2>/dev/null)
+  [ -z "$MAX_BRIGHTNESS" ] && {
+    echo "$0: can't work out max brightness via /sys/class/backlight/$DRIVER/max_brightness!" >&2
+    exit 99
+  }
 
   echo "* checking current brightness level (may require sudo)..."
   sudo cat /sys/class/backlight/$DRIVER/brightness || exit 9
 
-  MAX_MINS=$(( $MAX_HOURS * 60 ))
-  for (( i=1; i<=$MAX_MINS; i++ ))
-  do  
+  MAX_MINS=$(($MAX_HOURS * 60))
+  for ((i = 1; i <= $MAX_MINS; i++)); do
     echo -n "Run #$i/$MAX_MINS mins: setting $DRIVER brightness to max: $MAX_BRIGHTNESS and waiting 60 secs: "
-    echo $MAX_BRIGHTNESS |sudo tee /sys/class/backlight/$DRIVER/brightness
+    echo $MAX_BRIGHTNESS | sudo tee /sys/class/backlight/$DRIVER/brightness
 
     # sleep 1 min
     sleep 60
   done
 }
 
-function send_dummy_key_event ()
-{
+function send_dummy_key_event() {
   # need xdotool
-  which xdotool >&/dev/null || { echo "$PROG: no \`xdotool' utility installed!" >&2; exit 1; }
+  which xdotool >&/dev/null || {
+    echo "$PROG: no \`xdotool' utility installed!" >&2
+    exit 1
+  }
 
   # need display
-  [ -z "$DISPLAY" ] && { echo "$PROG: no DISPLAY variable - are you logged in under an X Server?!" >&2; exit 9; }
+  [ -z "$DISPLAY" ] && {
+    echo "$PROG: no DISPLAY variable - are you logged in under an X Server?!" >&2
+    exit 9
+  }
 
-  MAX_MINS=$(( $MAX_HOURS * 60 ))
-  for (( i=1; i<=$MAX_MINS; i++ ))
-  do  
+  MAX_MINS=$(($MAX_HOURS * 60))
+  for ((i = 1; i <= $MAX_MINS; i++)); do
     echo "Run #$i/$MAX_MINS mins: sending a dummy key event and waiting 60 secs..."
     #xdotool mousemove 0 0 || exit 99
     xdotool key VoidSymbol || exit 99
@@ -69,7 +77,7 @@ function send_dummy_key_event ()
 #
 # MAIN PROGRAM
 #
-PROG=`basename $0`
+PROG=$(basename $0)
 if [ "$1" = "-max_bright" ]; then
   keep_brightness_up
 elif [ "$1" = "-dummy_event" ]; then
