@@ -1070,14 +1070,6 @@ function create_user()
       echo "$ $0 -ZSH"
     fi
 
-    if grep -q sudo /etc/group; then
-      echo "- adding $USER to sudo group to allow sudo"
-      $SUDO usermod -aG sudo $USER
-      sleep 1
-    else
-      echo "--WARN: no group sudo to add $USER to..."
-    fi
-
     # set up some basics, such as ssh authorized keys
     if [ -n "$CONFIG_BASE" ]; then
       echo "- setting up $USER .ssh & homedir"
@@ -1091,11 +1083,24 @@ function create_user()
       [ -s $HOME/.ssh/authorized_keys ] && $SUDO cp -fv $HOME/.ssh/authorized_keys $U_HOME/.ssh/authorized_keys
       [ -s $CONFIG_BASE/.ssh/authorized_keys ] && $SUDO cp -fv $CONFIG_BASE/.ssh/authorized_keys $U_HOME/.ssh/authorized_keys
       [ -s $U_HOME/.ssh/authorized_keys ] && $SUDO chmod 600 $U_HOME/.ssh/authorized_keys && $SUDO chown -v $USER $U_HOME/.ssh/authorized_keys
-      ls -lh $U_HOME/.ssh/authorized_keys
+      $SUDO ls -lh $U_HOME/.ssh/authorized_keys
       $SUDO cat $U_HOME/.ssh/authorized_keys
       sleep 1
     else
       echo "--WARN: skip setting up $USER ssh and homedir..."
+    fi
+
+    # SUDOERS
+    echo && echo -e "*** Would you like to add user \"$USER\" to sudoers? [y/N] \c"
+    read CONF
+    if [ "$CONF" = "y" -o "$CONF" = "Y" ]; then
+      if grep -q "^sudo" /etc/group; then
+        echo "- adding $USER to sudo group to allow sudo"
+        $SUDO usermod -aG sudo $USER
+        sleep 1
+      else
+        echo "--WARN: no group sudo to add $USER to..."
+      fi
     fi
 
     echo && echo "*** su to & setup the user: $USER"
