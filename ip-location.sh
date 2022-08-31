@@ -38,7 +38,7 @@ else
 
       # 2nd attempt via another provider
       if [ -z "$IP" ]; then
-        IP=$(timeout 3 dig +short whoami.akamai.net @ns1-1.akamaitech.net. | egrep '[0-9]')
+        IP=$(timeout 2 dig +short whoami.akamai.net @ns1-1.akamaitech.net. | egrep '[0-9]')
         if [ $? -ne 0 ]; then
           echo "--WARN: can't work out external/public IP address via cmd (RC=$?): dig +short whoami.akamai.net." >&2
         fi
@@ -46,7 +46,7 @@ else
 
       # 3rd attempt via another provider
       if [ -z "$IP" ]; then
-        IP=$(timeout 3 dig txt o-o.myaddr.test.l.google.com @ns1.google.com. +short | egrep '[0-9]')
+        IP=$(timeout 2 dig txt o-o.myaddr.test.l.google.com @ns1.google.com. +short | egrep '[0-9]')
         if [ $? -ne 0 ]; then
           echo "--WARN: can't work out external/public IP address via cmd (RC=$?): dig txt o-o.myaddr.test.l.google.com. @ns1.google.com +short.akamai.net" >&2
         fi
@@ -61,8 +61,8 @@ else
       fi
     elif which curl >&/dev/null; then
       IP=""
-      [ -z "$IP" ] && IP=$(timeout 5 curl -sSL http://ipecho.net/plain 2>/dev/null)
-      [ -z "$IP" ] && IP=$(timeout 5 curl -sSL http: ifconfig.me 2>/dev/null)
+      [ -z "$IP" ] && IP=$(timeout 4 curl -sSL http://ipecho.net/plain 2>/dev/null)
+      [ -z "$IP" ] && IP=$(timeout 4 curl -sSL http: ifconfig.me 2>/dev/null)
     else
       echo "--ERROR: no \`dig', no \`nslookup' and no \`curl' command on $(uname -n):" >&2
       which dig 1>&2
@@ -75,8 +75,8 @@ else
   if [ -z "$IP" ]; then
     if which curl >&/dev/null; then
       IP=""
-      [ -z "$IP" ] && IP=$(timeout 5 curl -sSL http://ipecho.net/plain 2>/dev/null)
-      [ -z "$IP" ] && IP=$(timeout 5 curl -sSL http: ifconfig.me 2>/dev/null)
+      [ -z "$IP" ] && IP=$(timeout 4 curl -sSL http://ipecho.net/plain 2>/dev/null)
+      [ -z "$IP" ] && IP=$(timeout 4 curl -sSL http: ifconfig.me 2>/dev/null)
     fi
   fi
 
@@ -136,10 +136,12 @@ else
     # - when getting current IP (no params)
     if [ -z "$1" ]; then
       echo && echo "--> WTFMYIP.COM:"
-      timeout 5 curl -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g'
+      OUT1=$(timeout 5 curl -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g')
+      [ -z "$OUT1" ] && $CLI_BROWSER -dump http://wtfismyip.com/json 2>/dev/null
 
       echo && echo "--> IPAPI.CO:"
-      timeout 5 curl -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": '
+      OUT2=$(timeout 5 curl -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": ')
+      [ -z "$OUT2" ] && $CLI_BROWSER -dump http://ipapi.co/json 2>/dev/null
     else
       echo "--warn: skipping WTFMYIP.COM & IPAPI.CO as these can only be used on CURRENT IP, rather than PARAM IP!" >&2
     fi
@@ -149,10 +151,12 @@ else
     echo && echo "--BACKUP MODE: will try to geo-code using \`curl' and external websites:" >&2
 
     echo && echo "--> WTFISMYIP.COM:"
-    timeout 5 curl -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g'
+    OUT1=$(timeout 5 curl -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g')
+    [ -z "$OUT1" ] && $CLI_BROWSER -dump http://wtfismyip.com/json 2>/dev/null
 
     echo && echo "--> IPAPI.CO:"
-    timeout 5 curl -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": '
+    OUT2=$(timeout 5 curl -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": ')
+    [ -z "$OUT2" ] && $CLI_BROWSER -dump http://ipapi.co/json 2>/dev/null
 
     # IPLOCATION.COM/NET
     # - via links/lynx/w3m
