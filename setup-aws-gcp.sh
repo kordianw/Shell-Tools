@@ -98,7 +98,8 @@ function connect_gcp_cloudshell()
       curl -fsSL "https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=1.1.1.1" && echo
 
       # give useful info that it can be force-requested
-      RUN=$(echo $0 | sed "s/$HOME/~\//")
+      RUN=$0
+      RUN=$(echo $0 | sed "s|$HOME|~|" 2>/dev/null)
       echo && echo "NB: run: \`$RUN -cloudshell $GCP_DNS_ALIAS -force_request' to request new GCP Cloud Shell." 1>&2
       exit 1
     elif [ $RC -ne 0 -a $RC -ne 14 ]; then

@@ -1034,8 +1034,8 @@ function create_user()
         echo "--FATAL: /home/$USER doesn't exist?!" >&2
         exit 99
       fi
-      cp -vpf "$ZSHRC" /home/$USER || exit 1
-      chown -v $USER /home/$USER/.zshrc || exit 1
+      $SUDO cp -vpf "$ZSHRC" /home/$USER || exit 1
+      $SUDO chown -v $USER /home/$USER/.zshrc || exit 1
 
       if [ -r /home/$USER/.zshrc ]; then
         if egrep -q "$USER:.*zsh" /etc/passwd; then
@@ -1072,7 +1072,7 @@ function create_user()
 
     if grep -q sudo /etc/group; then
       echo "- adding $USER to sudo group to allow sudo"
-      usermod -aG sudo $USER
+      $SUDO usermod -aG sudo $USER
       sleep 1
     else
       echo "--WARN: no group sudo to add $USER to..."
@@ -1083,16 +1083,16 @@ function create_user()
       echo "- setting up $USER .ssh & homedir"
       U_HOME=/home/$USER
 
-      mkdir $U_HOME/.ssh
-      chmod -v 700 $U_HOME/.ssh
-      chown -v $USER $U_HOME/.ssh
+      $SUDO mkdir $U_HOME/.ssh
+      $SUDO chmod -v 700 $U_HOME/.ssh
+      $SUDO chown -v $USER $U_HOME/.ssh
 
       echo "- copying up << $CONFIG_BASE/.ssh/authorized_keys >> to $USER .ssh & homedir"
-      [ -s $HOME/.ssh/authorized_keys ] && cp -fv $HOME/.ssh/authorized_keys $U_HOME/.ssh/authorized_keys
-      [ -s $CONFIG_BASE/.ssh/authorized_keys ] && cp -fv $CONFIG_BASE/.ssh/authorized_keys $U_HOME/.ssh/authorized_keys
-      [ -s $U_HOME/.ssh/authorized_keys ] && chmod 600 $U_HOME/.ssh/authorized_keys && chown -v $USER $U_HOME/.ssh/authorized_keys
+      [ -s $HOME/.ssh/authorized_keys ] && $SUDO cp -fv $HOME/.ssh/authorized_keys $U_HOME/.ssh/authorized_keys
+      [ -s $CONFIG_BASE/.ssh/authorized_keys ] && $SUDO cp -fv $CONFIG_BASE/.ssh/authorized_keys $U_HOME/.ssh/authorized_keys
+      [ -s $U_HOME/.ssh/authorized_keys ] && $SUDO chmod 600 $U_HOME/.ssh/authorized_keys && $SUDO chown -v $USER $U_HOME/.ssh/authorized_keys
       ls -lh $U_HOME/.ssh/authorized_keys
-      cat $U_HOME/.ssh/authorized_keys
+      $SUDO cat $U_HOME/.ssh/authorized_keys
       sleep 1
     else
       echo "--WARN: skip setting up $USER ssh and homedir..."
