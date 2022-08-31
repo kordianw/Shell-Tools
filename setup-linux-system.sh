@@ -547,7 +547,19 @@ function enable_setup_zsh()
   # don't change shell for `root'
   if [ "$USER" = "root" ]; then
     echo "--WARN: handled ZSH installation, but don't recommend changing shell for \`root', ENDING script!"
-    exit 99
+    exit 1
+  fi
+
+  if [ "$USER" = "ubuntu" -o "$USER" = "ec2-user" ]; then
+    echo && echo "*** NB: this user is \"$USER\", consider keeping current shell and create another user w/ZSH for daily use..." >&2
+    echo && echo -e "*** Would you still like to change \"$USER\" default shell to ZSH? [y/N] \c"
+    read CONF
+    if [ "$CONF" = "y" -o "$CONF" = "Y" ]; then
+      echo "--WARN: handled ZSH installation, and will now change default shell for \`$USER' to ZSH"
+    else
+      echo "--WARN: handled ZSH installation, but don't recommend changing shell for \`$USER', ENDING script!"
+      exit 1
+    fi
   fi
 
   # make sure we have ZSHRC installed
