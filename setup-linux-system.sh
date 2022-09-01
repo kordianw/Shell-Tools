@@ -1049,7 +1049,10 @@ function create_user()
       $SUDO cp -vpf "$ZSHRC" /home/$USER || exit 1
       $SUDO chown -v $USER /home/$USER/.zshrc || exit 1
 
-      if [ -r /home/$USER/.zshrc ]; then
+      # check if user's ZSHRC exists
+      ZSHRC_OK=$($SUDO ls /home/$USER/.zshrc 2>/dev/null)
+
+      if [ -n "$ZSHRC_OK" ]; then
         if egrep -q "$USER:.*zsh" /etc/passwd; then
           echo "*** user << $USER >> arlaedy has ZSH as shell"
         else
@@ -1060,8 +1063,10 @@ function create_user()
             OS=$(awk -F= '/^NAME=/{print $NF}' /etc/os-release)
 
             # various Linux -> installs csh
-            if echo "$OS" | egrep -q "Amazon Linux|Fedora|CentOS|Rocky"; then
+            if echo "$OS" | egrep -q "Amazon Linux|Fedora|CentOS|RHEL|Rocky"; then
               $SUDO yum -y install util-linux-user
+            elif [ -x /usr/bin/yum ]; then
+              $SUDO yum -y -qq install util-linux-user
             fi
           fi
 
@@ -1110,13 +1115,31 @@ function create_user()
         echo "- adding $USER to sudo group to allow sudo"
         $SUDO usermod -aG sudo $USER
         sleep 1
+      elif grep -q "^wheel" /etc/group; then
+        echo "- adding $USER to wheel group to allow sudo"
+        $SUDO usermod -aG wheel $USER
+        sleep 1
       else
         echo "--WARN: no group sudo to add $USER to..."
       fi
     fi
 
+    # BONUS: copy the bkup-script
+    BONUS_CONFIG_FILE="$(dirname $CONFIG_BASE)/bkup-and-transfer.sh"
+    if [ -r "$BONUS_CONFIG_FILE" ]; then
+      echo && echo "*** copying bonus config file \"$BONUS_CONFIG_FILE\" to $U_HOME"
+      $SUDO cp -pv "$BONUS_CONFIG_FILE" "$U_HOME" || exit 1
+      $SUDO chown -v $USER "$U_HOME/$(basename $BONUS_CONFIG_FILE)" || exit 1
+      BONUS_FILE_COPIED="yes"
+    fi
+
+    # FINAL Instructions
     echo && echo "*** su to & setup the user: $USER"
-    echo "- eg: run: <<  wget http://<<XXX>>.com/dl.sh && bash dl.sh >>"
+    if [ -n "$BONUS_FILE_COPIED" ]; then
+      echo "- eg: run: ./$(basename $BONUS_CONFIG_FILE)"
+    else
+      echo "- eg: run: <<  wget http://<<XXX>>.com/dl.sh && bash dl.sh >>"
+    fi
     echo
     echo "+ $SUDO su - $USER"
     exec $SUDO su - $USER
