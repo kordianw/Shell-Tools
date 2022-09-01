@@ -138,10 +138,12 @@ else
       echo && echo "--> WTFMYIP.COM:"
       OUT1=$(timeout 5 curl -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g')
       [ -z "$OUT1" ] && $CLI_BROWSER -dump http://wtfismyip.com/json 2>/dev/null
+      [ -n "$OUT1" ] && echo "$OUT1"
 
       echo && echo "--> IPAPI.CO:"
       OUT2=$(timeout 5 curl -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": ')
       [ -z "$OUT2" ] && $CLI_BROWSER -dump http://ipapi.co/json 2>/dev/null
+      [ -n "$OUT2" ] && echo "$OUT2"
     else
       echo "--warn: skipping WTFMYIP.COM & IPAPI.CO as these can only be used on CURRENT IP, rather than PARAM IP!" >&2
     fi
@@ -153,10 +155,12 @@ else
     echo && echo "--> WTFISMYIP.COM:"
     OUT1=$(timeout 5 curl -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g')
     [ -z "$OUT1" ] && $CLI_BROWSER -dump http://wtfismyip.com/json 2>/dev/null
+    [ -n "$OUT1" ] && echo "$OUT1"
 
     echo && echo "--> IPAPI.CO:"
     OUT2=$(timeout 5 curl -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": ')
     [ -z "$OUT2" ] && $CLI_BROWSER -dump http://ipapi.co/json 2>/dev/null
+    [ -n "$OUT2" ] && echo "$OUT2"
 
     # IPLOCATION.COM/NET
     # - via links/lynx/w3m
