@@ -75,8 +75,8 @@ else
   if [ -z "$IP" ]; then
     if which curl >&/dev/null; then
       IP=""
-      [ -z "$IP" ] && IP=$(timeout 4 curl -sSL http://ipecho.net/plain 2>/dev/null)
-      [ -z "$IP" ] && IP=$(timeout 4 curl -sSL http: ifconfig.me 2>/dev/null)
+      [ -z "$IP" ] && IP=$(timeout 4 curl -k -sSL http://ipecho.net/plain 2>/dev/null)
+      [ -z "$IP" ] && IP=$(timeout 4 curl -k -sSL http: ifconfig.me 2>/dev/null)
     fi
   fi
 
@@ -93,14 +93,14 @@ else
     # KEYCDN
     echo "--> KEYCDN.COM:"
     if which jq >&/dev/null; then
-      timeout 5 curl -sSL -H "User-Agent: keycdn-tools:https://google.com" http://tools.keycdn.com/geo.json?host=$IP | jq . | egrep -v '^{|^}|status"|description"|data"|geo"|host":|ip":|asn":|code":|latitude":|longitude":|metro_code"|datetime":|continent_name":|^ *}'
+      timeout 5 curl -k -sSL -H "User-Agent: keycdn-tools:https://google.com" http://tools.keycdn.com/geo.json?host=$IP | jq . | egrep -v '^{|^}|status"|description"|data"|geo"|host":|ip":|asn":|code":|latitude":|longitude":|metro_code"|datetime":|continent_name":|^ *}'
     else
-      timeout 5 curl -w "\n" -sSL -H "User-Agent: keycdn-tools:https://google.com" http://tools.keycdn.com/geo.json?host=$IP
+      timeout 5 curl -k -w "\n" -sSL -H "User-Agent: keycdn-tools:https://google.com" http://tools.keycdn.com/geo.json?host=$IP
     fi
 
     # IPINFO
     echo && echo "--> IPINFO.IO:"
-    timeout 5 curl -sSL http://ipinfo.io/$IP | egrep -v '^{|^}|"ip":|"readme":|"loc":'
+    timeout 5 curl -k -sSL http://ipinfo.io/$IP | egrep -v '^{|^}|"ip":|"readme":|"loc":'
 
     # IPLOCATION.NET
     # - via links/lynx/w3m
@@ -136,12 +136,12 @@ else
     # - when getting current IP (no params)
     if [ -z "$1" ]; then
       echo && echo "--> WTFMYIP.COM:"
-      OUT1=$(timeout 5 curl -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g')
+      OUT1=$(timeout 5 curl -k -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g')
       [ -z "$OUT1" ] && $CLI_BROWSER -dump http://wtfismyip.com/json 2>/dev/null
       [ -n "$OUT1" ] && echo "$OUT1"
 
       echo && echo "--> IPAPI.CO:"
-      OUT2=$(timeout 5 curl -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": ')
+      OUT2=$(timeout 5 curl -k -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": ')
       [ -z "$OUT2" ] && $CLI_BROWSER -dump http://ipapi.co/json 2>/dev/null
       [ -n "$OUT2" ] && echo "$OUT2"
     else
@@ -153,12 +153,12 @@ else
     echo && echo "--BACKUP MODE: will try to geo-code using \`curl' and external websites:" >&2
 
     echo && echo "--> WTFISMYIP.COM:"
-    OUT1=$(timeout 5 curl -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g')
+    OUT1=$(timeout 5 curl -k -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g')
     [ -z "$OUT1" ] && $CLI_BROWSER -dump http://wtfismyip.com/json 2>/dev/null
     [ -n "$OUT1" ] && echo "$OUT1"
 
     echo && echo "--> IPAPI.CO:"
-    OUT2=$(timeout 5 curl -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": ')
+    OUT2=$(timeout 5 curl -k -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": ')
     [ -z "$OUT2" ] && $CLI_BROWSER -dump http://ipapi.co/json 2>/dev/null
     [ -n "$OUT2" ] && echo "$OUT2"
 
