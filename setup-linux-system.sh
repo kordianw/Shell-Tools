@@ -552,7 +552,7 @@ function enable_setup_zsh()
 
   if [ "$USER" = "ubuntu" -o "$USER" = "ec2-user" ]; then
     echo && echo "*** NB: this user is \"$USER\", consider keeping current shell and create another user w/ZSH for daily use..." >&2
-    echo && echo -e "*** Would you still like to change \"$USER\" default shell to ZSH? [y/N] \c"
+    echo -e "-----> Would you still like to change \"$USER\" default shell to ZSH? [y/N] \c"
     read CONF
     if [ "$CONF" = "y" -o "$CONF" = "Y" ]; then
       echo "--WARN: handled ZSH installation, and will now change default shell for \`$USER' to ZSH"
@@ -1094,7 +1094,7 @@ function create_user()
       echo "- copying up << $CONFIG_BASE/.ssh/authorized_keys >> to $USER .ssh & homedir"
       [ -s $HOME/.ssh/authorized_keys ] && $SUDO cp -fv $HOME/.ssh/authorized_keys $U_HOME/.ssh/authorized_keys
       [ -s $CONFIG_BASE/.ssh/authorized_keys ] && $SUDO cp -fv $CONFIG_BASE/.ssh/authorized_keys $U_HOME/.ssh/authorized_keys
-      [ -s $U_HOME/.ssh/authorized_keys ] && $SUDO chmod 600 $U_HOME/.ssh/authorized_keys && $SUDO chown -v $USER $U_HOME/.ssh/authorized_keys
+      $SUDO chmod 600 $U_HOME/.ssh/authorized_keys && $SUDO chown -v $USER $U_HOME/.ssh/authorized_keys
       $SUDO ls -lh $U_HOME/.ssh/authorized_keys
       $SUDO cat $U_HOME/.ssh/authorized_keys
       sleep 1
