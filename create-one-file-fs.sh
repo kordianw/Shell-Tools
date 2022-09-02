@@ -15,23 +15,38 @@ DEFAULT_FS_TYPE=vfat
 # what are the MOUNT OPTIONS?
 MOUNT_OPTIONS="loop,rw,relatime,user,uid=$(id -u),gid=$(id -g)"
 
-
 ####################
 
 #
 # FUNCTIONS
 #
-function create_fs_and_mount()
-{
+function create_fs_and_mount() {
   FILE=$1
   SIZE=$2
   MOUNT=$3
-  [ -z "$FILE" ] && { echo "$PROG: no file supplied!" >&2; exit 99; }
-  [ -z "$SIZE" ] && { echo "$PROG: no size supplied!" >&2; exit 99; }
-  [ -z "$MOUNT" ] && { echo "$PROG: no mount supplied!" >&2; exit 99; }
+  [ -z "$FILE" ] && {
+    echo "$PROG: no file supplied!" >&2
+    exit 99
+  }
+  [ -z "$SIZE" ] && {
+    echo "$PROG: no size supplied!" >&2
+    exit 99
+  }
+  [ -z "$MOUNT" ] && {
+    echo "$PROG: no mount supplied!" >&2
+    exit 99
+  }
 
-  [ -e "$FILE" ] && { echo "$PROG: File << $FILE >> already exists:" >&2; ls -loh $FILE; exit 99; }
-  [ -e "$MOUNT" ] && { echo "$PROG: Mount dir << $MOUNT >> already exists:" >&2; ls -ld $MOUNT; exit 99; }
+  [ -e "$FILE" ] && {
+    echo "$PROG: File << $FILE >> already exists:" >&2
+    ls -loh $FILE
+    exit 99
+  }
+  [ -e "$MOUNT" ] && {
+    echo "$PROG: Mount dir << $MOUNT >> already exists:" >&2
+    ls -ld $MOUNT
+    exit 99
+  }
 
   echo "* creating << $DEFAULT_FS_TYPE >> one-file FS << $FILE >> with the size of << $SIZE >>" >&2
 
@@ -52,20 +67,39 @@ function create_fs_and_mount()
   df -Th | grep "$MOUNT"
 }
 
-function mount_fs()
-{
+function mount_fs() {
   FILE=$1
   MOUNT=$2
-  [ -z "$FILE" ] && { echo "$PROG: no file supplied!" >&2; exit 99; }
-  [ -z "$MOUNT" ] && { echo "$PROG: no mount supplied!" >&2; exit 99; }
+  [ -z "$FILE" ] && {
+    echo "$PROG: no file supplied!" >&2
+    exit 99
+  }
+  [ -z "$MOUNT" ] && {
+    echo "$PROG: no mount supplied!" >&2
+    exit 99
+  }
 
-  [ ! -e "$FILE" ] && { echo "$PROG: File << $FILE >> doesn't exist:" >&2; exit 99; }
-  [ ! -e "$MOUNT" ] && { echo "$PROG: Mount dir << $MOUNT >> doesn't exist:" >&2; exit 99; }
-  [ ! -r "$FILE" ] && { echo "$PROG: File << $FILE >> not readable:" >&2; ls -loh $FILE; exit 99; }
-  [ ! -w "$MOUNT" ] && { echo "$PROG: Mount dir << $MOUNT >> not writeable" >&2; ls -ld $MOUNT; exit 99; }
+  [ ! -e "$FILE" ] && {
+    echo "$PROG: File << $FILE >> doesn't exist:" >&2
+    exit 99
+  }
+  [ ! -e "$MOUNT" ] && {
+    echo "$PROG: Mount dir << $MOUNT >> doesn't exist:" >&2
+    exit 99
+  }
+  [ ! -r "$FILE" ] && {
+    echo "$PROG: File << $FILE >> not readable:" >&2
+    ls -loh $FILE
+    exit 99
+  }
+  [ ! -w "$MOUNT" ] && {
+    echo "$PROG: Mount dir << $MOUNT >> not writeable" >&2
+    ls -ld $MOUNT
+    exit 99
+  }
 
   # is the dir empty?
-  if /bin/ls -a $MOUNT |egrep -qv "^\.*$" |egrep "."; then
+  if /bin/ls -a $MOUNT | egrep -qv "^\.*$" | egrep "."; then
     echo "$PROG: Mount dir << $MOUNT >> not empty:" >&2
     ls $MOUNT
     exit 2
@@ -84,12 +118,16 @@ function mount_fs()
   fi
 
   echo "* working out FS-TYPE of one-file FS << $FILE >> " >&2
-  TYPE=`file $FILE`
+  TYPE=$(file $FILE)
   if echo "$TYPE" | egrep -q "mkfs.fat|vfat"; then FS_TYPE=vfat; fi
   if echo "$TYPE" | egrep -q "ext2|EXT2"; then FS_TYPE=ext2; fi
   if echo "$TYPE" | egrep -q "ext3|EXT3"; then FS_TYPE=ext3; fi
   if echo "$TYPE" | egrep -q "ext4|EXT4"; then FS_TYPE=ext4; fi
-  [ -z "$FS_TYPE" ] && { echo -e "$PROG: can't work out FS type of << $FILE >> from string:\n" >&2; file $FILE; exit 99; }
+  [ -z "$FS_TYPE" ] && {
+    echo -e "$PROG: can't work out FS type of << $FILE >> from string:\n" >&2
+    file $FILE
+    exit 99
+  }
 
   echo "* mounting one-file << $FS_TYPE >> FS << $FILE >> on mount dir << $MOUNT >>" >&2
   sudo mount -v -o $MOUNT_OPTIONS -t $FS_TYPE $FILE $MOUNT || exit 5
@@ -98,13 +136,22 @@ function mount_fs()
   df -Th | grep "$MOUNT"
 }
 
-function umount_fs()
-{
+function umount_fs() {
   MOUNT=$1
-  [ -z "$MOUNT" ] && { echo "$PROG: no mount supplied!" >&2; exit 99; }
+  [ -z "$MOUNT" ] && {
+    echo "$PROG: no mount supplied!" >&2
+    exit 99
+  }
 
-  [ ! -e "$MOUNT" ] && { echo "$PROG: Mount dir << $MOUNT >> doesn't exist:" >&2; exit 99; }
-  [ ! -r "$MOUNT" ] && { echo "$PROG: Mount dir << $MOUNT >> not readable" >&2; ls -ld $MOUNT; exit 99; }
+  [ ! -e "$MOUNT" ] && {
+    echo "$PROG: Mount dir << $MOUNT >> doesn't exist:" >&2
+    exit 99
+  }
+  [ ! -r "$MOUNT" ] && {
+    echo "$PROG: Mount dir << $MOUNT >> not readable" >&2
+    ls -ld $MOUNT
+    exit 99
+  }
 
   # is it mounted?
   if ! df -Th | grep -q "$MOUNT"; then
@@ -125,7 +172,7 @@ function umount_fs()
 #
 # MAIN PROGRAM
 #
-PROG=`basename $0`
+PROG=$(basename $0)
 if [ "$1" = "-create" -a -n "$2" -a -n "$3" -a -n "$4" ]; then
   create_fs_and_mount $2 $3 $4
 elif [ "$1" = "-mount" -a -n "$2" -a -n "$3" ]; then

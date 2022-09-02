@@ -10,7 +10,6 @@
 HEADER="Kordian W. <code [at] kordy.com>"
 PERL="/usr/bin/perl"
 
-
 ####################
 PROG=$(basename $0)
 if [ $# -eq 0 -o "$1" = "-h" ]; then
@@ -26,14 +25,26 @@ else
 
   # some processing and ensuring it can be done & all is OK
   echo "$1" | grep "\." >&/dev/null || FILE="$1.sh"
-  [ -e "$FILE" ] && { echo "$PROG: \"$FILE\" already exists!" >&2; exit 1; }
-  [ -w . ] || { echo "$PROG: Can't write \"$FILE\" to \"`pwd`\" ..." >&2; exit 1; }
-  ( touch "$FILE"; chmod 755 "$FILE" ) || { echo "$PROG: error setting +x permissions..." >&2; exit 1; }
+  if [ -e "$FILE" ]; then
+    echo "$PROG: \"$FILE\" already exists!" >&2
+    exit 1
+  fi
+  if [ ! -w . ]; then
+    echo "$PROG: Can't write \"$FILE\" to \"$(pwd)\" ..." >&2
+    exit 1
+  fi
+
+  # prep
+  touch "$FILE" && chmod 755 "$FILE"
+  if [ ! -x "$FILE" ]; then
+    echo "$PROG: error setting +x permissions on \"$FILE\"..." >&2
+    exit 1
+  fi
 
   # shell script
   if echo "$FILE" | grep "\.sh$" >&/dev/null; then
 
-    cat <<EOT | sed "s/DATE/$DATE/" > "./$FILE"
+    cat <<EOT | sed "s/DATE/$DATE/" >"./$FILE"
 #!/bin/bash
 #
 # Script to ...
@@ -62,7 +73,7 @@ fi
 # EOF
 EOT
   elif echo "$FILE" | grep "\.pl$" >&/dev/null; then
-    cat <<EOT | sed "s/DATE/$DATE/" > "./$FILE"
+    cat <<EOT | sed "s/DATE/$DATE/" >"./$FILE"
 #!$PERL -T
 #
 # Script to ...
