@@ -15,8 +15,7 @@ TZ="America/New_York"
 #
 # FUNCTIONS
 #
-function setup()
-{
+function setup() {
   # what is the package manager to choose?
   if [ -x /usr/bin/apt -a -x /usr/bin/yum ]; then
     echo "$PROG: both \`apt' and \`get' are installed! can't choose the package manager!" >&2
@@ -44,8 +43,7 @@ function setup()
   [ -d "$HOME/playground" ] && KW_SRC_DIR="$HOME/playground"
 }
 
-function check_root()
-{
+function check_root() {
   if [ "$EUID" -ne 0 ]; then
     sudo -n whoami >&/dev/null
     if [ $? -ne 0 ]; then
@@ -55,8 +53,7 @@ function check_root()
   fi
 }
 
-function install_general_packages
-{
+function install_general_packages {
   #
   # TODO Mint Linux
   #
@@ -240,8 +237,8 @@ function install_general_packages
   $INSTALL_CMD bind-utils # tools such as `dig'
 
   # GENPKG: network & security tools
-  $INSTALL_CMD telnet   # telnet for checking connectivity
-  $INSTALL_CMD dnsutils # provides dig+nslookup
+  $INSTALL_CMD telnet    # telnet for checking connectivity
+  $INSTALL_CMD dnsutils  # provides dig+nslookup
   $INSTALL_CMD net-tools # provides ifconfig
   #$INSTALL_CMD netcat        # TCP/IP swiss army knife
   $INSTALL_CMD nmap # The Network Mapper/Scanner
@@ -280,8 +277,7 @@ function install_general_packages
   fi
 }
 
-function change_timezone()
-{
+function change_timezone() {
   # setup program & vars
   setup
   check_root
@@ -468,8 +464,7 @@ function change_timezone()
   fi
 }
 
-function enable_setup_zsh()
-{
+function enable_setup_zsh() {
   # setup program & vars
   setup
 
@@ -597,8 +592,7 @@ function enable_setup_zsh()
   fi
 }
 
-function enable_ssh()
-{
+function enable_ssh() {
   check_root
 
   [ "$OSTYPE" != "linux-gnu" -a "$OSTYPE" != "linux" ] && {
@@ -641,8 +635,7 @@ function enable_ssh()
   fi
 }
 
-function disable_ssh()
-{
+function disable_ssh() {
   check_root
 
   [ "$OSTYPE" != "linux-gnu" -a "$OSTYPE" != "linux" ] && {
@@ -674,8 +667,7 @@ function disable_ssh()
   $SUDO apt remove -qq -y openssh-sftp-server
 }
 
-function install_brew()
-{
+function install_brew() {
   if [[ "$OSTYPE" != darwin* ]]; then
     echo "$PROG: invalid arch << $OSTYPE >>, expecting << darwin* >>! >&2"
     exit 2
@@ -736,8 +728,7 @@ function install_brew()
   $INSTALL_CMD outdated
 }
 
-function install_pi()
-{
+function install_pi() {
   # RASPBIAN PI
 
   check_root
@@ -812,15 +803,15 @@ function install_pi()
   $INSTALL_CMD bind-utils # tools such as `dig'
 
   # PI: network & security tools
-  $INSTALL_CMD telnet   # telnet for checking connectivity
-  $INSTALL_CMD dnsutils # provides dig+nslookup
+  $INSTALL_CMD telnet    # telnet for checking connectivity
+  $INSTALL_CMD dnsutils  # provides dig+nslookup
   $INSTALL_CMD net-tools # provides ifconfig
   #$INSTALL_CMD netcat        # TCP/IP swiss army knife
-  $INSTALL_CMD nmap        # The Network Mapper/Scanner
+  $INSTALL_CMD nmap # The Network Mapper/Scanner
   #$INSTALL_CMD sshfs       # filesystem client based on SSH File Transfer Protocol
   #$INSTALL_CMD netdiscover # SMBIOS/DMI table decoder
-  $INSTALL_CMD ntpdate     # one-off synchronize clock with a remote NTP server
-  $INSTALL_CMD ntpstat     # show network time protocol (ntp) status
+  $INSTALL_CMD ntpdate # one-off synchronize clock with a remote NTP server
+  $INSTALL_CMD ntpstat # show network time protocol (ntp) status
   #$INSTALL_CMD ethtool       # display or change Ethernet device settings
   #$INSTALL_CMD aircrack-ng   # wireless WEP/WPA cracking utilities
   $INSTALL_CMD sshpass # Non-interactive ssh password authentication
@@ -842,8 +833,7 @@ function install_pi()
   dpkg -l >$DIR/pkg-installed-list.txt
 }
 
-function install_rhel()
-{
+function install_rhel() {
   # RED HAT LINUX / CENT OS LINUX / FEDORA LINUX
 
   check_root
@@ -983,8 +973,7 @@ function install_rhel()
   fi
 }
 
-function create_user()
-{
+function create_user() {
   setup
   check_root
 
@@ -1152,8 +1141,7 @@ function create_user()
   fi
 }
 
-function ssh_conf()
-{
+function ssh_conf() {
   setup
   check_root
 
@@ -1186,8 +1174,7 @@ function ssh_conf()
   #$SUDO systemctl start ssh.service
 }
 
-function change_hostname()
-{
+function change_hostname() {
   setup
   check_root
 
