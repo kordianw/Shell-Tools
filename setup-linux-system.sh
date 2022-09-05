@@ -242,6 +242,7 @@ function install_general_packages
   # GENPKG: network & security tools
   $INSTALL_CMD telnet   # telnet for checking connectivity
   $INSTALL_CMD dnsutils # provides dig+nslookup
+  $INSTALL_CMD net-tools # provides ifconfig
   #$INSTALL_CMD netcat        # TCP/IP swiss army knife
   $INSTALL_CMD nmap # The Network Mapper/Scanner
   #$INSTALL_CMD sshfs         # filesystem client based on SSH File Transfer Protocol
@@ -813,10 +814,11 @@ function install_pi()
   # PI: network & security tools
   $INSTALL_CMD telnet   # telnet for checking connectivity
   $INSTALL_CMD dnsutils # provides dig+nslookup
+  $INSTALL_CMD net-tools # provides ifconfig
   #$INSTALL_CMD netcat        # TCP/IP swiss army knife
   $INSTALL_CMD nmap        # The Network Mapper/Scanner
-  $INSTALL_CMD sshfs       # filesystem client based on SSH File Transfer Protocol
-  $INSTALL_CMD netdiscover # SMBIOS/DMI table decoder
+  #$INSTALL_CMD sshfs       # filesystem client based on SSH File Transfer Protocol
+  #$INSTALL_CMD netdiscover # SMBIOS/DMI table decoder
   $INSTALL_CMD ntpdate     # one-off synchronize clock with a remote NTP server
   $INSTALL_CMD ntpstat     # show network time protocol (ntp) status
   #$INSTALL_CMD ethtool       # display or change Ethernet device settings
@@ -826,7 +828,7 @@ function install_pi()
   # PI: small utils (just helper utils)
   $INSTALL_CMD tofrodos # unix2dos, dos2unix
   $INSTALL_CMD bc       # CLI calculator
-  $INSTALL_CMD par      # advanced Paragraph reformatter (can be used inside vim)
+  #$INSTALL_CMD par      # advanced Paragraph reformatter (can be used inside vim)
   #$INSTALL_CMD pydf          # colourised df(1)-clone
   $INSTALL_CMD htop # improved `top'
 
