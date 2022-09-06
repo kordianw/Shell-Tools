@@ -91,10 +91,10 @@ function install_general_packages {
   # - LOGIN REMOTELY via ssh: ssh t480s
   #   * copy Config files
   # - ZSH -> this script with -ZSH param
-  # - install optional packages, such as VLC, Chrome, Remmina
+  # - install optional packages, such as VLC, Chrome, Remmina (RDP client)
   #   * later, restore Remmina settings/sessions
   #   * in Remmina, add the following 16:9 resolutions: 1440x810 & 1600x900
-  # - set-up Downloads area:
+  # - set-up Downloads area (useful for Live Distributions):
   #   # rmdir ~/Downloads
   #   # create-one-file-fs.sh /cdrom/Downloads-rw 4095M /home/mint/Downloads
   #   # add to /etc/fstab: /cdrom/Downloads-rw /home/mint/Downloads vfat loop,rw,relatime,user,uid=999,gid=999 0 0
