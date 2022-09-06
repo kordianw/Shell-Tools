@@ -47,7 +47,7 @@ if [ "$1" = "-ssd" -o "$1" = "--ssd" ]; then
   echo && echo "* df output:"
   echo "$DF_CMD"
 
-  if ! which lsblk >&/dev/null; then
+  if ! command -v lsblk >&/dev/null; then
     echo "--FATAL: you don't have \`lsblk' installed!" >&2
     echo "run: apt-get install util-linux" >&2
     exit 99
@@ -93,7 +93,7 @@ if [ "$1" = "-ssd" -o "$1" = "--ssd" ]; then
 fi
 
 if [ "$1" = "-install" ]; then
-  if ! which sysbench >&/dev/null; then
+  if ! command -v sysbench >&/dev/null; then
     echo "$PROG: trying to install \`sysbench' ..." >&2
 
     # quick install...
@@ -133,7 +133,7 @@ if [ "$1" = "-install" ]; then
 fi
 
 # do we now have it?
-if ! which sysbench >&/dev/null; then
+if ! command -v sysbench >&/dev/null; then
   echo "$PROG: --FATAL: you don't have \`sysbench' installed; can't do any CPU performance testing, you can install:" >&2
   RUN=$0
   RUN=$(echo $0 | sed "s|$HOME|~|" 2>/dev/null)
@@ -173,7 +173,7 @@ fi
 ##################
 
 # show HW information if available
-if which hw-info.sh >&/dev/null; then
+if command -v hw-info.sh >&/dev/null; then
   hw-info.sh
 elif [ -x ~/src/HW-Info/hw-info.sh ]; then
   ~/src/HW-Info/hw-info.sh

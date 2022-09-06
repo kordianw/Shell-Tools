@@ -348,7 +348,7 @@ function change_timezone() {
       cat /etc/timezone || exit 2
     fi
 
-    if which timedatectl >&/dev/null; then
+    if command -v timedatectl >&/dev/null; then
       echo && echo "* running \`timedatectl status' - check for sync:"
       timedatectl status || exit 3
     fi
@@ -370,7 +370,7 @@ function change_timezone() {
   fi
 
   # additional checks using timedatectl
-  if which timedatectl >&/dev/null; then
+  if command -v timedatectl >&/dev/null; then
 
     # check that this works
     timedatectl list-timezones >&/dev/null
@@ -401,7 +401,7 @@ function change_timezone() {
   fi
 
   # which method of change?
-  if which dpkg-reconfigure >&/dev/null; then
+  if command -v dpkg-reconfigure >&/dev/null; then
     #
     # CHANGE
     #
@@ -434,7 +434,7 @@ function change_timezone() {
     # confirm
     echo "- now:   $(date)"
 
-  elif which timedatectl >&/dev/null; then
+  elif command -v timedatectl >&/dev/null; then
     #
     # CHANGE
     # - this works on RHEL or Fedora
@@ -456,7 +456,7 @@ function change_timezone() {
   echo && echo "* viewing contents of updated /etc/localtime link:"
   ls -l /etc/localtime || exit 2
 
-  if which timedatectl >&/dev/null; then
+  if command -v timedatectl >&/dev/null; then
     echo && echo "* running \`timedatectl status' - check for sync:"
     timedatectl status
   else
@@ -476,7 +476,7 @@ function enable_setup_zsh() {
 
   # check for ZSH
   ZSH=$(chsh -l 2>/dev/null | grep zsh | tail -1)
-  [ -z "$ZSH" ] && ZSH=$(which zsh 2>/dev/null)
+  [ -z "$ZSH" ] && ZSH=$(command -v zsh 2>/dev/null)
   [ "$ZSH" = "/usr/bin/zsh" -a -x "/bin/zsh" ] && ZSH="/bin/zsh"
 
   # is ZSH available?
@@ -520,7 +520,7 @@ function enable_setup_zsh() {
 
   # after potential installation - check for ZSH
   ZSH=$(chsh -l 2>/dev/null | grep zsh | tail -1)
-  [ -z "$ZSH" ] && ZSH=$(which zsh 2>/dev/null)
+  [ -z "$ZSH" ] && ZSH=$(command -v zsh 2>/dev/null)
 
   # Failure...
   if [ -z "$ZSH" ]; then
@@ -567,7 +567,7 @@ function enable_setup_zsh() {
   fi
 
   # is chsh available? (not available on Amazon Linux)
-  if ! which chsh >&/dev/null; then
+  if ! command -v chsh >&/dev/null; then
     echo "$PROG: \`chsh' is not available on this system ... trying to install" 1>&2
     check_root
     OS=$(awk -F= '/^NAME=/{print $NF}' /etc/os-release)
@@ -674,7 +674,7 @@ function install_brew() {
   fi
 
   # install if necessary
-  if ! which brew >&/dev/null; then
+  if ! command -v brew >&/dev/null; then
     echo "$PROG: installing \`brew.sh' - enter sudo password:"
     sleep 1
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
@@ -952,14 +952,14 @@ function install_rhel() {
   sudo yum -y install perl-Mozilla-CA # for SSL handling
 
   # do we have hostname?
-  if ! which hostname >&/dev/null; then
+  if ! command -v hostname >&/dev/null; then
     sudo yum -y install bind-utils
     sudo yum -y install hostname
   fi
 
   # try to install SYSBENCH
   # - use a custom yum repository
-  if ! which sysbench >&/dev/null; then
+  if ! command -v sysbench >&/dev/null; then
     curl -s https://packagecloud.io/install/repositories/akopytov/sysbench/script.rpm.sh | sudo bash
     sudo yum -y install sysbench
   fi
@@ -1019,7 +1019,7 @@ function create_user() {
 
     # set shell
     ZSH=$(chsh -l 2>/dev/null | grep zsh | tail -1)
-    [ -z "$ZSH" ] && ZSH=$(which zsh 2>/dev/null)
+    [ -z "$ZSH" ] && ZSH=$(command -v zsh 2>/dev/null)
     [ "$ZSH" = "/usr/bin/zsh" -a -x "/bin/zsh" ] && ZSH="/bin/zsh"
 
     # only change the user's shell to ZSH:
@@ -1048,7 +1048,7 @@ function create_user() {
           echo "*** user << $USER >> arlaedy has ZSH as shell"
         else
           # is chsh available? (not available on Amazon Linux)
-          if ! which chsh >&/dev/null; then
+          if ! command -v chsh >&/dev/null; then
             echo "**** \`chsh' is not available on this system ... trying to install" 1>&2
             check_root
             OS=$(awk -F= '/^NAME=/{print $NF}' /etc/os-release)
@@ -1061,7 +1061,7 @@ function create_user() {
             fi
           fi
 
-          if which chsh >&/dev/null; then
+          if command -v chsh >&/dev/null; then
             echo "*** setting \`$ZSH' as shell for user $USER"
             $SUDO chsh -s $ZSH $USER
             sleep 1
@@ -1260,7 +1260,7 @@ function change_hostname() {
 
   # recommended: perform apt update
   echo && echo "* [$(date +%H:%M)] /OPTIONAL/ perform apt update/upgrade on $HOSTNAME, hit Ctrl-C to cancel"
-  if which apt >&/dev/null; then
+  if command -v apt >&/dev/null; then
     $SUDO nice apt update -qq && $SUDO nice apt upgrade -yq
   fi
 

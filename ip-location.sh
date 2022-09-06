@@ -24,7 +24,7 @@ Usage: $PROG [options] [IP]
 else
   IP="$1"
   if [ -z "$IP" ]; then
-    if which dig >&/dev/null; then
+    if command -v dig >&/dev/null; then
       #
       # DIG
       # - myip.opendns.com
@@ -51,7 +51,7 @@ else
           echo "--WARN: can't work out external/public IP address via cmd (RC=$?): dig txt o-o.myaddr.test.l.google.com. @ns1.google.com +short.akamai.net" >&2
         fi
       fi
-    elif which nslookup >&/dev/null; then
+    elif command -v nslookup >&/dev/null; then
       #
       # NSLOOKUP
       #
@@ -59,7 +59,7 @@ else
       if [ $? -ne 0 ]; then
         echo "--WARN: can't work out external/public IP address via cmd (RC=$?): nslookup myip.opendns.com resolver1.opendns.com" >&2
       fi
-    elif which curl >&/dev/null; then
+    elif command -v curl >&/dev/null; then
       IP=""
       [ -z "$IP" ] && IP=$(timeout 4 curl -sSL http://ipecho.net/plain 2>/dev/null)
       [ -z "$IP" ] && IP=$(timeout 4 curl -sSL http: ifconfig.me 2>/dev/null)
@@ -73,7 +73,7 @@ else
 
   # alternative method of getting the IP
   if [ -z "$IP" ]; then
-    if which curl >&/dev/null; then
+    if command -v curl >&/dev/null; then
       IP=""
       [ -z "$IP" ] && IP=$(timeout 4 curl -k -sSL http://ipecho.net/plain 2>/dev/null)
       [ -z "$IP" ] && IP=$(timeout 4 curl -k -sSL http: ifconfig.me 2>/dev/null)
@@ -92,7 +92,7 @@ else
 
     # KEYCDN
     echo "--> KEYCDN.COM:"
-    if which jq >&/dev/null; then
+    if command -v jq >&/dev/null; then
       timeout 5 curl -k -sSL -H "User-Agent: keycdn-tools:https://google.com" http://tools.keycdn.com/geo.json?host=$IP | jq . | egrep -v '^{|^}|status"|description"|data"|geo"|host":|ip":|asn":|code":|latitude":|longitude":|metro_code"|datetime":|continent_name":|: null,|^ *}'
     else
       timeout 5 curl -k -w "\n" -sSL -H "User-Agent: keycdn-tools:https://google.com" http://tools.keycdn.com/geo.json?host=$IP
@@ -104,17 +104,17 @@ else
 
     # IPLOCATION.NET
     # - via links/lynx/w3m
-    CLI_BROWSER=$(which links 2>/dev/null) # use `links' by default as the text-only browser
+    CLI_BROWSER=$(command -v links 2>/dev/null) # use `links' by default as the text-only browser
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/links ] && CLI_BROWSER=~/bin/links
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/links-2.12 ] && CLI_BROWSER=~/bin/links-2.12
 
-    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=$(which lynx 2>/dev/null)
+    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=$(command -v lynx 2>/dev/null)
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/lynx ] && CLI_BROWSER=~/bin/lynx
 
-    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=$(which lynxlet 2>/dev/null)
+    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=$(command -v lynxlet 2>/dev/null)
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/lynxlet ] && CLI_BROWSER=~/bin/lynxlet
 
-    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=$(which w3m 2>/dev/null)
+    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=$(command -v w3m 2>/dev/null)
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/w3m ] && CLI_BROWSER=~/bin/w3m
 
     if [ -n "$CLI_BROWSER" -a -x "$CLI_BROWSER" ]; then
@@ -164,17 +164,17 @@ else
 
     # IPLOCATION.COM/NET
     # - via links/lynx/w3m
-    CLI_BROWSER=$(which links 2>/dev/null) # use `links' by default as the text-only browser
+    CLI_BROWSER=$(command -v links 2>/dev/null) # use `links' by default as the text-only browser
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/links ] && CLI_BROWSER=~/bin/links
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/links-2.12 ] && CLI_BROWSER=~/bin/links-2.12
 
-    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=$(which lynx 2>/dev/null)
+    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=$(command -v lynx 2>/dev/null)
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/lynx ] && CLI_BROWSER=~/bin/lynx
 
-    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=$(which lynxlet 2>/dev/null)
+    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=$(command -v lynxlet 2>/dev/null)
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/lynxlet ] && CLI_BROWSER=~/bin/lynxlet
 
-    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=$(which w3m 2>/dev/null)
+    [ ! -x "$CLI_BROWSER" ] && CLI_BROWSER=$(command -v w3m 2>/dev/null)
     [ ! -x "$CLI_BROWSER" -a -x ~/bin/w3m ] && CLI_BROWSER=~/bin/w3m
 
     if [ -n "$CLI_BROWSER" -a -x "$CLI_BROWSER" ]; then

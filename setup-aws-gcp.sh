@@ -118,7 +118,7 @@ function connect_gcp_cloudshell()
 
     # do we have `gcloud' binary ?
     GCLOUD=gcloud
-    if ! which gcloud >&/dev/null; then
+    if ! command -v gcloud >&/dev/null; then
       [ -x /snap/bin/gcloud ] && GCLOUD=/snap/bin/gcloud
       [ -d "$GOOGLE_CLOUD_SDK" ] && GCLOUD=$GOOGLE_CLOUD_SDK/bin/gcloud
       if [ ! -x $GCLOUD ]; then
@@ -457,7 +457,7 @@ function update_dyn_dns()
   fi
 
   # check that we have dig
-  if ! which dig >&/dev/null; then
+  if ! command -v dig >&/dev/null; then
     echo "--FATAL: the \`dig' binary is not available on $(hostname)!" 1>&2
     exit 98
   fi
@@ -545,7 +545,7 @@ function gcloud_login()
 {
   # do we have `gcloud' binary ?
   GCLOUD=gcloud
-  if ! which gcloud >&/dev/null; then
+  if ! command -v gcloud >&/dev/null; then
     [ -x /snap/bin/gcloud ] && GCLOUD=/snap/bin/gcloud
     [ -d "$GOOGLE_CLOUD_SDK" ] && GCLOUD=$GOOGLE_CLOUD_SDK/bin/gcloud
     if [ ! -x $GCLOUD ]; then
