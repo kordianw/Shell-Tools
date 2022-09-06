@@ -27,6 +27,9 @@ function update_aws_otp() {
     return 1
   fi
 
+  # reset any AWS Profile var
+  unset AWS_PROFILE
+
   echo "* MFA-SERIAL config: $ aws configure get mfa_serial --profile $MASTER_ACCOUNT_PROFILE" >&2
   mfa_serial=$(aws configure get mfa_serial --profile $MASTER_ACCOUNT_PROFILE)
   if [ -n "$mfa_serial" ]; then
@@ -48,13 +51,21 @@ function update_aws_otp() {
   aws configure set profile.$SUB_ACCOUNT_PROFILE.aws_secret_access_key $(jq '.Credentials.SecretAccessKey' --raw-output <<<$creds) || exit 1
   aws configure set profile.$SUB_ACCOUNT_PROFILE.aws_session_token $(jq '.Credentials.SessionToken' --raw-output <<<$creds) || exit 1
 
+  # verify that we now have this new profile added to credentials
+  if grep -q "^.$SUB_MASTER_ACCOUNT_PROFILE" ~/.aws/credentials; then
+    echo "... success: $SUB_MASTER_ACCOUNT_PROFILE 24-hours credentials added to ~/.aws/credentials" >&2
+  else
+    echo "--FATAL: API credentials for sub-account assume-role $SUB_MASTER_ACCOUNT_PROFILE is NOT in AWS credentials file!" >&2
+    exit 1
+  fi
+
   echo "* confirm the profile $TARGET_AWS_PROFILE set: $ aws configure list" >&2
   export AWS_PROFILE=$TARGET_AWS_PROFILE
   aws configure list || exit 1
 
   expiredate=$(jq '.Credentials.Expiration' --raw-output <<<$creds)
   export aws_token_expirey=$(date -d "$expiredate" +%Y-%m-%dT%H:%M:%S)
-  echo && echo "* NB: token will expire on: $aws_token_expirey local-time ($expiredate UTC)" >&2
+  echo && echo "* NB: token will expire in 24 hours on: $aws_token_expirey local-time ($expiredate UTC)" >&2
   echo "... to use: export AWS_PROFILE=$TARGET_AWS_PROFILE"
 }
 
@@ -70,33 +81,40 @@ function setup() {
   }
 
   # make sure we have ~/.aws/credentials and ~/.aws/config
-  if [ ! -r ~/.aws/credentials ]; then
-    echo "--FATAL: can't read ~/.aws/credentials credentials file" >&2
+  if [ ! -r ~/.aws/credentials -o ! -s ~/.aws/credentials ]; then
+    echo "--FATAL: can't read ~/.aws/credentials API credentials file!" >&2
     exit 1
   fi
-  if [ ! -r ~/.aws/config ]; then
-    echo "--FATAL: can't read ~/.aws/config file" >&2
+  if [ ! -r ~/.aws/config -o ! -s ~/.aws/config ]; then
+    echo "--FATAL: can't read ~/.aws/config file!" >&2
     exit 1
   fi
 
   # check for correct entries in the AWS config files
-  if ! grep -q $MASTER_ACCOUNT_PROFILE ~/.aws/config; then
-    echo "--FATAL: master/parent profile $MASTER_ACCOUNT_PROFILE not in AWS config file" >&2
+  if ! grep -q "profile $MASTER_ACCOUNT_PROFILE" ~/.aws/config; then
+    echo "--FATAL: master/parent profile $MASTER_ACCOUNT_PROFILE not in AWS config file!" >&2
+    exit 1
+  fi
+  if ! grep -q "profile $TARGET_AWS_PROFILE" ~/.aws/config; then
+    echo "--FATAL: sub target (assume role) profile $TARGET_AWS_PROFILE not in AWS config file!" >&2
+    exit 1
+  fi
+  if ! grep -q "^mfa_serial.*mfa" ~/.aws/config; then
+    echo "--FATAL: no mfa_serial entry in $MASTER_ACCOUNT_PROFILE profile in AWS config file!" >&2
+    exit 1
+  fi
+  if ! grep -q "^role_arn.*role" ~/.aws/config; then
+    echo "--FATAL: no role_arn entry in $TARGET_AWS_PROFILE profile in AWS config file!" >&2
     exit 1
   fi
 
-  if ! grep -q $MASTER_ACCOUNT_PROFILE ~/.aws/credentials; then
-    echo "--FATAL: master/parent profile $MASTER_ACCOUNT_PROFILE with credentials is NOT in AWS credentials file" >&2
+  # check for correct entries for the sub-account
+  if ! grep -q "^.$MASTER_ACCOUNT_PROFILE" ~/.aws/credentials; then
+    echo "--FATAL: master/parent profile $MASTER_ACCOUNT_PROFILE with credentials is NOT in AWS credentials file!" >&2
     exit 1
   fi
-
-  if ! grep -q $TARGET_AWS_PROFILE ~/.aws/config; then
-    echo "--FATAL: sub target (assume role) profile $TARGET_AWS_PROFILE not in AWS config file" >&2
-    exit 1
-  fi
-
-  if ! grep -q $SUB_ACCOUNT_PROFILE ~/.aws/config; then
-    echo "--FATAL: sub target (assume role) MFA profile $SUB_ACCOUNT_PROFILE not in AWS config file" >&2
+  if ! grep -q "source_profile.*$SUB_ACCOUNT_PROFILE" ~/.aws/config; then
+    echo "--FATAL: sub target (assume role) MFA profile $SUB_ACCOUNT_PROFILE not in AWS config file!" >&2
     exit 1
   fi
 }
