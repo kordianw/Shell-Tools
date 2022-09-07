@@ -1,10 +1,21 @@
 #!/bin/bash
+#
+# Script to login to a master AWS account with MFA and then assume-role to a sub-account
+# - automatically generates API Keys for the sub-account and stores into ~/.aws/credentials
+# - reminds to set AWS_PROFILE for the assume-role sub-account in order to use AWS CLI
+# - performs various checks to ensure the configturation is set-up correctly
+#
+# * By Kordian W. @ Aug 2022
+#
 
 # what is the account profile?
-# - master account's API keys need to be defiend in: ~/.aws/credentials
+# - master account's profile needs to be defined in: << ~/.aws/config >>
+# - master account's API keys need to be defined in: << ~/.aws/credentials >>
 MASTER_ACCOUNT_PROFILE=development-account
 
-# what is the target AWS profile? as defined in the ~/.aws/config
+# what is the target AWS profile? as defined in: ~/.aws/config
+# - this needs to be defined as a 2nd entry in the AWS config file
+# - this is what we will use for assume-role, API key credentials will be generated
 TARGET_AWS_PROFILE=sub-development-account
 
 # what are the access keys for the sub-account we weant to create and add to ~/.aws/credentials via this script?
