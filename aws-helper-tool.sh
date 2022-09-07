@@ -152,31 +152,41 @@ function setup() {
     exit 1
   fi
 
+  # check we have credentials at all ?
+  if ! grep -q "^aws_access_key_id = ...." ~/.aws/credentials; then
+    echo "--FATAL: no \`aws_access_key_id' entry in AWS credentials file!" >&2
+    exit 1
+  fi
+  if ! grep -q "^aws_secret_access_key = ...." ~/.aws/credentials; then
+    echo "--FATAL: no \`aws_secret_access_key' entry in AWS credentials file!" >&2
+    exit 1
+  fi
+
   # check for correct entries in the AWS config files
   if ! grep -q "profile $MASTER_ACCOUNT_PROFILE" ~/.aws/config; then
-    echo "--FATAL: master/parent profile $MASTER_ACCOUNT_PROFILE not in AWS config file!" >&2
+    echo "--FATAL: master/parent profile \`$MASTER_ACCOUNT_PROFILE' not in AWS config file!" >&2
     exit 1
   fi
   if ! grep -q "profile $TARGET_AWS_PROFILE" ~/.aws/config; then
-    echo "--FATAL: sub target (assume role) profile $TARGET_AWS_PROFILE not in AWS config file!" >&2
+    echo "--FATAL: sub target (assume role) profile \`$TARGET_AWS_PROFILE' not in AWS config file!" >&2
     exit 1
   fi
   if ! grep -q "^mfa_serial.*mfa" ~/.aws/config; then
-    echo "--FATAL: no mfa_serial entry in $MASTER_ACCOUNT_PROFILE profile in AWS config file!" >&2
+    echo "--FATAL: no mfa_serial entry in \`$MASTER_ACCOUNT_PROFILE' profile in AWS config file!" >&2
     exit 1
   fi
   if ! grep -q "^role_arn.*role" ~/.aws/config; then
-    echo "--FATAL: no role_arn entry in $TARGET_AWS_PROFILE profile in AWS config file!" >&2
+    echo "--FATAL: no role_arn entry in \`$TARGET_AWS_PROFILE' profile in AWS config file!" >&2
     exit 1
   fi
 
   # check for correct entries for the sub-account
   if ! grep -q "^.$MASTER_ACCOUNT_PROFILE" ~/.aws/credentials; then
-    echo "--FATAL: master/parent profile $MASTER_ACCOUNT_PROFILE with credentials is NOT in AWS credentials file!" >&2
+    echo "--FATAL: master/parent profile \`$MASTER_ACCOUNT_PROFILE' with credentials is NOT in AWS credentials file!" >&2
     exit 1
   fi
   if ! grep -q "source_profile.*$SUB_ACCOUNT_PROFILE" ~/.aws/config; then
-    echo "--FATAL: sub target (assume role) MFA profile $SUB_ACCOUNT_PROFILE not in AWS config file!" >&2
+    echo "--FATAL: sub target (assume role) MFA profile \`$SUB_ACCOUNT_PROFILE' not in AWS config file!" >&2
     exit 1
   fi
 }
