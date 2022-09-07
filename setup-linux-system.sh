@@ -248,7 +248,7 @@ function install_general_packages {
   $INSTALL_CMD ntpstat # show network time protocol (ntp) status
   #$INSTALL_CMD ethtool       # display or change Ethernet device settings
   #$INSTALL_CMD aircrack-ng   # wireless WEP/WPA cracking utilities
-  $INSTALL_CMD sshpass # Non-interactive ssh password authentication
+  $INSTALL_CMD sshpass    # Non-interactive ssh password authentication
   $INSTALL_CMD traceroute # in case traceroute is not installed
 
   # GENPKG: small utils (just helper utils)
@@ -317,7 +317,7 @@ function change_timezone() {
 
   echo "* viewing contents of current /etc/timezone and /etc/localtime link:"
   [ ! -e /etc/localtime ] && {
-    echo "$PROG: not supporting absense of /etc/localtime!" >&2
+    echo "$PROG: not supporting the absence of /etc/localtime!" >&2
     exit 1
   }
 
@@ -815,7 +815,7 @@ function install_pi() {
   $INSTALL_CMD ntpstat # show network time protocol (ntp) status
   #$INSTALL_CMD ethtool       # display or change Ethernet device settings
   #$INSTALL_CMD aircrack-ng   # wireless WEP/WPA cracking utilities
-  $INSTALL_CMD sshpass # Non-interactive ssh password authentication
+  $INSTALL_CMD sshpass    # Non-interactive ssh password authentication
   $INSTALL_CMD traceroute # in case traceroute is not installed
 
   # PI: small utils (just helper utils)
