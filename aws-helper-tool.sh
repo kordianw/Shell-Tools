@@ -30,6 +30,8 @@
 # * By Kordian W. @ Aug 2022
 #
 
+#### CONFIG:
+
 # what is the account profile?
 # - master account's profile needs to be defined in: << ~/.aws/config >>
 # - master account's API keys need to be defined in: << ~/.aws/credentials >>
@@ -40,7 +42,7 @@ MASTER_ACCOUNT_PROFILE=development-account
 # - this is what we will use for assume-role, API key credentials will be generated
 TARGET_AWS_PROFILE=sub-development-account
 
-# what are the access keys for the sub-account we weant to create and add to ~/.aws/credentials via this script?
+# what are the access keys for the sub-account we want to create and add to ~/.aws/credentials via this script?
 SUB_ACCOUNT_PROFILE=sub-$MASTER_ACCOUNT_PROFILE-mfa
 
 #############################################
