@@ -107,7 +107,7 @@ function update_aws_otp() {
   expiredate=$(jq '.Credentials.Expiration' --raw-output <<<$creds)
   export aws_token_expirey=$(date -d "$expiredate" +%Y-%m-%dT%H:%M:%S)
   echo && echo "* NB: OTP token will expire in 24 hours on: $aws_token_expirey local-time ($expiredate UTC)" >&2
-  echo -e "... to use:\n# export AWS_PROFILE=$MASTER_AWS_PROFILE\n# export AWS_PROFILE=$TARGET_AWS_PROFILE"
+  echo -e "... to use:\n# export AWS_PROFILE=$MASTER_ACCOUNT_PROFILE\n# export AWS_PROFILE=$TARGET_AWS_PROFILE"
 }
 
 function check_aws_login() {
@@ -144,11 +144,11 @@ function setup() {
 
   # make sure we have ~/.aws/credentials and ~/.aws/config
   if [ ! -r ~/.aws/credentials -o ! -s ~/.aws/credentials ]; then
-    echo "--FATAL: can't read ~/.aws/credentials API credentials file!" >&2
+    echo "--FATAL: AWS CLI not set-up: can't read ~/.aws/credentials API credentials file!" >&2
     exit 1
   fi
   if [ ! -r ~/.aws/config -o ! -s ~/.aws/config ]; then
-    echo "--FATAL: can't read ~/.aws/config file!" >&2
+    echo "--FATAL: AWS CLI not set-up: can't read ~/.aws/config file!" >&2
     exit 1
   fi
 
