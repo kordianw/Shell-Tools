@@ -16,6 +16,18 @@ PROG=$(basename $0)
 function update_aws_otp() {
   local token source_profile mfa_serial creds expiredate
 
+  # reset any AWS Profile var
+  unset AWS_PROFILE
+
+  echo "* MFA-SERIAL config: $ aws configure get mfa_serial --profile $MASTER_ACCOUNT_PROFILE" >&2
+  mfa_serial=$(aws configure get mfa_serial --profile $MASTER_ACCOUNT_PROFILE)
+  if [ -n "$mfa_serial" ]; then
+    echo "... using AWS account: << $mfa_serial >>" >&2
+  else
+    echo "--FATAL: could not fetch mfa_serial config based on master account $MASTER_ACCOUNT_PROFILE!" >&2
+    return
+  fi
+
   if [ $# -ne 1 ]; then
     echo -n "$PROG: Provide your 6-digit AWS MFA OTP token and press [ENTER]: "
     read read_otp_token
@@ -26,18 +38,6 @@ function update_aws_otp() {
   if [ -z "$read_otp_token" ]; then
     echo "--FATAL: no 6-digit AWS MFA OTP token supplied or read!" >&2
     return 1
-  fi
-
-  # reset any AWS Profile var
-  unset AWS_PROFILE
-
-  echo "* MFA-SERIAL config: $ aws configure get mfa_serial --profile $MASTER_ACCOUNT_PROFILE" >&2
-  mfa_serial=$(aws configure get mfa_serial --profile $MASTER_ACCOUNT_PROFILE)
-  if [ -n "$mfa_serial" ]; then
-    echo "... using MFA account: $mfa_serial" >&2
-  else
-    echo "--FATAL: could not fetch mfa_serial config based on master account $MASTER_ACCOUNT_PROFILE!" >&2
-    return
   fi
 
   echo "* logging in with MFA and getting STS session creds: $ aws sts get-session-token --profile $MASTER_ACCOUNT_PROFILE --serial-number $mfa_serial --token-code $read_otp_token" >&2
