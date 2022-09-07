@@ -1,6 +1,8 @@
 #!/bin/bash
 #
-# Script to login to a master AWS account with MFA and then assume-role to a sub-account
+# AWS Helper Script - a variety of tools to help with AWS CLI/API Usage
+#
+# One key function is to login to a master AWS account with MFA and then assume-role to a sub-account
 # - automatically generates API Keys for the sub-account and stores into ~/.aws/credentials
 # - reminds to set AWS_PROFILE for the assume-role sub-account in order to use AWS CLI
 # - performs various checks to ensure the configuration is set-up correctly
@@ -57,7 +59,7 @@ function update_aws_otp() {
     echo "... using AWS account: << $(sed 's/arn:aws:iam:://' <<<$mfa_serial) >>" >&2
   else
     echo "--FATAL: could not fetch mfa_serial config based on master account $MASTER_ACCOUNT_PROFILE!" >&2
-    return
+    exit 1
   fi
 
   if [ $# -ne 1 ]; then
@@ -69,14 +71,14 @@ function update_aws_otp() {
 
   if [ -z "$read_otp_token" ]; then
     echo "--FATAL: no 6-digit AWS MFA OTP token supplied or read!" >&2
-    return 1
+    exit 1
   fi
 
   echo -e "* logging in with MFA and getting STS session creds:\n$ aws sts get-session-token --profile $MASTER_ACCOUNT_PROFILE --serial-number $mfa_serial --token-code $read_otp_token" >&2
   creds=$(aws sts get-session-token --profile $MASTER_ACCOUNT_PROFILE --serial-number $mfa_serial --token-code $read_otp_token)
   if [ -z "$creds" ]; then
     echo "--FATAL: could not login & fetch account STS credentials from master account $MASTER_ACCOUNT_PROFILE!"
-    return
+    exit 1
   fi
 
   # check AWS login
@@ -127,19 +129,19 @@ function check_aws_login() {
   if aws iam get-user >&/dev/null; then
     aws iam get-user
   else
-    echo "- AWS CLI: \`aws iam get-user' iam:GetUser query call not allowed!" >&2
+    echo "- AWS CLI: \`aws iam get-user' iam:GetUser query call not allowed." >&2
   fi
 }
 
-function setup() {
+function setup_basic() {
   # do we have the AWS and JQ?
   command -v aws &>/dev/null || {
     echo "$PROG: You need \`AWS CLI' installed, eg: 'brew install awscli'" >&2
-    return 1
+    exit 99
   }
   command -v jq &>/dev/null || {
     echo "$PROG: You need \`jq' installed, eg 'brew install jq'" >&2
-    return 1
+    exit 99
   }
 
   # make sure we have ~/.aws/credentials and ~/.aws/config
@@ -161,7 +163,9 @@ function setup() {
     echo "--FATAL: no \`aws_secret_access_key' entry in AWS credentials file!" >&2
     exit 1
   fi
+}
 
+function setup_profile() {
   # check for correct entries in the AWS config files
   if ! grep -q "profile $MASTER_ACCOUNT_PROFILE" ~/.aws/config; then
     echo "--FATAL: master/parent profile \`$MASTER_ACCOUNT_PROFILE' not in AWS config file!" >&2
@@ -194,7 +198,29 @@ function setup() {
 #
 # MAIN
 #
-setup
-update_aws_otp
+if [ $# -eq 0 -o "$1" = "-h" -o "$1" = "--help" ]; then
+  cat <<! >&2
+$PROG: AWS Helper Script - a variety of tools to help with AWS CLI/API Usage
+
+Usage: $PROG <option>
+       
+       Options:
+       -check_access    checks login/access to AWS
+       -update_otp      assume-role and update OTP credentials for a sub-account/sub-user
+                        -> master profile: \`$MASTER_ACCOUNT_PROFILE'
+                        -> assume-role profile: \`$SUB_ACCOUNT_PROFILE'
+
+       -h    this screen
+!
+elif [ "$1" = "-check_access" ]; then
+  setup_basic
+  check_aws_login
+elif [ "$1" = "-update_otp" ]; then
+  setup_basic
+  setup_profile
+  update_aws_otp
+else
+  echo "$PROG: invalid option, see \`$PROG --help'" >&2
+fi
 
 # EOF
