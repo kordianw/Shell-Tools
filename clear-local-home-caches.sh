@@ -4,8 +4,7 @@
 #
 # FUNCTIONS
 #
-function report_cache()
-{
+function report_cache() {
   df -Th ~/.cache
 
   echo -en "* Chrome:\t"
@@ -28,15 +27,15 @@ if [ ! -e ~/.cache ]; then
   exit 1
 elif [ ! -d ~/.cache/chromium -a ! -d ~/.cache/mozilla -a ! -d ~/.cache/pip ]; then
   echo "* Caches [~/.cache/chromium, ~/.cache/mozilla, ~/.cache/pip] already cleaned!" >&2
-  du -sh ~/.cache/* |sort -rn | egrep -v '^[0-9][0-9]*K|^8.0K|^4.0K|^0'
+  du -sh ~/.cache/* | sort -rn | egrep -v '^[0-9][0-9]*K|^8.0K|^4.0K|^0'
   exit 2
 fi
 
 report_cache
 
 # CLEAN:
-echo  "...CLEARING..."
-rm -r  ~/.cache/chromium ~/.cache/mozilla ~/.cache/pip
+echo "...CLEARING..."
+rm -r ~/.cache/chromium ~/.cache/mozilla ~/.cache/pip
 RC=$?
 echo -e "Done: RC=$RC\n"
 
