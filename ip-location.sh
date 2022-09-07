@@ -82,7 +82,7 @@ else
 
   # got the IP!
   if [ -n "$IP" ]; then
-    if ! echo "$IP" | grep -q '[0-9][0-9]'; then
+    if ! grep -q '[0-9][0-9]' <<<$IP; then
       echo "--FATAL: worked out external/public IP << $IP >> doesn't looks like a valid IP!" >&2
       exit 99
     fi
@@ -119,7 +119,7 @@ else
 
     if [ -n "$CLI_BROWSER" -a -x "$CLI_BROWSER" ]; then
       # ignore invalid SSL certs with links
-      if echo "$CLI_BROWSER" | grep -q links; then
+      if grep -q links <<<$CLI_BROWSER; then
         CLI_BROWSER="$CLI_BROWSER -ssl.certificates 0"
       fi
 
@@ -179,7 +179,7 @@ else
 
     if [ -n "$CLI_BROWSER" -a -x "$CLI_BROWSER" ]; then
       # ignore invalid SSL certs with links
-      if echo "$CLI_BROWSER" | grep -q links; then
+      if grep -q links <<<$CLI_BROWSER; then
         CLI_BROWSER="$CLI_BROWSER -ssl.certificates 0"
       fi
 

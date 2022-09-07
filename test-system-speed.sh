@@ -136,7 +136,7 @@ fi
 if ! command -v sysbench >&/dev/null; then
   echo "$PROG: --FATAL: you don't have \`sysbench' installed; can't do any CPU performance testing, you can install:" >&2
   RUN=$0
-  RUN=$(echo $0 | sed "s|$HOME|~|" 2>/dev/null)
+  RUN=$(sed "s|$HOME|~|" <<<$0 2>/dev/null)
   echo -e "----> TRY:\n$ $RUN -install"
   exit 2
 fi

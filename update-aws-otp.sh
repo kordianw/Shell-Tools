@@ -11,8 +11,7 @@ TARGET_AWS_PROFILE=sub-development-account
 SUB_ACCOUNT_PROFILE=sub-$MASTER_ACCOUNT_PROFILE-mfa
 
 #############################################
-
-PROG=$(basename $PROG)
+PROG=$(basename $0)
 
 function update_aws_otp() {
   local token source_profile mfa_serial creds expiredate

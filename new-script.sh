@@ -24,7 +24,7 @@ else
   FILE="$1"
 
   # some processing and ensuring it can be done & all is OK
-  echo "$1" | grep "\." >&/dev/null || FILE="$1.sh"
+  grep "\." >&/dev/null <<<$1 || FILE="$1.sh"
   if [ -e "$FILE" ]; then
     echo "$PROG: \"$FILE\" already exists!" >&2
     exit 1
@@ -42,7 +42,7 @@ else
   fi
 
   # shell script
-  if echo "$FILE" | grep "\.sh$" >&/dev/null; then
+  if grep "\.sh$" <<<$FILE >&/dev/null; then
 
     cat <<EOT | sed "s/DATE/$DATE/" >"./$FILE"
 #!/bin/bash
@@ -72,7 +72,7 @@ fi
 
 # EOF
 EOT
-  elif echo "$FILE" | grep "\.pl$" >&/dev/null; then
+  elif grep "\.pl$" <<<$FILE >&/dev/null; then
     cat <<EOT | sed "s/DATE/$DATE/" >"./$FILE"
 #!$PERL -T
 #

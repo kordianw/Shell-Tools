@@ -573,7 +573,7 @@ function enable_setup_zsh() {
     OS=$(awk -F= '/^NAME=/{print $NF}' /etc/os-release)
 
     # various Linux -> installs csh
-    if echo "$OS" | egrep -q "Amazon Linux|Fedora|CentOS|RHEL|Rocky"; then
+    if egrep -q "Amazon Linux|Fedora|CentOS|RHEL|Rocky" <<<$OS; then
       $SUDO yum -y -qq install util-linux-user
     elif [ -x /usr/bin/yum ]; then
       $SUDO yum -y -qq install util-linux-user
@@ -1054,7 +1054,7 @@ function create_user() {
             OS=$(awk -F= '/^NAME=/{print $NF}' /etc/os-release)
 
             # various Linux -> installs csh
-            if echo "$OS" | egrep -q "Amazon Linux|Fedora|CentOS|RHEL|Rocky"; then
+            if egrep -q "Amazon Linux|Fedora|CentOS|RHEL|Rocky" <<<$OS; then
               $SUDO yum -y install util-linux-user
             elif [ -x /usr/bin/yum ]; then
               $SUDO yum -y -qq install util-linux-user
