@@ -8,7 +8,7 @@
 # ~/.aws/config:
 # [profile development-account]
 # aws_account_id = <MASTER_AWS_ID>
-# mfa_serial = arn:aws:iam::<MASTER_AWS_ID>:mfa/user@domain.com
+# mfa_serial = arn:aws:iam::<MASTER_AWS_ID>:mfa/<USER>@<DOMAIN>.com
 # region=us-east-1
 # output=json
 #
@@ -48,6 +48,7 @@ function update_aws_otp() {
   local token source_profile mfa_serial creds expiredate
 
   # reset any AWS Profile var
+  # - can also use: --profile=<profile>
   unset AWS_PROFILE
 
   echo "* MFA-SERIAL config: $ aws configure get mfa_serial --profile $MASTER_ACCOUNT_PROFILE" >&2
@@ -82,9 +83,7 @@ function update_aws_otp() {
   # - can use AWS_PROFILE env-var or --profile=<profile>
   echo "* checking AWS login for profile: $MASTER_ACCOUNT_PROFILE" >&2
   export AWS_PROFILE=$MASTER_ACCOUNT_PROFILE
-  aws configure list || exit 1
-  aws sts get-caller-identity || exit 1
-  aws iam get-user || exit 1
+  check_aws_login
 
   echo "* configuring assume-role sub-profile: $SUB_ACCOUNT_PROFILE into ~/.aws/credentials" >&2
   aws configure set profile.$SUB_ACCOUNT_PROFILE.aws_access_key_id $(jq '.Credentials.AccessKeyId' --raw-output <<<$creds) || exit 1
@@ -103,13 +102,33 @@ function update_aws_otp() {
   # - can use AWS_PROFILE env-var or --profile=<profile>
   echo "* confirm the profile $TARGET_AWS_PROFILE is correctly set:" >&2
   export AWS_PROFILE=$TARGET_AWS_PROFILE
-  aws configure list || exit 1
-  aws sts get-caller-identity || exit 1
+  check_aws_login
 
   expiredate=$(jq '.Credentials.Expiration' --raw-output <<<$creds)
   export aws_token_expirey=$(date -d "$expiredate" +%Y-%m-%dT%H:%M:%S)
-  echo && echo "* NB: token will expire in 24 hours on: $aws_token_expirey local-time ($expiredate UTC)" >&2
-  echo -e "... to use:\n# export AWS_PROFILE=$TARGET_AWS_PROFILE"
+  echo && echo "* NB: OTP token will expire in 24 hours on: $aws_token_expirey local-time ($expiredate UTC)" >&2
+  echo -e "... to use:\n# export AWS_PROFILE=$MASTER_AWS_PROFILE\n# export AWS_PROFILE=$TARGET_AWS_PROFILE"
+}
+
+function check_aws_login() {
+  # check configure list
+  aws configure list || exit 1
+
+  # check STS login
+  if aws sts get-caller-identity >&/dev/null; then
+    aws sts get-caller-identity | jq
+  else
+    aws sts get-caller-identity
+    echo "--FATAL: AWS login failed!" >&2
+    exit 1
+  fi
+
+  # check IAM get-user
+  if aws iam get-user >&/dev/null; then
+    aws iam get-user
+  else
+    echo "- AWS CLI: \`aws iam get-user' iam:GetUser query call not allowed!" >&2
+  fi
 }
 
 function setup() {
