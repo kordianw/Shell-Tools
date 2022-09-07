@@ -12,7 +12,7 @@ PERL="/usr/bin/perl"
 
 ####################
 PROG=$(basename $0)
-if [ $# -eq 0 -o "$1" = "-h" ]; then
+if [ $# -eq 0 -o "$1" = "-h" -o "$1" = "--help" ]; then
   cat <<! >&2
 $PROG: Script to create a new script template in current dir ...
 
