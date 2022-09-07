@@ -249,6 +249,7 @@ function install_general_packages {
   #$INSTALL_CMD ethtool       # display or change Ethernet device settings
   #$INSTALL_CMD aircrack-ng   # wireless WEP/WPA cracking utilities
   $INSTALL_CMD sshpass # Non-interactive ssh password authentication
+  $INSTALL_CMD traceroute # in case traceroute is not installed
 
   # GENPKG: small utils (just helper utils)
   $INSTALL_CMD tofrodos # unix2dos, dos2unix
@@ -815,6 +816,7 @@ function install_pi() {
   #$INSTALL_CMD ethtool       # display or change Ethernet device settings
   #$INSTALL_CMD aircrack-ng   # wireless WEP/WPA cracking utilities
   $INSTALL_CMD sshpass # Non-interactive ssh password authentication
+  $INSTALL_CMD traceroute # in case traceroute is not installed
 
   # PI: small utils (just helper utils)
   $INSTALL_CMD tofrodos # unix2dos, dos2unix
