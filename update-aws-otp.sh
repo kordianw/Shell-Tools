@@ -12,11 +12,13 @@ SUB_ACCOUNT_PROFILE=sub-$MASTER_ACCOUNT_PROFILE-mfa
 
 #############################################
 
+PROG=$(basename $PROG)
+
 function update_aws_otp() {
   local token source_profile mfa_serial creds expiredate
 
   if [ $# -ne 1 ]; then
-    echo -n "$0: Provide your 6-digit AWS MFA OTP token and press [ENTER]: "
+    echo -n "$PROG: Provide your 6-digit AWS MFA OTP token and press [ENTER]: "
     read read_otp_token
   else
     read_otp_token=$1
@@ -35,18 +37,18 @@ function update_aws_otp() {
   if [ -n "$mfa_serial" ]; then
     echo "... using MFA account: $mfa_serial" >&2
   else
-    echo "$0: could not fetch mfa_serial config based on master account $MASTER_ACCOUNT_PROFILE!" >&2
+    echo "--FATAL: could not fetch mfa_serial config based on master account $MASTER_ACCOUNT_PROFILE!" >&2
     return
   fi
 
-  echo "* STS session creds: $ aws sts get-session-token --profile $MASTER_ACCOUNT_PROFILE --serial-number $mfa_serial --token-code $read_otp_token" >&2
+  echo "* logging in with MFA and getting STS session creds: $ aws sts get-session-token --profile $MASTER_ACCOUNT_PROFILE --serial-number $mfa_serial --token-code $read_otp_token" >&2
   creds=$(aws sts get-session-token --profile $MASTER_ACCOUNT_PROFILE --serial-number $mfa_serial --token-code $read_otp_token)
   if [ -z "$creds" ]; then
-    echo "$0: could not fetch sub-account STS credentials from master account $MASTER_ACCOUNT_PROFILE!"
+    echo "--FATAL: could not login & fetch account STS credentials from master account $MASTER_ACCOUNT_PROFILE!"
     return
   fi
 
-  echo "* configuring sub-profile: $SUB_ACCOUNT_PROFILE into ~/.aws/credentials" >&2
+  echo "* configuring assume-role sub-profile: $SUB_ACCOUNT_PROFILE into ~/.aws/credentials" >&2
   aws configure set profile.$SUB_ACCOUNT_PROFILE.aws_access_key_id $(jq '.Credentials.AccessKeyId' --raw-output <<<$creds) || exit 1
   aws configure set profile.$SUB_ACCOUNT_PROFILE.aws_secret_access_key $(jq '.Credentials.SecretAccessKey' --raw-output <<<$creds) || exit 1
   aws configure set profile.$SUB_ACCOUNT_PROFILE.aws_session_token $(jq '.Credentials.SessionToken' --raw-output <<<$creds) || exit 1
@@ -72,11 +74,11 @@ function update_aws_otp() {
 function setup() {
   # do we have the AWS and JQ?
   command -v aws &>/dev/null || {
-    echo "$0: You need \`AWS CLI' installed, eg: 'brew install awscli'" >&2
+    echo "$PROG: You need \`AWS CLI' installed, eg: 'brew install awscli'" >&2
     return 1
   }
   command -v jq &>/dev/null || {
-    echo "$0: You need \`jq' installed, eg 'brew install jq'" >&2
+    echo "$PROG: You need \`jq' installed, eg 'brew install jq'" >&2
     return 1
   }
 
