@@ -74,14 +74,21 @@ function update_aws_otp() {
     exit 1
   fi
 
-  echo -e "* logging in with MFA and getting STS session creds:\n$ aws sts get-session-token --profile $MASTER_ACCOUNT_PROFILE --serial-number $mfa_serial --token-code $read_otp_token" >&2
-  creds=$(aws sts get-session-token --profile $MASTER_ACCOUNT_PROFILE --serial-number $mfa_serial --token-code $read_otp_token)
+  #
+  # MFA:
+  #
+  # obtain session credentials via MFA with 36 hours expiry ie 1.5 days (86400 seconds)
+  # - maximum is 36 hours (129600 seconds) - 1.5 days
+  # - default is 12 hours (43200 seconds) - 0.5 days
+  # - good option is 24 hours (86400 seconds) - 1 day
+  echo -e "* getting session token with MFA to obtain session creds:\n$ aws sts get-session-token --profile $MASTER_ACCOUNT_PROFILE --serial-number $mfa_serial --token-code $read_otp_token" >&2
+  creds=$(aws sts get-session-token --profile $MASTER_ACCOUNT_PROFILE --serial-number $mfa_serial --token-code $read_otp_token --duration-seconds 129600)
   if [ -z "$creds" ]; then
     echo "--FATAL: could not login & fetch account STS credentials from master account $MASTER_ACCOUNT_PROFILE!"
     exit 1
   fi
 
-  # check AWS login
+  # check AWS session
   # - can use AWS_PROFILE env-var or --profile=<profile>
   echo "* checking AWS login for profile: $MASTER_ACCOUNT_PROFILE" >&2
   export AWS_PROFILE=$MASTER_ACCOUNT_PROFILE
@@ -108,7 +115,7 @@ function update_aws_otp() {
 
   expiredate=$(jq '.Credentials.Expiration' --raw-output <<<$creds)
   export aws_token_expirey=$(date -d "$expiredate" +%Y-%m-%dT%H:%M:%S)
-  echo && echo "* NB: OTP token will expire in 24 hours on: $aws_token_expirey local-time ($expiredate UTC)" >&2
+  echo && echo "* NB: OTP token will expire on: $aws_token_expirey local-time ($expiredate UTC)" >&2
   echo -e "... to use:\n# export AWS_PROFILE=$MASTER_ACCOUNT_PROFILE\n# export AWS_PROFILE=$TARGET_AWS_PROFILE"
 }
 
