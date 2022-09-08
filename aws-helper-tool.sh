@@ -32,18 +32,14 @@
 
 #### CONFIG:
 
-# what is the account profile?
-# - master account's profile needs to be defined in: << ~/.aws/config >>
-# - master account's API keys need to be defined in: << ~/.aws/credentials >>
-MASTER_ACCOUNT_PROFILE=development-account
-
-# what is the target AWS profile? as defined in: ~/.aws/config
-# - this needs to be defined as a 2nd entry in the AWS config file
-# - this is what we will use for assume-role, API key credentials will be generated
-TARGET_AWS_PROFILE=sub-development-account
+# what is the target profile AWS prefix? use the prefix to define sub-profile in: ~/.aws/config
+# - this prefix needs to be used to define a 2nd entry in the AWS config file with this prefix
+# - the full role name with prefix is what we will use for assume-role, API key credentials will be generated
+TARGET_AWS_PREFIX=sub
 
 # what are the access keys for the sub-account we want to create and add to ~/.aws/credentials via this script?
-SUB_ACCOUNT_PROFILE=sub-$MASTER_ACCOUNT_PROFILE-mfa
+# - this is the source_profile = line in ~/.aws/config
+SOURCE_ACCOUNT_PROFILE="sub-<PROFILE>-mfa"
 
 #############################################
 PROG=$(basename $0)
@@ -96,10 +92,10 @@ function update_aws_otp() {
   export AWS_PROFILE=$MASTER_ACCOUNT_PROFILE
   check_aws_login
 
-  echo "* configuring assume-role sub-profile: $SUB_ACCOUNT_PROFILE into ~/.aws/credentials" >&2
-  aws configure set profile.$SUB_ACCOUNT_PROFILE.aws_access_key_id $(jq '.Credentials.AccessKeyId' --raw-output <<<$creds) || exit 1
-  aws configure set profile.$SUB_ACCOUNT_PROFILE.aws_secret_access_key $(jq '.Credentials.SecretAccessKey' --raw-output <<<$creds) || exit 1
-  aws configure set profile.$SUB_ACCOUNT_PROFILE.aws_session_token $(jq '.Credentials.SessionToken' --raw-output <<<$creds) || exit 1
+  echo "* configuring assume-role sub-profile: $SOURCE_ACCOUNT_PROFILE into ~/.aws/credentials" >&2
+  aws configure set profile.$SOURCE_ACCOUNT_PROFILE.aws_access_key_id $(jq '.Credentials.AccessKeyId' --raw-output <<<$creds) || exit 1
+  aws configure set profile.$SOURCE_ACCOUNT_PROFILE.aws_secret_access_key $(jq '.Credentials.SecretAccessKey' --raw-output <<<$creds) || exit 1
+  aws configure set profile.$SOURCE_ACCOUNT_PROFILE.aws_session_token $(jq '.Credentials.SessionToken' --raw-output <<<$creds) || exit 1
 
   # verify that we now have this new profile added to credentials
   if grep -q "^.$SUB_MASTER_ACCOUNT_PROFILE" ~/.aws/credentials; then
@@ -111,14 +107,14 @@ function update_aws_otp() {
 
   # confirm that we've assumed the role correctly
   # - can use AWS_PROFILE env-var or --profile=<profile>
-  echo "* confirm the profile $TARGET_AWS_PROFILE is correctly set:" >&2
-  export AWS_PROFILE=$TARGET_AWS_PROFILE
+  echo "* confirm the profile << $TARGET_AWS_PREFIX-$MASTER_ACCOUNT_PROFILE >> is correctly set:" >&2
+  export AWS_PROFILE=$TARGET_AWS_PREFIX-$MASTER_ACCOUNT_PROFILE
   check_aws_login
 
   expiredate=$(jq '.Credentials.Expiration' --raw-output <<<$creds)
   export aws_token_expirey=$(date -d "$expiredate" +%Y-%m-%dT%H:%M:%S)
   echo && echo "* NB: OTP token will expire on: $aws_token_expirey local-time ($expiredate UTC)" >&2
-  echo -e "... to use:\n# export AWS_PROFILE=$MASTER_ACCOUNT_PROFILE\n# export AWS_PROFILE=$TARGET_AWS_PROFILE"
+  echo -e "... to use:\n# export AWS_PROFILE=$MASTER_ACCOUNT_PROFILE\n# export AWS_PROFILE=$TARGET_AWS_PREFIX-$MASTER_ACCOUNT_PROFILE"
 }
 
 NC='\033[0m' # No Color
@@ -210,17 +206,26 @@ function setup_basic() {
       echo "--FATAL: profile \`$AWS_PROFILE' as defined in AWS_PROFILE env not in AWS config file ~/.aws/config!" >&2
       exit 1
     fi
+    if ! grep -q "^.$AWS_PROFILE." ~/.aws/credentials; then
+      echo "--FATAL: profile \`$AWS_PROFILE' as defined in AWS_PROFILE env has no credentials in ~/.aws/credentials, run \`aws configure'" >&2
+      exit 1
+    fi
   fi
 }
 
 function setup_profile() {
+  if [ -z "$MASTER_ACCOUNT_PROFILE" ]; then
+    echo "--FATAL: master account profile not defined!" >&2
+    exit 1
+  fi
+
   # check for correct entries in the AWS config files
   if ! grep -q "profile $MASTER_ACCOUNT_PROFILE" ~/.aws/config; then
     echo "--FATAL: master/parent profile \`$MASTER_ACCOUNT_PROFILE' not in AWS config file!" >&2
     exit 1
   fi
-  if ! grep -q "profile $TARGET_AWS_PROFILE" ~/.aws/config; then
-    echo "--FATAL: sub target (assume role) profile \`$TARGET_AWS_PROFILE' not in AWS config file!" >&2
+  if ! grep -q "profile $TARGET_AWS_PREFIX-$MASTER_ACCOUNT_PROFILE" ~/.aws/config; then
+    echo "--FATAL: sub target (assume role) profile \`$TARGET_AWS_PREFIX-$MASTER_ACCOUNT_PROFILE' not in AWS config file!" >&2
     exit 1
   fi
   if ! grep -q "^mfa_serial.*mfa" ~/.aws/config; then
@@ -228,7 +233,7 @@ function setup_profile() {
     exit 1
   fi
   if ! grep -q "^role_arn.*role" ~/.aws/config; then
-    echo "--FATAL: no role_arn entry in \`$TARGET_AWS_PROFILE' profile in AWS config file!" >&2
+    echo "--FATAL: no role_arn entry in \`$TARGET_AWS_PREFIX-$MASTER_ACCOUNT_PROFILE' profile in AWS config file!" >&2
     exit 1
   fi
 
@@ -237,8 +242,8 @@ function setup_profile() {
     echo "--FATAL: master/parent profile \`$MASTER_ACCOUNT_PROFILE' with credentials is NOT in AWS credentials file!" >&2
     exit 1
   fi
-  if ! grep -q "source_profile.*$SUB_ACCOUNT_PROFILE" ~/.aws/config; then
-    echo "--FATAL: sub target (assume role) MFA profile \`$SUB_ACCOUNT_PROFILE' not in AWS config file!" >&2
+  if ! grep -q "source_profile.*$SOURCE_ACCOUNT_PROFILE" ~/.aws/config; then
+    echo "--FATAL: sub target (assume role) MFA profile \`$SOURCE_ACCOUNT_PROFILE' not in AWS config file!" >&2
     exit 1
   fi
 }
@@ -250,6 +255,10 @@ function show_env() {
     # check profile
     if ! grep -q "profile $AWS_PROFILE" ~/.aws/config; then
       echo "--FATAL: profile \`$AWS_PROFILE' as defined in AWS_PROFILE env not in AWS config file ~/.aws/config!" >&2
+      exit 1
+    fi
+    if ! grep -q "^.$AWS_PROFILE." ~/.aws/credentials; then
+      echo "--FATAL: profile \`$AWS_PROFILE' as defined in AWS_PROFILE env has no credentials in ~/.aws/credentials, run \`aws configure'" >&2
       exit 1
     fi
   else
@@ -268,9 +277,10 @@ Usage: $PROG <option>
        
        Options:
        -check_access    checks login/access to AWS
-       -update_otp      assume-role and update OTP credentials for a sub-account/sub-user
-                        -> master profile: \`$MASTER_ACCOUNT_PROFILE'
-                        -> assume-role profile: \`$SUB_ACCOUNT_PROFILE'
+       -update_otp <profile> 
+                        assume-role and update OTP credentials for a sub-account/sub-user
+                        -> master profile: <profile>
+                        -> assume-role profile: <$SUB_ACCOUNT_PREFIX-profile>
 
        -h    this screen
 !
@@ -279,6 +289,12 @@ elif [ "$1" = "-check_access" -o "$1" = "-check-access" ]; then
   show_env
   check_aws_login
 elif [ "$1" = "-update_otp" -o "$1" = "-update-otp" ]; then
+  MASTER_ACCOUNT_PROFILE=$2
+  if [ -z "$MASTER_ACCOUNT_PROFILE" ]; then
+    echo "--FATAL: no profile supplied!, see \`$PROG --help'" >&2
+    exit 1
+  fi
+  SOURCE_ACCOUNT_PROFILE=$(sed "s/<PROFILE>/$MASTER_ACCOUNT_PROFILE/" <<<$SOURCE_ACCOUNT_PROFILE)
   setup_basic
   setup_profile
   show_env
