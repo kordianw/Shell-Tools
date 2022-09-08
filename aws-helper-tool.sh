@@ -121,6 +121,27 @@ function update_aws_otp() {
   echo -e "... to use:\n# export AWS_PROFILE=$MASTER_ACCOUNT_PROFILE\n# export AWS_PROFILE=$TARGET_AWS_PROFILE"
 }
 
+NC='\033[0m' # No Color
+function echo_cyan() {
+  Cyan='\033[0;36m'
+  printf "${Cyan}${@}${NC}"
+}
+
+function echo_red() {
+  Red='\033[0;91m'
+  printf "${Red}${@}${NC}"
+}
+
+function echo_yellow() {
+  BYellow='\033[1;33m'
+  printf "${BYellow}${@}${NC}"
+}
+
+function echo_green() {
+  IGreen='\033[0;92m'
+  printf "${IGreen}${@}${NC}"
+}
+
 function check_aws_login() {
   # check configure list
   aws configure list || exit 1
@@ -136,9 +157,18 @@ function check_aws_login() {
 
   # check IAM get-user
   if aws iam get-user >&/dev/null; then
-    aws iam get-user
+    aws iam get-user | jq
   else
     echo "- AWS CLI: \`aws iam get-user' iam:GetUser query call not allowed." >&2
+  fi
+
+  # use S3 to find out owner name
+  echo "* Getting Owner name via S3-API root bucket:"
+  NAME=$(aws s3api list-buckets | jq '.Owner.DisplayName')
+  if [ -n "$NAME" ]; then
+    echo "Owner Display Name: << $(echo_green $NAME) >>"
+  else
+    echo "- no root-bucket S3 name from S3 API" >&2
   fi
 }
 
@@ -172,6 +202,15 @@ function setup_basic() {
     echo "--FATAL: no \`aws_secret_access_key' entry in AWS credentials file!" >&2
     exit 1
   fi
+
+  # check profile
+  if [ -n "$AWS_PROFILE" ]; then
+    if ! grep -q "profile $AWS_PROFILE" ~/.aws/config; then
+      echo "* $(echo_red 'AWS_PROFILE') = $(echo_cyan "$AWS_PROFILE")"
+      echo "--FATAL: profile \`$AWS_PROFILE' as defined in AWS_PROFILE env not in AWS config file ~/.aws/config!" >&2
+      exit 1
+    fi
+  fi
 }
 
 function setup_profile() {
@@ -204,6 +243,20 @@ function setup_profile() {
   fi
 }
 
+function show_env() {
+  if [ -n "$AWS_PROFILE" ]; then
+    echo "* $(echo_red 'AWS_PROFILE') = $(echo_cyan "$AWS_PROFILE")"
+
+    # check profile
+    if ! grep -q "profile $AWS_PROFILE" ~/.aws/config; then
+      echo "--FATAL: profile \`$AWS_PROFILE' as defined in AWS_PROFILE env not in AWS config file ~/.aws/config!" >&2
+      exit 1
+    fi
+  else
+    echo "* $(echo_red 'AWS_PROFILE') $(echo_cyan 'not currently set'), using default AWS profile"
+  fi
+}
+
 #
 # MAIN
 #
@@ -221,12 +274,14 @@ Usage: $PROG <option>
 
        -h    this screen
 !
-elif [ "$1" = "-check_access" ]; then
+elif [ "$1" = "-check_access" -o "$1" = "-check-access" ]; then
   setup_basic
+  show_env
   check_aws_login
-elif [ "$1" = "-update_otp" ]; then
+elif [ "$1" = "-update_otp" -o "$1" = "-update-otp" ]; then
   setup_basic
   setup_profile
+  show_env
   update_aws_otp
 else
   echo "$PROG: invalid option, see \`$PROG --help'" >&2
