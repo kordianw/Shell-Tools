@@ -32,6 +32,10 @@
 
 #### CONFIG:
 
+# what are the default REGIONS we focus on, in checking running instances?
+# - can be filtered via a param
+KEY_REGIONS="us-east-1 us-east-2 ca-central-1"
+
 # what is the target profile AWS prefix? use the prefix to define sub-profile in: ~/.aws/config
 # - this prefix needs to be used to define a 2nd entry in the AWS config file with this prefix
 # - the full role name with prefix is what we will use for assume-role, API key credentials will be generated
@@ -57,7 +61,8 @@ function update_aws_otp() {
   echo "* MFA-SERIAL config: $ aws configure get mfa_serial --profile $MASTER_ACCOUNT_PROFILE" >&2
   mfa_serial=$(aws configure get mfa_serial --profile $MASTER_ACCOUNT_PROFILE)
   if [ -n "$mfa_serial" ]; then
-    echo "... using AWS account: << $(sed 's/arn:aws:iam:://' <<<$mfa_serial) >>" >&2
+    ACCOUNT_INFO=$(sed 's/arn:aws:iam:://' <<<$mfa_serial)
+    echo "... using AWS account: << $(echo_green $ACCOUNT_INFO) >>" >&2
   else
     echo "--FATAL: could not fetch mfa_serial config based on master account $MASTER_ACCOUNT_PROFILE!" >&2
     exit 1
@@ -205,8 +210,9 @@ function setup_basic() {
   fi
 
   # check profile
+  [ "$AWS_PROFILE" = "default" ] && AWS_PROFILE=
   if [ -n "$AWS_PROFILE" ]; then
-    if ! grep -q "profile $AWS_PROFILE" ~/.aws/config; then
+    if ! grep -q "^\[profile $AWS_PROFILE\]" ~/.aws/config; then
       echo "* $(echo_red 'AWS_PROFILE') = $(echo_cyan "$AWS_PROFILE")"
       echo "--FATAL: profile \`$AWS_PROFILE' as defined in AWS_PROFILE env not in AWS config file ~/.aws/config!" >&2
       exit 1
@@ -225,11 +231,11 @@ function setup_profile() {
   fi
 
   # check for correct entries in the AWS config files
-  if ! grep -q "profile $MASTER_ACCOUNT_PROFILE" ~/.aws/config; then
+  if ! grep -q "^\[profile $MASTER_ACCOUNT_PROFILE\]" ~/.aws/config; then
     echo "--FATAL: master/parent profile \`$MASTER_ACCOUNT_PROFILE' not in AWS config file!" >&2
     exit 1
   fi
-  if ! grep -q "profile $TARGET_AWS_PREFIX-$MASTER_ACCOUNT_PROFILE" ~/.aws/config; then
+  if ! grep -q "^\[profile $TARGET_AWS_PREFIX-$MASTER_ACCOUNT_PROFILE\]" ~/.aws/config; then
     echo "--FATAL: sub target (assume role) profile \`$TARGET_AWS_PREFIX-$MASTER_ACCOUNT_PROFILE' not in AWS config file!" >&2
     exit 1
   fi
@@ -243,7 +249,7 @@ function setup_profile() {
   fi
 
   # check for correct entries for the sub-account
-  if ! grep -q "^\[$MASTER_ACCOUNT_PROFILE" ~/.aws/credentials; then
+  if ! grep -q "^\[$MASTER_ACCOUNT_PROFILE\]" ~/.aws/credentials; then
     echo "--FATAL: master/parent profile \`$MASTER_ACCOUNT_PROFILE' with credentials is NOT in AWS credentials file!" >&2
     exit 1
   fi
@@ -258,17 +264,41 @@ function show_env() {
     echo "* current env: $(echo_red 'AWS_PROFILE') = $(echo_cyan "$AWS_PROFILE")"
 
     # check profile
-    if ! grep -q "profile $AWS_PROFILE" ~/.aws/config; then
-      echo "--FATAL: profile \`$AWS_PROFILE' as defined in AWS_PROFILE env not in AWS config file ~/.aws/config!" >&2
-      exit 1
+    if [ "$AWS_PROFILE" = "default" ]; then
+      if ! grep -q "^\[$AWS_PROFILE\]" ~/.aws/config; then
+        echo "--FATAL: profile \`$AWS_PROFILE' as defined in AWS_PROFILE env not in AWS config file ~/.aws/config!" >&2
+        exit 1
+      fi
+    else
+      if ! grep -q "^\[profile $AWS_PROFILE\]" ~/.aws/config; then
+        echo "--FATAL: profile \`$AWS_PROFILE' as defined in AWS_PROFILE env not in AWS config file ~/.aws/config!" >&2
+        exit 1
+      fi
     fi
-    if ! grep -q "^.$AWS_PROFILE." ~/.aws/credentials; then
+    if ! grep -q "^\[$AWS_PROFILE." ~/.aws/credentials; then
       echo "--FATAL: profile \`$AWS_PROFILE' as defined in AWS_PROFILE env has no credentials in ~/.aws/credentials, run \`aws configure'" >&2
       exit 1
     fi
   else
     echo "* $(echo_red 'AWS_PROFILE') $(echo_cyan 'not currently set'), using default AWS profile"
   fi
+}
+
+function check_ec2() {
+  #REGIONS=$(aws ec2 describe-regions --region us-east-1 --output text --query Regions[*].[RegionName])
+  KEY_REGIONS=$(tr ' ' '\n' <<<$KEY_REGIONS)
+
+  REGIONS=$KEY_REGIONS
+  [ -n "$1" ] && REGIONS=$1
+  for region in $REGIONS
+  do
+    echo -e "\n* EC2 Instances in '$region':";
+    aws ec2 describe-instances --region $region | \
+      jq '.Reservations[].Instances[] | "EC2: \(.InstanceId): \(.State.Name) << \(.Tags[]|select(.Key=="Name")|.Value) >> \(.InstanceType)/\(.Placement.AvailabilityZone), \(.KeyName), \(.PublicIpAddress) @ \(.LaunchTime)"'
+    #aws ec2 describe-instances --region "$region" |\
+    # jq ".Reservations[].Instances[] | {type: .InstanceType, state: .State.Name, tags: .Tags, zone: .Placement.AvailabilityZone}" --raw-output
+    #aws ec2 describe-instances --output table --query "Reservations[].Instances[].{Name: Tags[?Key == 'Name'].Value | [0], Id: InstanceId, State: State.Name, Type: InstanceType, DC: Placement.AvailabilityZone, Key: KeyName, IP: PublicIpAddress, Launch: LaunchTime}"
+  done
 }
 
 #
@@ -281,7 +311,9 @@ $PROG: AWS Helper Script - a variety of tools to help with AWS CLI/API Usage
 Usage: $PROG <option>
        
        Options:
-       -check_access    checks login/access to AWS
+       -check_access    checks login/access to AWS, based on current AWS_PROFILE/default
+       -check_ec2 [region] 
+                        shows all running EC2 instances (in REGIONS=$KEY_REGIONS)
        -update_otp <profile> 
                         assume-role and update OTP credentials for a sub-account/sub-user
                         -> master profile: <profile>
@@ -293,6 +325,10 @@ elif [ "$1" = "-check_access" -o "$1" = "-check-access" ]; then
   setup_basic
   show_env
   check_aws_login
+elif [ "$1" = "-check_ec2" -o "$1" = "-check-ec2" ]; then
+  setup_basic
+  show_env
+  check_ec2 $2
 elif [ "$1" = "-update_otp" -o "$1" = "-update-otp" ]; then
   MASTER_ACCOUNT_PROFILE=$2
   if [ -z "$MASTER_ACCOUNT_PROFILE" ]; then
