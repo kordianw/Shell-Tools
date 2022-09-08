@@ -49,7 +49,10 @@ function update_aws_otp() {
 
   # reset any AWS Profile var
   # - can also use: --profile=<profile>
-  unset AWS_PROFILE
+  if [ -n "$AWS_PROFILE" ]; then
+    echo "* unsetting env: AWS_PROFILE to have clean environment"
+    unset AWS_PROFILE
+  fi
 
   echo "* MFA-SERIAL config: $ aws configure get mfa_serial --profile $MASTER_ACCOUNT_PROFILE" >&2
   mfa_serial=$(aws configure get mfa_serial --profile $MASTER_ACCOUNT_PROFILE)
@@ -90,6 +93,7 @@ function update_aws_otp() {
   # - can use AWS_PROFILE env-var or --profile=<profile>
   echo "* checking AWS login for profile: $MASTER_ACCOUNT_PROFILE" >&2
   export AWS_PROFILE=$MASTER_ACCOUNT_PROFILE
+  echo "* $(echo_red 'AWS_PROFILE') = $(echo_cyan "$AWS_PROFILE")"
   check_aws_login
 
   echo "* configuring assume-role sub-profile: $SOURCE_ACCOUNT_PROFILE into ~/.aws/credentials" >&2
@@ -109,6 +113,7 @@ function update_aws_otp() {
   # - can use AWS_PROFILE env-var or --profile=<profile>
   echo "* confirm the profile << $TARGET_AWS_PREFIX-$MASTER_ACCOUNT_PROFILE >> is correctly set:" >&2
   export AWS_PROFILE=$TARGET_AWS_PREFIX-$MASTER_ACCOUNT_PROFILE
+  echo "* $(echo_red 'AWS_PROFILE') = $(echo_cyan "$AWS_PROFILE")"
   check_aws_login
 
   expiredate=$(jq '.Credentials.Expiration' --raw-output <<<$creds)
@@ -206,7 +211,7 @@ function setup_basic() {
       echo "--FATAL: profile \`$AWS_PROFILE' as defined in AWS_PROFILE env not in AWS config file ~/.aws/config!" >&2
       exit 1
     fi
-    if ! grep -q "^.$AWS_PROFILE." ~/.aws/credentials; then
+    if ! grep -q "^\[$AWS_PROFILE." ~/.aws/credentials; then
       echo "--FATAL: profile \`$AWS_PROFILE' as defined in AWS_PROFILE env has no credentials in ~/.aws/credentials, run \`aws configure'" >&2
       exit 1
     fi
@@ -238,7 +243,7 @@ function setup_profile() {
   fi
 
   # check for correct entries for the sub-account
-  if ! grep -q "^.$MASTER_ACCOUNT_PROFILE" ~/.aws/credentials; then
+  if ! grep -q "^\[$MASTER_ACCOUNT_PROFILE" ~/.aws/credentials; then
     echo "--FATAL: master/parent profile \`$MASTER_ACCOUNT_PROFILE' with credentials is NOT in AWS credentials file!" >&2
     exit 1
   fi
@@ -250,7 +255,7 @@ function setup_profile() {
 
 function show_env() {
   if [ -n "$AWS_PROFILE" ]; then
-    echo "* $(echo_red 'AWS_PROFILE') = $(echo_cyan "$AWS_PROFILE")"
+    echo "* current env: $(echo_red 'AWS_PROFILE') = $(echo_cyan "$AWS_PROFILE")"
 
     # check profile
     if ! grep -q "profile $AWS_PROFILE" ~/.aws/config; then
@@ -291,7 +296,10 @@ elif [ "$1" = "-check_access" -o "$1" = "-check-access" ]; then
 elif [ "$1" = "-update_otp" -o "$1" = "-update-otp" ]; then
   MASTER_ACCOUNT_PROFILE=$2
   if [ -z "$MASTER_ACCOUNT_PROFILE" ]; then
-    echo "--FATAL: no profile supplied!, see \`$PROG --help'" >&2
+    echo "--FATAL: no master AWS profile supplied!, see \`$PROG --help'" >&2
+
+    echo && echo "Defined profiles in ~/.aws/config:"
+    grep "^\[profile ." ~/.aws/config |grep -v " sub-" | sed 's/\[/- /; s/\]$//; s/profile /defined profile: /' | sort
     exit 1
   fi
   SOURCE_ACCOUNT_PROFILE=$(sed "s/<PROFILE>/$MASTER_ACCOUNT_PROFILE/" <<<$SOURCE_ACCOUNT_PROFILE)
