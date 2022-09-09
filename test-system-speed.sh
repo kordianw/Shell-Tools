@@ -2,7 +2,12 @@
 # tests CPU+Mem+IO speed using `sysbench'
 # - writes test files to current dir
 #
+# NB: for CPU Mark, more extensive testing:
+# wget https://www.passmark.com/downloads/pt_linux_x64.zip
+# wget https://www.passmark.com/downloads/pt_linux_x86_64_legacy.zip
+#
 # OPTIONS:
+# -cpumark <-- tries to download and use CPU Mark tests (best option)
 # -install <-- tries to install `sysbench' if not installed
 # -cpu     <-- just the CPU testing
 # -memory  <-- memory testing included
@@ -90,6 +95,31 @@ if [ "$1" = "-ssd" -o "$1" = "--ssd" ]; then
   ##########################################################
 
   exit 0
+fi
+
+if [ "$1" = "-cpumark" ]; then
+  echo "$PROG: trying to run \`cpumark' ..." >&2
+
+  # quick install...
+  if [ -x /usr/bin/apt ]; then
+    echo "- trying to install dependencies via apt:"
+    sudo apt update -qq
+    sudo apt install -y -qq unzip libncurses5
+  elif [ -x /usr/bin/yum ]; then
+    echo "- trying to install dependencies via yum:"
+    #dnf install unzip
+    #dnf install ncurses-compat-libs
+    yum install -qq -y unzip
+    yum install -qq -y ncurses-libs
+  fi
+
+  echo "$PROG: trying to download & install \`cpumark' ..." >&2
+  wget https://www.passmark.com/downloads/pt_linux_x64.zip &&
+    unzip pt_linux_x64.zip &&
+    rm -f pt_linux_x64.zip &&
+    cd PerformanceTest &&
+    ./pt_linux_x64 -r3
+  exit $?
 fi
 
 if [ "$1" = "-install" ]; then
