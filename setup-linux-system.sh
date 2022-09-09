@@ -224,6 +224,7 @@ function install_general_packages {
   [ -x /usr/bin/apt ] && $INSTALL_CMD apt-file # search for files within Debian packages (CLI)
 
   # GENPKG: system utils (do not require cron)
+  $INSTALL_CMD unzip      # unzip util
   #$INSTALL_CMD neofetch      # Shows Linux System Information with Distribution Logo
   #$INSTALL_CMD inxi          # full featured system information script
   #$INSTALL_CMD lshw          # information about hardware configuration, incl. lspci
@@ -235,6 +236,8 @@ function install_general_packages {
   $INSTALL_CMD lsof       # Utility to list open files
   $INSTALL_CMD ncdu       # Disk usage analysis
   $INSTALL_CMD bind-utils # tools such as `dig'
+
+  $INSTALL_CMD libncurses5
 
   # GENPKG: network & security tools
   $INSTALL_CMD telnet    # telnet for checking connectivity
