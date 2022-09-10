@@ -102,23 +102,37 @@ if [ "$1" = "-cpumark" ]; then
 
   # quick install...
   if [ -x /usr/bin/apt ]; then
-    echo "- trying to install dependencies via apt:"
-    sudo apt update -qq
-    sudo apt install -y -qq unzip libncurses5
+    echo "- trying to install dependencies via apt: unzip & libncurses"
+    sudo -n apt update -qq
+    sudo -n apt install -y -qq unzip libncurses5
   elif [ -x /usr/bin/yum ]; then
-    echo "- trying to install dependencies via yum:"
+    echo "- trying to install dependencies via yum: unzip & libncurses"
     #dnf install unzip
     #dnf install ncurses-compat-libs
-    yum install -qq -y unzip
-    yum install -qq -y ncurses-libs
+    sudo -n yum install -qq -y unzip
+    sudo -n yum install -qq -y ncurses-libs
   fi
 
   echo "$PROG: trying to download & install \`cpumark' ..." >&2
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:.:./PerformanceTest
   wget https://www.passmark.com/downloads/pt_linux_x64.zip &&
     unzip pt_linux_x64.zip &&
     rm -f pt_linux_x64.zip &&
-    cd PerformanceTest &&
-    ./pt_linux_x64 -r3
+    ./PerformanceTest/pt_linux_x64 -r3
+
+  if [ $? -ne 0 ]; then
+    echo && echo "--FAILURE ... fallback to legacy version!" >&2
+    mkdir ./PerformanceTest >&/dev/null
+
+    echo "$PROG: trying to download & install \`cpumark legacy' ..." >&2
+    cd ./PerformanceTest &&
+    wget https://www.passmark.com/downloads/pt_linux_x86_64_legacy.zip &&
+      unzip pt_linux_x86_64_legacy.zip &&
+      rm -f pt_linux_x86_64_legacy.zip &&
+      cd .. &&
+      ./PerformanceTest/pt_linux_x86_64_legacy -r3
+  fi
+
   exit $?
 fi
 
