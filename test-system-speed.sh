@@ -118,7 +118,7 @@ if [ "$1" = "-cpumark" ]; then
   wget https://www.passmark.com/downloads/pt_linux_x64.zip &&
     unzip pt_linux_x64.zip &&
     rm -f pt_linux_x64.zip &&
-    ./PerformanceTest/pt_linux_x64 -r3
+    ./PerformanceTest/pt_linux_x64 -r 3
 
   if [ $? -ne 0 ]; then
     echo && echo "--FAILURE ... fallback to legacy version!" >&2
@@ -130,7 +130,7 @@ if [ "$1" = "-cpumark" ]; then
       unzip pt_linux_x86_64_legacy.zip &&
       rm -f pt_linux_x86_64_legacy.zip &&
       cd .. &&
-      ./PerformanceTest/pt_linux_x86_64_legacy -r3
+      ./PerformanceTest/pt_linux_x86_64_legacy -r 3
   fi
 
   exit $?
