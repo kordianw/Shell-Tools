@@ -131,6 +131,12 @@ if [ "$1" = "-cpumark" ]; then
       mv ./PerformanceTest ~/bin/cpumark &&
       time ~/bin/cpumark/pt_linux_x64 -r 3
 
+    if [ $? -ne 0 -a -r /usr/lib/x86_64-linux-gnu/libncurses.so.6 ]; then
+      echo "$PROG: trying to copy required libraries for \`cpumark' ..." >&2
+      cp -pv /usr/lib/x86_64-linux-gnu/libncurses.so.6 ~/bin/cpumark/libncurses.so.5
+      time ~/bin/cpumark/pt_linux_x64 -r 3
+    fi
+
     if [ $? -ne 0 ]; then
       echo && echo "--FAILURE ... fallback to legacy version!" >&2
       mkdir ~/bin/cpumark >&/dev/null
