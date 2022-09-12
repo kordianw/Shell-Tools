@@ -290,15 +290,26 @@ function check_ec2() {
 
   REGIONS=$KEY_REGIONS
   [ -n "$1" ] && REGIONS=$1
-  for region in $REGIONS
-  do
-    echo -e "\n* EC2 Instances in '$region':";
-    aws ec2 describe-instances --region $region | \
+  for region in $REGIONS; do
+    echo -e "\n* EC2 Instances in '$region':"
+    aws ec2 describe-instances --region $region |
       jq '.Reservations[].Instances[] | "EC2: \(.InstanceId): \(.State.Name) << \(.Tags[]|select(.Key=="Name")|.Value) >> \(.InstanceType)/\(.Placement.AvailabilityZone), \(.KeyName), \(.PublicIpAddress) @ \(.LaunchTime)"'
     #aws ec2 describe-instances --region "$region" |\
     # jq ".Reservations[].Instances[] | {type: .InstanceType, state: .State.Name, tags: .Tags, zone: .Placement.AvailabilityZone}" --raw-output
     #aws ec2 describe-instances --output table --query "Reservations[].Instances[].{Name: Tags[?Key == 'Name'].Value | [0], Id: InstanceId, State: State.Name, Type: InstanceType, DC: Placement.AvailabilityZone, Key: KeyName, IP: PublicIpAddress, Launch: LaunchTime}"
   done
+}
+
+function terminate_ec2() {
+  if [ -z "$1" ]; then
+    echo "--FATAL: requires instance-id!" >&2
+    exit 99
+  fi
+
+  #
+  # EXEC
+  #
+  aws terminate-instances --instance-ids $1 | jq
 }
 
 #
@@ -314,6 +325,9 @@ Usage: $PROG <option>
        -check_access    checks login/access to AWS, based on current AWS_PROFILE/default
        -check_ec2 [region] 
                         shows all running EC2 instances (in REGIONS=$KEY_REGIONS)
+       -terminate_ec2 <instance-id>
+                        terminates EC2, ie: \`aws cli terminate-instances --instance-ids <value>'
+                        Note: terminate-instances doesn't require region param
        -update_otp <profile> 
                         assume-role and update OTP credentials for a sub-account/sub-user
                         -> master profile: <profile>
@@ -329,13 +343,17 @@ elif [ "$1" = "-check_ec2" -o "$1" = "-check-ec2" ]; then
   setup_basic
   show_env
   check_ec2 $2
+elif [ "$1" = "-terminate_ec2" -o "$1" = "-terminate-ec2" ]; then
+  setup_basic
+  show_env
+  terminate_ec2 $2
 elif [ "$1" = "-update_otp" -o "$1" = "-update-otp" ]; then
   MASTER_ACCOUNT_PROFILE=$2
   if [ -z "$MASTER_ACCOUNT_PROFILE" ]; then
     echo "--FATAL: no master AWS profile supplied!, see \`$PROG --help'" >&2
 
     echo && echo "Defined profiles in ~/.aws/config:"
-    grep "^\[profile ." ~/.aws/config |grep -v " sub-" | sed 's/\[/- /; s/\]$//; s/profile /defined profile: /' | sort
+    grep "^\[profile ." ~/.aws/config | grep -v " sub-" | sed 's/\[/- /; s/\]$//; s/profile /defined profile: /' | sort
     exit 1
   fi
   SOURCE_ACCOUNT_PROFILE=$(sed "s/<PROFILE>/$MASTER_ACCOUNT_PROFILE/" <<<$SOURCE_ACCOUNT_PROFILE)
