@@ -119,39 +119,60 @@ if [ "$1" = "-cpumark" ]; then
 
   if [ -x ~/bin/cpumark/pt_linux_x64 ]; then
     echo "$PROG: found cpumark (modern) - running \`cpumark' ..." >&2
-    time ~/bin/cpumark/pt_linux_x64 -r 3
+    ~/bin/cpumark/pt_linux_x64 -r 3
+    RC=$?
   elif [ -x ~/bin/cpumark/pt_linux_x86_64_legacy ]; then
     echo "$PROG: found cpumark (legacy) - running \`cpumark' ..." >&2
-    time ~/bin/cpumark/pt_linux_x86_64_legacy -r 3
+    ~/bin/cpumark/pt_linux_x86_64_legacy -r 3
+    RC=$?
   else
+    # DOWNLOAD & INSTALL
     echo "$PROG: trying to download & install \`cpumark' ..." >&2
     wget https://www.passmark.com/downloads/pt_linux_x64.zip &&
       unzip pt_linux_x64.zip &&
       rm -f pt_linux_x64.zip &&
       mv ./PerformanceTest ~/bin/cpumark &&
-      time ~/bin/cpumark/pt_linux_x64 -r 3
-
-    if [ $? -ne 0 -a -r /usr/lib/x86_64-linux-gnu/libncurses.so.6 ]; then
-      echo "$PROG: trying to copy required libraries for \`cpumark' ..." >&2
-      cp -pv /usr/lib/x86_64-linux-gnu/libncurses.so.6 ~/bin/cpumark/libncurses.so.5
-      time ~/bin/cpumark/pt_linux_x64 -r 3
-    fi
-
-    if [ $? -ne 0 ]; then
-      echo && echo "--FAILURE ... fallback to legacy version!" >&2
-      mkdir ~/bin/cpumark >&/dev/null
-
-      echo "$PROG: trying to download & install \`cpumark legacy' ..." >&2
-      cd ~/bin/cpumark >&/dev/null &&
-      wget https://www.passmark.com/downloads/pt_linux_x86_64_legacy.zip &&
-        unzip pt_linux_x86_64_legacy.zip &&
-        rm -f pt_linux_x86_64_legacy.zip &&
-        cd $HOME >&/dev/null &&
-        time ~/bin/cpumark/pt_linux_x86_64_legacy -r 3
-    fi
+      ~/bin/cpumark/pt_linux_x64 -r 3
+    RC=$?
   fi
 
-  exit $?
+  if [ $RC -ne 0 -a -r /usr/lib/x86_64-linux-gnu/libncurses.so.6 ]; then
+    echo "$PROG: #1: trying to copy required libraries for \`cpumark' ..." >&2
+    cp -pv /usr/lib/x86_64-linux-gnu/libncurses.so.6 ~/bin/cpumark/libncurses.so.5
+    ~/bin/cpumark/pt_linux_x64 -r 3
+    RC=$?
+  fi
+
+  if [ $RC -ne 0 -a -r /usr/lib/libncurses.so.6 ]; then
+    echo "$PROG: #2: trying to copy required libraries for \`cpumark' ..." >&2
+    cp -pv /usr/lib/libncurses.so.6 ~/bin/cpumark/libncurses.so.5
+    ~/bin/cpumark/pt_linux_x64 -r 3
+    RC=$?
+  fi
+
+  if [ $RC -ne 0 -a -r /usr/lib64/libncurses.so.6 ]; then
+    echo "$PROG: #2: trying to copy required libraries for \`cpumark' ..." >&2
+    cp -pv /usr/lib64/libncurses.so.6 ~/bin/cpumark/libncurses.so.5
+    ~/bin/cpumark/pt_linux_x64 -r 3
+    RC=$?
+  fi
+
+  # fall-back ...
+  if [ $RC -ne 0 ]; then
+    echo && echo "--FAILURE ... fallback to legacy version!" >&2
+    mkdir ~/bin/cpumark >&/dev/null
+
+    echo "$PROG: trying to download & install \`cpumark legacy' ..." >&2
+    cd ~/bin/cpumark >&/dev/null &&
+      wget https://www.passmark.com/downloads/pt_linux_x86_64_legacy.zip &&
+      unzip pt_linux_x86_64_legacy.zip &&
+      rm -f pt_linux_x86_64_legacy.zip &&
+      cd $HOME >&/dev/null &&
+      ~/bin/cpumark/pt_linux_x86_64_legacy -r 3
+    RC=$?
+  fi
+
+  exit $RC
 fi
 
 if [ "$1" = "-install" ]; then
