@@ -1,5 +1,13 @@
 #!/bin/bash
 # Linode setup StackScript for Debian/Ubuntu Linux
+# - sets a default hostname
+# - sets up the system's timezone
+# - does an apt-update
+# - installs `zsh'
+# - sets up a main user and adds to sudo group
+# - installs fail2ban to help guard against SSH attacks
+# - sets up key packages: screen/tmux/sshpass (under `nice')
+# - performs an apt-upgrade to bring the system to the latest level (under `nice')
 #
 # * By Kordian W. <code [at] kordy.com>, Aug 2022
 #
@@ -10,7 +18,6 @@ LOCAL_USER="<USER>"
 
 # name of the key setup script
 WGET_URL="<URL>"
-SETUP_SCRIPT="bkup-and-transfer.sh"
 
 TZ="America/New_York"
 ##################################
@@ -38,37 +45,25 @@ OS_RELEASE=$(grep "VERSION_ID=" /etc/os-release | sed 's/.*="\([0-9]*\).*/\1/; s
 echo "- setting hostname to: $HOSTNAME"
 hostnamectl set-hostname $HOSTNAME
 
-# P2: get the dl.sh script, which we'll use later
-echo && echo "* [$(date +%H:%M)] downloading $SETUP_SCRIPT"
-cd && mkdir src && cd src
-if echo "$WGET_URL" | egrep -q '^http'; then
-  wget -q "$WGET_URL" && chmod 755 dl.sh && mv dl.sh $SETUP_SCRIPT
-  cd && ln -s "./src/$SETUP_SCRIPT"
-  cd && ls -lh $SETUP_SCRIPT
-  cd && mkdir bin && chmod 755 bin
-else
-  echo "--WARN: invalid URL << $WGET_URL >>, skipping..." >&2
-fi
-
-# P3: set timezone to LOCAL timezone
-echo && echo "* [$(date +%H:%M)] setting timezone to \'$TZ' timezone"
+# P2: set timezone to LOCAL timezone
+echo && echo "* [$(date +%H:%M)] setting timezone to '$TZ' timezone"
 timedatectl set-timezone $TZ
 
 # set env as non-interactive, to suppress errors in apt-get installation
 export DEBIAN_FRONTEND="noninteractive"
 
-# P4: run apt-get update
+# P3: run apt-get update
 echo && echo "* [$(date +%H:%M)] update apt sources"
 apt-get update -qq
 
-# P5: install ZSH
+# P3: install ZSH
 echo && echo "* [$(date +%H:%M)] install+setup: zsh"
 apt-get install -qq -y zsh
 
-# P6: add a non-root user, with same PW as root
+# P4: add a non-root user, with same PW as root
 echo && echo "* [$(date +%H:%M)] add additional user: $LOCAL_USER"
 if echo "$LOCAL_USER" | egrep -q '^[a-z][a-z]*$'; then
-  PW_HASH=$(getent shadow $USER | cut -d: -f2)
+  PW_HASH=$(getent shadow $USER | cut -d: -f2 |head -1)
   [ -z "$PW_HASH" ] && exit 1
   echo "- adding $LOCAL_USER with existing PW hash"
   sudo useradd -m -p "$PW_HASH" $LOCAL_USER || exit 1
@@ -79,15 +74,17 @@ if echo "$LOCAL_USER" | egrep -q '^[a-z][a-z]*$'; then
 
   echo "- setting up $LOCAL_USER .ssh & homedir"
   U_HOME=/home/$LOCAL_USER
+  echo "echo 'TO-SETUP-RUN: $ rm .zshrc && wget $WGET_URL && bash dl.sh'" > $U_HOME/.zshrc || exit 1
+  chown -v $LOCAL_USER $U_HOME/.zshrc && chmod -v 666 $U_HOME/.zshrc
   mkdir $U_HOME/.ssh || exit 1
   cp -fv $HOME/.ssh/authorized_keys $U_HOME/.ssh/authorized_keys || exit 1
-  chmod -v 700 $U_HOME/.ssh && chmod 600 $U_HOME/.ssh/authorized_keys || exit 1
+  chmod -v 700 $U_HOME/.ssh && chmod -v 600 $U_HOME/.ssh/authorized_keys || exit 1
   chown -v $LOCAL_USER $U_HOME/.ssh $U_HOME/.ssh/authorized_keys || exit 1
 else
   echo "--WARN: invalid user << $LOCAL_USER >>, skipping..." >&2
 fi
 
-# install fail2ban - to increase SSH security
+# P5: install fail2ban - to increase SSH security
 echo && echo "* [$(date +%H:%M)] install+setup: fail2ban"
 nice apt-get install -qq -y fail2ban
 nice systemctl enable fail2ban
@@ -95,9 +92,9 @@ nice systemctl start fail2ban
 
 ### optional stuff (under `nice') ######################
 
-# install additional key packages
-echo && echo "* [$(date +%H:%M)] install screen,sshpass,sysbench"
-nice apt-get install -qq -y screen sshpass sysbench
+# P6: install additional key packages
+echo && echo "* [$(date +%H:%M)] install screen,tmux,sshpass"
+nice apt-get install -qq -y screen tmux sshpass
 
 echo && echo "* [$(date +%H:%M)] perform apt-get upgrade"
 nice apt-get upgrade -y
@@ -107,12 +104,13 @@ echo "---> $0: finished-run as $(whoami): $(date)"
 ### Metadata ###########################################
 #
 # KW custom boot script - StackScript (runs as root)
-# - does an apt-update
-# - sets up timezone
-# - downloads the main setup script
-# - installs `zsh'
-# - sets up key packages
-# - sets up a user and adds to sudo group
 # - sets a default hostname
+# - sets up the system's timezone
+# - does an apt-update
+# - installs `zsh'
+# - sets up a main user and adds to sudo group
+# - installs fail2ban to help guard against SSH attacks
+# - sets up key packages: screen/tmux/sshpass (under `nice')
+# - performs an apt-upgrade to bring the system to the latest level (under `nice')
 
 # EOF
