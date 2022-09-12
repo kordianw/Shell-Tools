@@ -1245,14 +1245,15 @@ function change_hostname() {
       echo && echo "* [$(date +%H:%M)] updating /etc/hosts with $HOSTNAME"
 
       if [ -n "$OLD_HOSTNAME" -a "$OLD_HOSTNAME" != "$HOSTNAME" ]; then
-        $SUDO sed -i "s/^127.0.0.1\( *\)localhost $OLD_HOSTNAME$/127.0.0.1\1localhost $HOSTNAME/" /etc/hosts
-        $SUDO sed -i "s/^127.0.0.1\( *\)localhost.localdomain localhost4 localhost4.localdomain4 $OLD_HOSTNAME$/127.0.0.1\1localhost.localdomain localhost4 localhost4.localdomain4 $HOSTNAME/" /etc/hosts
+        $SUDO sed -i "s/^127.0.0.1\([ \t]*\)localhost $OLD_HOSTNAME$/127.0.0.1\1localhost $HOSTNAME/" /etc/hosts
+        $SUDO sed -i "s/^127.0.0.1\([ \t]*\)localhost.localdomain localhost4 localhost4.localdomain4 $OLD_HOSTNAME$/127.0.0.1\1localhost.localdomain localhost4 localhost4.localdomain4 $HOSTNAME/" /etc/hosts
       fi
 
-      $SUDO sed -i "s/^127.0.0.1\( *\)localhost$/127.0.0.1\1localhost $HOSTNAME/" /etc/hosts
-      $SUDO sed -i "s/^127.0.0.1\( *\)localhost.localdomain localhost4 localhost4.localdomain4$/127.0.0.1\1localhost.localdomain localhost4 localhost4.localdomain4 $HOSTNAME/" /etc/hosts
+      $SUDO sed -i "s/^127.0.0.1\([ \t]*\)localhost$/127.0.0.1\1localhost $HOSTNAME/" /etc/hosts
+      $SUDO sed -i "s/^127.0.0.1\([ \t]*\)localhost.localdomain localhost4 localhost4.localdomain4$/127.0.0.1\1localhost.localdomain localhost4 localhost4.localdomain4 $HOSTNAME/" /etc/hosts
 
       cat /etc/hosts
+      sleep 2
     else
       echo "--FATAL: ERROR RC=$RC running: $SUDO hostnamectl set-hostname --static $HOSTNAME" >&2
       exit 99
@@ -1263,13 +1264,13 @@ function change_hostname() {
   if [ -s /etc/cloud/cloud.cfg -o -n "$AWS" -o -n "$GCP" ]; then
     echo && echo "***NB****: note that on Public Cloud hosts need to change /etc/cloud/cloud.cfg to preserve_hostname across reboots:"
     grep -i preserve_hostname /etc/cloud/cloud.cfg
-    sleep 1
+    sleep 2
   fi
 
   # recommended: perform apt update
   echo && echo "* [$(date +%H:%M)] /OPTIONAL/ perform apt update/upgrade on $HOSTNAME, hit Ctrl-C to cancel"
   if command -v apt >&/dev/null; then
-    $SUDO nice apt update -qq && $SUDO nice apt upgrade -yq
+    $SUDO nice apt update -qq && $SUDO nice apt upgrade -qq -y
   fi
 
   # reload the shell
