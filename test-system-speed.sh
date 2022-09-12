@@ -104,15 +104,20 @@ if [ "$1" = "-cpumark" ]; then
   if ! command -v unzip >&/dev/null; then
     if [ -x /usr/bin/apt ]; then
       echo "- trying to install dependencies via apt: unzip & libncurses"
-      sudo -n apt update -qq
-      sudo -n apt install -y -qq unzip libncurses5
+      sudo apt update -qq
+      sudo apt install -y -qq unzip libncurses5
     elif [ -x /usr/bin/yum ]; then
       echo "- trying to install dependencies via yum: unzip & libncurses"
       #dnf install unzip
       #dnf install ncurses-compat-libs
-      sudo -n yum install -qq -y unzip
-      sudo -n yum install -qq -y ncurses-libs
+      sudo yum install -qq -y unzip
+      sudo yum install -qq -y ncurses-libs
     fi
+  fi
+
+  if ! command -v unzip >&/dev/null; then
+    echo "--FATAL: needs UNZIP to run ..." >&2
+    exit 99
   fi
 
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:.:./cpumark:~/bin/cpumark
