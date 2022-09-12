@@ -1168,6 +1168,13 @@ function ssh_conf() {
   echo sed -i 's/#\?\(PermitEmptyPasswords\s*\).*$/\1 no/' /etc/ssh/sshd_config
   echo sed -i 's/#\?\(PasswordAuthentication\s*\).*$/\1 no/' /etc/ssh/sshd_config
 
+  #
+  # NB:
+  # - consider adding this:
+  #
+  # # Keep alive ssh connections by sending a packet every 2 minutes.
+  #ClientAliveInterval 120
+
   # install fail2ban - to increase SSH security
   echo && echo "* [$(date +%H:%M)] install+setup: fail2ban"
   $SUDO apt-get install -qq -y fail2ban
