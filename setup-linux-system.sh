@@ -201,7 +201,7 @@ function install_general_packages {
   $INSTALL_CMD pkg-config # pkg-config
   $INSTALL_CMD openssl    # SSL
   $INSTALL_CMD libssl-dev # SSL libraries
-  $INSTALL_CMD libncurses5-dev libncursesw5-dev
+  #$INSTALL_CMD libncurses5-dev libncursesw5-dev
 
   # GENPKG: additional perl modules
   #$INSTALL_CMD libjson-perl        # JSON.pm
@@ -237,7 +237,7 @@ function install_general_packages {
   $INSTALL_CMD ncdu       # Disk usage analysis
   $INSTALL_CMD bind-utils # tools such as `dig'
 
-  $INSTALL_CMD libncurses5
+  #$INSTALL_CMD libncurses5
 
   # GENPKG: network & security tools
   $INSTALL_CMD telnet    # telnet for checking connectivity
@@ -807,7 +807,7 @@ function install_pi() {
   $INSTALL_CMD ncdu       # Disk usage analysis
   $INSTALL_CMD bind-utils # tools such as `dig'
 
-  $INSTALL_CMD libncurses5
+  #$INSTALL_CMD libncurses5
 
   # PI: network & security tools
   $INSTALL_CMD telnet    # telnet for checking connectivity
