@@ -1,17 +1,21 @@
 #!/bin/bash
-# tests CPU+Mem+IO speed using `sysbench'
-# - writes test files to current dir
+# tests CPU+Mem+IO speed using `CPUmark' or `sysbench'
+# - in sysbench mode, writes test files to current dir, testing disk
 #
 # NB: for CPU Mark, more extensive testing:
 # wget https://www.passmark.com/downloads/pt_linux_x64.zip
 # wget https://www.passmark.com/downloads/pt_linux_x86_64_legacy.zip
 #
+# MODES:
+# -cpumark <-- CPU MARK MODE: tries to download and use CPU Mark tests (best option)
+# -sysbench<-- SYSBENCH MODE: uses sysbench
+# -ssd     <-- SSD MODE: crude way to work out if current disk is SSD or not
+#
 # OPTIONS:
 # -cpumark <-- tries to download and use CPU Mark tests (best option)
 # -install <-- tries to install `sysbench' if not installed
-# -cpu     <-- just the CPU testing
-# -memory  <-- memory testing included
-# -ssd     <-- checks if a disk is SSD by running a quick IO test
+# -cpu     <-- just the sysbench CPU testing
+# -memory  <-- sysbench memory testing included
 # -hdparm  <-- adds a hdparm test at the end
 #
 # * By Kordian W. <code [at] kordy.com>, Jan 2020
@@ -34,8 +38,21 @@ if [ ! -w . ]; then
   exit 1
 fi
 
-# check SSD/HDD speed - crude way ...
+# CHOOSE MODE
+if [ $# -eq 0 ]; then
+  echo "$PROG: please choose the MODE:" >&2
+  echo " -cpumark  <- CPU MARK MODE: tries to download and use CPU Mark tests (best option)" >&2
+  echo " -sysbench <- SYSBENCH MODE: uses sysbench" >&2
+  echo " -ssd      <- SSD? MODE: crude way to work out if current disk is SSD or not" >&2
+  exit 1
+fi
+
+#
+# CPUMARK
+# - check SSD/HDD speed - crude way ...
+#
 if [ "$1" = "-ssd" -o "$1" = "--ssd" ]; then
+  echo "$PROG: trying to execute MODE: \`ssd check' ..." >&2
 
   COUNT=2000
 
@@ -95,10 +112,13 @@ if [ "$1" = "-ssd" -o "$1" = "--ssd" ]; then
   ##########################################################
 
   exit 0
-fi
 
-if [ "$1" = "-cpumark" ]; then
-  echo "$PROG: trying to run \`cpumark' ..." >&2
+#
+# CPUMARK
+#
+elif [ "$1" = "-cpumark" ]; then
+
+  echo "$PROG: trying to execute MODE: \`cpumark' ..." >&2
 
   # quick install...
   if ! command -v unzip >&/dev/null; then
@@ -122,64 +142,86 @@ if [ "$1" = "-cpumark" ]; then
 
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:.:./cpumark:~/bin/cpumark
 
-  if [ -x ~/bin/cpumark/pt_linux_x64 ]; then
-    echo "$PROG: found cpumark (modern) - running \`cpumark' ..." >&2
-    ~/bin/cpumark/pt_linux_x64 -r 3
-    RC=$?
-  elif [ -x ~/bin/cpumark/pt_linux_x86_64_legacy ]; then
-    echo "$PROG: found cpumark (legacy) - running \`cpumark' ..." >&2
-    ~/bin/cpumark/pt_linux_x86_64_legacy -r 3
-    RC=$?
-  else
-    # DOWNLOAD & INSTALL
-    echo "$PROG: trying to download & install \`cpumark' ..." >&2
-    wget https://www.passmark.com/downloads/pt_linux_x64.zip &&
-      unzip pt_linux_x64.zip &&
-      rm -f pt_linux_x64.zip &&
-      mv ./PerformanceTest ~/bin/cpumark &&
+  if [ "$OSTYPE" = "linux-gnu" -o "$OSTYPE" = "linux" ]; then
+
+    if [ -x ~/bin/cpumark/pt_linux_x64 ]; then
+      echo "$PROG: found cpumark (modern) - running \`cpumark' ..." >&2
       ~/bin/cpumark/pt_linux_x64 -r 3
-    RC=$?
-  fi
-
-  if [ $RC -ne 0 -a -r /usr/lib/x86_64-linux-gnu/libncurses.so.6 ]; then
-    echo "$PROG: #1: trying to copy required libraries for \`cpumark' ..." >&2
-    cp -pv /usr/lib/x86_64-linux-gnu/libncurses.so.6 ~/bin/cpumark/libncurses.so.5
-    ~/bin/cpumark/pt_linux_x64 -r 3
-    RC=$?
-  fi
-
-  if [ $RC -ne 0 -a -r /usr/lib/libncurses.so.6 ]; then
-    echo "$PROG: #2: trying to copy required libraries for \`cpumark' ..." >&2
-    cp -pv /usr/lib/libncurses.so.6 ~/bin/cpumark/libncurses.so.5
-    ~/bin/cpumark/pt_linux_x64 -r 3
-    RC=$?
-  fi
-
-  if [ $RC -ne 0 -a -r /usr/lib64/libncurses.so.6 ]; then
-    echo "$PROG: #2: trying to copy required libraries for \`cpumark' ..." >&2
-    cp -pv /usr/lib64/libncurses.so.6 ~/bin/cpumark/libncurses.so.5
-    ~/bin/cpumark/pt_linux_x64 -r 3
-    RC=$?
-  fi
-
-  # fall-back ...
-  if [ $RC -ne 0 ]; then
-    echo && echo "--FAILURE ... fallback to legacy version!" >&2
-    mkdir ~/bin/cpumark >&/dev/null
-
-    echo "$PROG: trying to download & install \`cpumark legacy' ..." >&2
-    cd ~/bin/cpumark >&/dev/null &&
-      wget https://www.passmark.com/downloads/pt_linux_x86_64_legacy.zip &&
-      unzip pt_linux_x86_64_legacy.zip &&
-      rm -f pt_linux_x86_64_legacy.zip &&
-      cd $HOME >&/dev/null &&
+      RC=$?
+    elif [ -x ~/bin/cpumark/pt_linux_x86_64_legacy ]; then
+      echo "$PROG: found cpumark (legacy) - running \`cpumark' ..." >&2
       ~/bin/cpumark/pt_linux_x86_64_legacy -r 3
-    RC=$?
+      RC=$?
+    else
+      # DOWNLOAD & INSTALL
+      echo "$PROG: trying to download & install \`cpumark' ..." >&2
+      wget https://www.passmark.com/downloads/pt_linux_x64.zip &&
+        unzip pt_linux_x64.zip &&
+        rm -f pt_linux_x64.zip &&
+        mv ./PerformanceTest ~/bin/cpumark &&
+        ~/bin/cpumark/pt_linux_x64 -r 3
+      RC=$?
+    fi
+
+    if [ $RC -ne 0 -a -r /usr/lib/x86_64-linux-gnu/libncurses.so.6 ]; then
+      echo "$PROG: #1: trying to copy required libraries for \`cpumark' ..." >&2
+      cp -pv /usr/lib/x86_64-linux-gnu/libncurses.so.6 ~/bin/cpumark/libncurses.so.5
+      ~/bin/cpumark/pt_linux_x64 -r 3
+      RC=$?
+    fi
+
+    if [ $RC -ne 0 -a -r /usr/lib/libncurses.so.6 ]; then
+      echo "$PROG: #2: trying to copy required libraries for \`cpumark' ..." >&2
+      cp -pv /usr/lib/libncurses.so.6 ~/bin/cpumark/libncurses.so.5
+      ~/bin/cpumark/pt_linux_x64 -r 3
+      RC=$?
+    fi
+
+    if [ $RC -ne 0 -a -r /usr/lib64/libncurses.so.6 ]; then
+      echo "$PROG: #2: trying to copy required libraries for \`cpumark' ..." >&2
+      cp -pv /usr/lib64/libncurses.so.6 ~/bin/cpumark/libncurses.so.5
+      ~/bin/cpumark/pt_linux_x64 -r 3
+      RC=$?
+    fi
+
+    # fall-back ...
+    if [ $RC -ne 0 ]; then
+      echo && echo "--FAILURE ... fallback to legacy version!" >&2
+      mkdir ~/bin/cpumark >&/dev/null
+
+      echo "$PROG: trying to download & install \`cpumark legacy' ..." >&2
+      cd ~/bin/cpumark >&/dev/null &&
+        wget https://www.passmark.com/downloads/pt_linux_x86_64_legacy.zip &&
+        unzip pt_linux_x86_64_legacy.zip &&
+        rm -f pt_linux_x86_64_legacy.zip &&
+        cd $HOME >&/dev/null &&
+        ~/bin/cpumark/pt_linux_x86_64_legacy -r 3
+      RC=$?
+    fi
+  else
+    if [ -x ~/bin/cpumark/pt_mac ]; then
+      echo "$PROG: found cpumark (mac) - running \`cpumark' ..." >&2
+      ~/bin/cpumark/pt_mac -r 3
+      RC=$?
+    else
+      # DOWNLOAD & INSTALL
+      echo "$PROG: trying to download & install \`cpumark' ..." >&2
+      #wget https://www.passmark.com/downloads/pt_mac.zip &&
+      curl -k -o pt_mac.zip https://www.passmark.com/downloads/pt_mac.zip &&
+        unzip pt_mac.zip &&
+        rm -f pt_mac.zip &&
+        mv ./PerformanceTest ~/bin/cpumark &&
+        ~/bin/cpumark/pt_mac -r 3
+      RC=$?
+    fi
   fi
 
   exit $RC
 fi
 
+#
+# SYSBENCH
+#
 if [ "$1" = "-install" ]; then
   if ! command -v sysbench >&/dev/null; then
     echo "$PROG: trying to install \`sysbench' ..." >&2
