@@ -142,6 +142,9 @@ elif [ "$1" = "-cpumark" ]; then
 
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:.:./cpumark:~/bin/cpumark
 
+  #
+  # LINUX
+  #
   if [ "$OSTYPE" = "linux-gnu" -o "$OSTYPE" = "linux" ]; then
 
     if [ -x ~/bin/cpumark/pt_linux_x64 ]; then
@@ -150,7 +153,7 @@ elif [ "$1" = "-cpumark" ]; then
       RC=$?
     elif [ -x ~/bin/cpumark/pt_linux_x86_64_legacy ]; then
       echo "$PROG: found cpumark (legacy) - running \`cpumark' ..." >&2
-      ~/bin/cpumark/pt_linux_x86_64_legacy -r 3
+      ~/bin/cpumark/pt_linux_x86_64_legacy
       RC=$?
     else
       # DOWNLOAD & INSTALL
@@ -189,15 +192,24 @@ elif [ "$1" = "-cpumark" ]; then
       echo && echo "--FAILURE ... fallback to legacy version!" >&2
       mkdir ~/bin/cpumark >&/dev/null
 
-      echo "$PROG: trying to download & install \`cpumark legacy' ..." >&2
-      cd ~/bin/cpumark >&/dev/null &&
-        wget https://www.passmark.com/downloads/pt_linux_x86_64_legacy.zip &&
-        unzip pt_linux_x86_64_legacy.zip &&
-        rm -f pt_linux_x86_64_legacy.zip &&
-        cd $HOME >&/dev/null &&
-        ~/bin/cpumark/pt_linux_x86_64_legacy -r 3
+      if [ -x ~/bin/cpumark/pt_linux_x86_64_legacy ]; then
+        echo "$PROG: trying to run \`cpumark legacy' ..." >&2
+        ~/bin/cpumark/pt_linux_x86_64_legacy
+      else
+        echo "$PROG: trying to download & install \`cpumark legacy' ..." >&2
+        cd ~/bin/cpumark >&/dev/null &&
+          wget https://www.passmark.com/downloads/pt_linux_x86_64_legacy.zip &&
+          unzip pt_linux_x86_64_legacy.zip &&
+          rm -f pt_linux_x86_64_legacy.zip &&
+          cd $HOME >&/dev/null &&
+          ~/bin/cpumark/pt_linux_x86_64_legacy -r 3
+      fi
       RC=$?
     fi
+    
+  #
+  # MAC
+  #
   else
     if [ -x ~/bin/cpumark/pt_mac ]; then
       echo "$PROG: found cpumark (mac) - running \`cpumark' ..." >&2
@@ -216,11 +228,15 @@ elif [ "$1" = "-cpumark" ]; then
     fi
   fi
 
-  # show results
-  if [ -r ~/results_all.yml ]; then
+  #
+  # RESULTS:
+  #
+  RESULTS=results_all.yml
+  [ -r ~/results_all.yml ] && RESULTS=~/results_all.yml
+  if [ -r $RESULTS ]; then
     echo "*** RESULTS:" >&2
-    egrep "SUMM|Process|Memory" ~/results_all.yml
-    mv -f ~/results_all.yml ~/bin/cpumark
+    egrep "SUMM|Process|Memory" $RESULTS
+    mv -f $RESULTS ~/bin/cpumark
   fi
 
   exit $RC
