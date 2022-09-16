@@ -235,7 +235,7 @@ elif [ "$1" = "-cpumark" ]; then
   [ -r ~/results_all.yml ] && RESULTS=~/results_all.yml
   if [ -r $RESULTS ]; then
     echo "*** RESULTS:" >&2
-    egrep "SUMM|Process|Memory" $RESULTS
+    egrep "SUMM|Process|Memory|SINGLETHREAD" $RESULTS
     mv -f $RESULTS ~/bin/cpumark
   fi
 
