@@ -1264,20 +1264,21 @@ function change_hostname() {
             $SUDO sed -i "/^127.0.0.1/{s/$SHORT_OLD /$HOSTNAME /g; s/ $SHORT_OLD/ $HOSTNAME/g; s/$SHORT_OLD$/$HOSTNAME/g}" /etc/hosts
           fi
         fi
-      else
-        if grep -q "\." <<<$HOSTNAME; then
-          SHORT=$(awk -F. '{print $1}' <<<$HOSTNAME)
-          echo "- add new: short=$SHORT, fqdn=$HOSTNAME" >&2
-          $SUDO sed -i "s/^127.0.0.1\([ \t]*\)localhost$/127.0.0.1\1localhost $SHORT $HOSTNAME/" /etc/hosts
-          $SUDO sed -i "s/^127.0.0.1\([ \t]*\)localhost.localdomain localhost4 localhost4.localdomain4$/127.0.0.1\1localhost.localdomain localhost4 localhost4.localdomain4 $SHORT $HOSTNAME/" /etc/hosts
-        else
-          echo "- add new: short_dns=$HOSTNAME" >&2
-          $SUDO sed -i "s/^127.0.0.1\([ \t]*\)localhost$/127.0.0.1\1localhost $HOSTNAME/" /etc/hosts
-          $SUDO sed -i "s/^127.0.0.1\([ \t]*\)localhost.localdomain localhost4 localhost4.localdomain4$/127.0.0.1\1localhost.localdomain localhost4 localhost4.localdomain4 $HOSTNAME/" /etc/hosts
-        fi
       fi
 
-      echo "---review edits to /etc/hosts:" >&2
+      # if hostname not there
+      if grep -q "\." <<<$HOSTNAME; then
+        SHORT=$(awk -F. '{print $1}' <<<$HOSTNAME)
+        echo "- add new: short=$SHORT, fqdn=$HOSTNAME" >&2
+        $SUDO sed -i "s/^127.0.0.1\([ \t]*\)localhost$/127.0.0.1\1localhost $SHORT $HOSTNAME/" /etc/hosts
+        $SUDO sed -i "s/^127.0.0.1\([ \t]*\)localhost.localdomain localhost4 localhost4.localdomain4$/127.0.0.1\1localhost.localdomain localhost4 localhost4.localdomain4 $SHORT $HOSTNAME/" /etc/hosts
+      else
+        echo "- add new: short_dns=$HOSTNAME" >&2
+        $SUDO sed -i "s/^127.0.0.1\([ \t]*\)localhost$/127.0.0.1\1localhost $HOSTNAME/" /etc/hosts
+        $SUDO sed -i "s/^127.0.0.1\([ \t]*\)localhost.localdomain localhost4 localhost4.localdomain4$/127.0.0.1\1localhost.localdomain localhost4 localhost4.localdomain4 $HOSTNAME/" /etc/hosts
+      fi
+
+      echo && echo "---review edits to /etc/hosts:" >&2
       cat /etc/hosts
       sleep 2
     else
