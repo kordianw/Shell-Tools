@@ -206,7 +206,7 @@ elif [ "$1" = "-cpumark" ]; then
       fi
       RC=$?
     fi
-    
+
   #
   # MAC
   #
