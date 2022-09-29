@@ -354,6 +354,7 @@ function backup_cloud_home()
       --exclude='example-scripts.tar.gz.gpg' \
       --exclude='Mail/tmp' \
       --exclude='_gsdata_' \
+      --exclude='__pycache__' \
       --exclude='.bash_history' \
       --exclude='.lesshst' \
       --exclude='.wget-hsts' \
