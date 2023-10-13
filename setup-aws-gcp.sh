@@ -222,6 +222,10 @@ function setup_gcp_shell_VM()
     exit 99
   fi
 
+  # some defaults
+  mkdir ~/.cloudshell >&/dev/null
+  touch ~/.cloudshell/no-apt-get-warning >&/dev/null
+
   # set-up ~/.customize_environment
   echo "#!/bin/sh
 ##
@@ -270,7 +274,7 @@ nice ~$conf_google_main_user/bin/scripts/setup-linux-system.sh -GENPKG
 
 echo \"---> \$0: end-run (Phase 2) as \`whoami\`: \`date\`\"
 
-# EOF" >~/.customize_environment
+# EOF" > ~/.customize_environment
   chmod 755 ~/.customize_environment >&/dev/null
 
   # ZSH/SCREEN/SSHPASS
