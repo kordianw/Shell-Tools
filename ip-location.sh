@@ -55,7 +55,7 @@ else
       #
       # NSLOOKUP
       #
-      IP=$(timeout 3 nslookup myip.opendns.com resolver1.opendns.com 2>/dev/null | cat -v | awk '/Address:/{print $NF}' | sed 's/[^0-9\.]*//g' | egrep '[0-9]' | tail -1)
+      IP=$(timeout 3 nslookup myip.opendns.com resolver1.opendns.com 2>/dev/null | tail +3 | cat -v | awk '/Address:/{print $NF}' | sed 's/[^0-9\.]*//g' | egrep '[0-9]' | tail -1)
       if [ $? -ne 0 ]; then
         echo "--WARN: can't work out external/public IP address via cmd (RC=$?): nslookup myip.opendns.com resolver1.opendns.com" >&2
       fi
