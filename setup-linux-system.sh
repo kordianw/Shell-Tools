@@ -205,6 +205,7 @@ function install_general_packages {
 
   # GENPKG: additional perl modules
   #$INSTALL_CMD libjson-perl        # JSON.pm
+  #$INSTALL_CMD libwww-perl         # for LWP::UserAgent
   #$INSTALL_CMD libdate-manip-perl  # DateManip.pm
   #$INSTALL_CMD libxml-sax-perl     # for XML parsing (faster)
   #$INSTALL_CMD libxml-parser-perl  # for XML parsing (faster)
@@ -236,6 +237,8 @@ function install_general_packages {
   $INSTALL_CMD lsof       # Utility to list open files
   $INSTALL_CMD ncdu       # Disk usage analysis
   $INSTALL_CMD bind-utils # tools such as `dig'
+  $INSTALL_CMD binutils   # tools such as `strings'
+  $INSTALL_CMD whois      # whois lookup
 
   #$INSTALL_CMD libncurses5
 
@@ -253,6 +256,8 @@ function install_general_packages {
   #$INSTALL_CMD aircrack-ng   # wireless WEP/WPA cracking utilities
   $INSTALL_CMD sshpass    # Non-interactive ssh password authentication
   $INSTALL_CMD traceroute # in case traceroute is not installed
+  $INSTALL_CMD nfs-common # allows NFS mounts
+  #$INSTALL_CMD mosh       # improved ssh shell
 
   # GENPKG: small utils (just helper utils)
   $INSTALL_CMD tofrodos # unix2dos, dos2unix
@@ -778,6 +783,7 @@ function install_pi() {
 
   # PI: additional perl modules
   #$INSTALL_CMD libjson-perl  # JSON.pm
+  #$INSTALL_CMD libwww-perl   # for LWP::UserAgent
 
   # PI: PYTHON 3
   #$INSTALL_CMD python3
@@ -806,6 +812,8 @@ function install_pi() {
   $INSTALL_CMD lsof       # Utility to list open files
   $INSTALL_CMD ncdu       # Disk usage analysis
   $INSTALL_CMD bind-utils # tools such as `dig'
+  $INSTALL_CMD binutils   # tools such as `strings'
+  $INSTALL_CMD whois      # whois lookup
 
   #$INSTALL_CMD libncurses5
 
@@ -823,6 +831,8 @@ function install_pi() {
   #$INSTALL_CMD aircrack-ng   # wireless WEP/WPA cracking utilities
   $INSTALL_CMD sshpass    # Non-interactive ssh password authentication
   $INSTALL_CMD traceroute # in case traceroute is not installed
+  $INSTALL_CMD nfs-common # allows NFS mounts
+  #$INSTALL_CMD mosh       # improved ssh shell
 
   # PI: small utils (just helper utils)
   $INSTALL_CMD tofrodos # unix2dos, dos2unix
