@@ -213,6 +213,7 @@ function install_general_packages {
   # GENPKG: PYTHON 3
   $INSTALL_CMD python3
   $INSTALL_CMD python3-pip
+  #$INSTALL_CMD python3-venv
 
   # GENPKG: additional PYTHON modules
   #$INSTALL_CMD pylint
@@ -788,6 +789,7 @@ function install_pi() {
   # PI: PYTHON 3
   #$INSTALL_CMD python3
   #$INSTALL_CMD python3-pip
+  #$INSTALL_CMD python3-venv
 
   # PI: additional python modules
   #$INSTALL_CMD pylint
@@ -899,6 +901,7 @@ function install_rhel() {
   sudo yum -y install python-pip
   sudo yum -y install python3
   sudo yum -y install python3-pip
+  sudo yum -y install python3-venv
   sudo yum -y install git    # GIT/GITHUB access
   sudo yum -y install jq     # lightweight and flexible command-line JSON processor
   sudo yum -y install strace # debug running processes
