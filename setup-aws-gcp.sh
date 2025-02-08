@@ -548,6 +548,14 @@ function dl_and_update()
 
 function gcloud_login()
 {
+  #######################################
+
+  # location of Google Cloud SDK?
+  # - if not in system path
+  GOOGLE_CLOUD_SDK=~/google-cloud-sdk
+
+  #######################################
+
   # do we have `gcloud' binary ?
   GCLOUD=gcloud
   if ! command -v gcloud >&/dev/null; then
