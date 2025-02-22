@@ -94,8 +94,8 @@ function connect_gcp_cloudshell()
     if [ $RC -eq 255 ]; then
       # update DYN_DNS - we have to invalidate
       echo -ne "* [$(date +%H:%M)] alive, but can't connect - invalidating \"$GCP_DNS_ALIAS\" Dynamic DNS IP ... " 1>&2
-      eval $(parse_yaml "google-domains-dyndns-secrets.yaml" "conf_")
-      curl -fsSL "https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=1.1.1.1" && echo
+      eval $(parse_yaml "dynu-domains-dyndns-secrets.yaml" "conf_")
+      curl -fsSL "https://api.dynu.com/nic/update?hostname=$conf_gcp_shell_dns&myip=1.1.1.1&password=$conf_md5password" && echo
 
       # give useful info that it can be force-requested
       RUN=$0
@@ -148,8 +148,8 @@ function connect_gcp_cloudshell()
 
     # update DYN_DNS - while we wait for machine to fully come up!
     echo -ne "* [$(date +%H:%M)] updating \"$GCP_DNS_ALIAS\" Dynamic DNS to $IP ... " 1>&2
-    eval $(parse_yaml "google-domains-dyndns-secrets.yaml" "conf_")
-    curl -fsSL "https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=$IP"
+    eval $(parse_yaml "dynu-domains-dynds-secrets.yaml" "conf_")
+    curl -fsSL "https://api.dynu.com/nic/update?hostname=$conf_gcp_shell_dns&myip=$IP&password=$conf_md5password" && echo
 
     # connect via IP while we wait for the DNS to change
     IP_MASK=$(echo $IP | sed 's/^\([0-9][0-9][0-9]*\.[0-9][0-9]*\)\..*/\1/')
@@ -206,15 +206,19 @@ function setup_gcp_shell_VM()
   update_scripts
   check_root
 
+  #####################
+  MAIN_GCP_USER=kordian
+  #####################
+
   #
   # credentials from Google Domains
   # - parses YAML & assigns config items into variables, prefixed with "conf_"
   #
-  eval $(parse_yaml "google-domains-dyndns-secrets.yaml" "conf_")
+  eval $(parse_yaml "dynu-domains-dynds-secrets.yaml" "conf_")
 
   # check that we have the right stuff
-  if [ -z "$conf_google_main_user" ]; then
-    echo "--FATAL: no main Google user config!" 1>&2
+  if [ -z "$conf_md5password" ]; then
+    echo "--FATAL: no MD5 password in config!" 1>&2
     exit 98
   fi
   if [ -z "$conf_gcp_shell_dns" ]; then
@@ -240,15 +244,15 @@ export TZ=\"America/New_York\"
 
 echo \"---> \$0: start-run as \`whoami\`: \`date\`\"
 
-# P1: install ZSH & set as default for \`$conf_google_main_user'
+# P1: install ZSH & set as default for \`$MAIN_GCP_USER'
 echo && echo \"* [\`date +%H:%M\`] install+setup: zsh\"
 nice -n -5 apt-get install -qq -y zsh
-nice -n -5 chsh --shell /bin/zsh $conf_google_main_user
+nice -n -5 chsh --shell /bin/zsh $MAIN_GCP_USER
 
 # P2: $conf_gcp_shell_dns: update dynamic DNS entry
 echo && echo \"* [\`date +%H:%M\`] update << $conf_gcp_shell_dns >> DYNAMIC DNS\"
 IP=\`dig +short myip.opendns.com @resolver1.opendns.com\`
-nice -n -5 curl -fsSL \"https://$conf_gcp_shell_user:$conf_gcp_shell_password@domains.google.com/nic/update?hostname=$conf_gcp_shell_dns&myip=\$IP\"
+nice -n -5 curl -fsSL \"https://api.dynu.com/nic/update?hostname=$conf_gcp_shell_dns&myip=\$IP\&password=$conf_md5password\"
 
 # set env as non-interactive, to suppress errors in screen installation
 export DEBIAN_FRONTEND=\"noninteractive\"
@@ -260,7 +264,7 @@ apt-get install -qq -y screen sshpass
 
 # P4: change system's timezone to local
 echo && echo \"* [\`date +%H:%M\`] changing system's timezone to local timezone\"
-~$conf_google_main_user/bin/scripts/setup-linux-system.sh -TZ
+~$MAIN_GCP_USER/bin/scripts/setup-linux-system.sh -TZ
 
 # switch off accessibility options
 echo && echo \"* [\`date +%H:%M\`] set gcloud accessibility/screen_reader=false, for better table handling\"
@@ -270,7 +274,7 @@ echo \"---> end-run (Phase 1) as \`whoami\`: \`date\`\"
 
 # PHASE 2 - SW INSTALL (all other packages) -> ~5mins
 echo && echo \"* [\`date +%H:%M\`] starting Phase 2 (~5 mins) - SOFTWARE INSTALL\"
-nice ~$conf_google_main_user/bin/scripts/setup-linux-system.sh -GENPKG
+nice ~$MAIN_GCP_USER/bin/scripts/setup-linux-system.sh -GENPKG
 
 echo \"---> \$0: end-run (Phase 2) as \`whoami\`: \`date\`\"
 
@@ -445,11 +449,11 @@ function parse_yaml()
 function update_dyn_dns()
 {
   #
-  # credentials from Google Domains
+  # credentials from DYNU Dynamic DNS
   # - parses YAML & assigns config items into variables, prefixed with "conf_"
   #
-  eval $(parse_yaml "google-domains-dyndns-secrets.yaml" "conf_")
-  if [ -z "$conf_google_main_user" ]; then
+  eval $(parse_yaml "dynu-domains-dynds-secrets.yaml" "conf_")
+  if [ -z "$conf_md5password" ]; then
     echo "--FATAL: were not able to parse YAML file properly... exiting!" 1>&2
     exit 99
   fi
