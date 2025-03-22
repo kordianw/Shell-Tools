@@ -62,8 +62,8 @@ apt-get install -qq -y zsh
 
 # P4: add a non-root user, with same PW as root
 echo && echo "* [$(date +%H:%M)] add additional user: $LOCAL_USER"
-if echo "$LOCAL_USER" | egrep -q '^[a-z][a-z]*$'; then
-  PW_HASH=$(getent shadow $USER | cut -d: -f2 |head -1)
+if echo "$LOCAL_USER" | grep -E -q '^[a-z][a-z]*$'; then
+  PW_HASH=$(getent shadow $USER | cut -d: -f2 | head -1)
   [ -z "$PW_HASH" ] && exit 1
   echo "- adding $LOCAL_USER with existing PW hash"
   sudo useradd -m -p "$PW_HASH" $LOCAL_USER || exit 1
@@ -74,7 +74,7 @@ if echo "$LOCAL_USER" | egrep -q '^[a-z][a-z]*$'; then
 
   echo "- setting up $LOCAL_USER .ssh & homedir"
   U_HOME=/home/$LOCAL_USER
-  echo "echo 'TO-SETUP-RUN: $ rm .zshrc && wget $WGET_URL && bash dl.sh'" > $U_HOME/.zshrc || exit 1
+  echo "echo 'TO-SETUP-RUN: $ rm .zshrc && wget $WGET_URL && bash dl.sh'" >$U_HOME/.zshrc || exit 1
   chown -v $LOCAL_USER $U_HOME/.zshrc && chmod -v 666 $U_HOME/.zshrc
   mkdir $U_HOME/.ssh || exit 1
   cp -fv $HOME/.ssh/authorized_keys $U_HOME/.ssh/authorized_keys || exit 1

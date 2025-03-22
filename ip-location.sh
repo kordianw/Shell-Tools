@@ -31,14 +31,14 @@ else
       # - whoami.akamai.net
       # - google
       #
-      IP=$(timeout 3 dig +short myip.opendns.com @resolver1.opendns.com. | egrep '[0-9]')
+      IP=$(timeout 3 dig +short myip.opendns.com @resolver1.opendns.com. | grep -E '[0-9]')
       if [ $? -ne 0 ]; then
         echo "--WARN: can't work out external/public IP address via cmd (RC=$?): dig +short myip.opendns.com @resolver1.opendns.com." >&2
       fi
 
       # 2nd attempt via another provider
       if [ -z "$IP" ]; then
-        IP=$(timeout 2 dig +short whoami.akamai.net @ns1-1.akamaitech.net. | egrep '[0-9]')
+        IP=$(timeout 2 dig +short whoami.akamai.net @ns1-1.akamaitech.net. | grep -E '[0-9]')
         if [ $? -ne 0 ]; then
           echo "--WARN: can't work out external/public IP address via cmd (RC=$?): dig +short whoami.akamai.net." >&2
         fi
@@ -46,7 +46,7 @@ else
 
       # 3rd attempt via another provider
       if [ -z "$IP" ]; then
-        IP=$(timeout 2 dig txt o-o.myaddr.test.l.google.com @ns1.google.com. +short | egrep '[0-9]')
+        IP=$(timeout 2 dig txt o-o.myaddr.test.l.google.com @ns1.google.com. +short | grep -E '[0-9]')
         if [ $? -ne 0 ]; then
           echo "--WARN: can't work out external/public IP address via cmd (RC=$?): dig txt o-o.myaddr.test.l.google.com. @ns1.google.com +short.akamai.net" >&2
         fi
@@ -55,7 +55,7 @@ else
       #
       # NSLOOKUP
       #
-      IP=$(timeout 3 nslookup myip.opendns.com resolver1.opendns.com 2>/dev/null | tail +3 | cat -v | awk '/Address:/{print $NF}' | sed 's/[^0-9\.]*//g' | egrep '[0-9]' | tail -1)
+      IP=$(timeout 3 nslookup myip.opendns.com resolver1.opendns.com 2>/dev/null | tail +3 | cat -v | awk '/Address:/{print $NF}' | sed 's/[^0-9\.]*//g' | grep -E '[0-9]' | tail -1)
       if [ $? -ne 0 ]; then
         echo "--WARN: can't work out external/public IP address via cmd (RC=$?): nslookup myip.opendns.com resolver1.opendns.com" >&2
       fi
@@ -93,14 +93,14 @@ else
     # KEYCDN
     echo "--> KEYCDN.COM:"
     if command -v jq >&/dev/null; then
-      timeout 5 curl -k -sSL -H "User-Agent: keycdn-tools:https://google.com" http://tools.keycdn.com/geo.json?host=$IP | jq . | egrep -v '^{|^}|status"|description"|data"|geo"|host":|ip":|asn":|code":|latitude":|longitude":|metro_code"|datetime":|continent_name":|: null,|^ *}'
+      timeout 5 curl -k -sSL -H "User-Agent: keycdn-tools:https://google.com" http://tools.keycdn.com/geo.json?host=$IP | jq . | grep -E -v '^{|^}|status"|description"|data"|geo"|host":|ip":|asn":|code":|latitude":|longitude":|metro_code"|datetime":|continent_name":|: null,|^ *}'
     else
       timeout 5 curl -k -w "\n" -sSL -H "User-Agent: keycdn-tools:https://google.com" http://tools.keycdn.com/geo.json?host=$IP
     fi
 
     # IPINFO
     echo && echo "--> IPINFO.IO:"
-    timeout 5 curl -k -sSL http://ipinfo.io/$IP | egrep -v '^{|^}|"ip":|"readme":|"loc":'
+    timeout 5 curl -k -sSL http://ipinfo.io/$IP | grep -E -v '^{|^}|"ip":|"readme":|"loc":'
 
     # IPLOCATION.NET
     # - via links/lynx/w3m
@@ -124,10 +124,10 @@ else
       fi
 
       echo && echo "--> IPLOCATION.NET:"
-      timeout 5 $CLI_BROWSER -dump http://iplocation.net | egrep 'IP Location .*Details|Host Name |ISP  '
+      timeout 5 $CLI_BROWSER -dump http://iplocation.net | grep -E 'IP Location .*Details|Host Name |ISP  '
 
       echo && echo "--> IPLOCATION.COM:"
-      timeout 5 $CLI_BROWSER -dump https://iplocation.com | egrep 'Country  |Region  |City  |Organization  '
+      timeout 5 $CLI_BROWSER -dump https://iplocation.com | grep -E 'Country  |Region  |City  |Organization  '
     else
       echo && echo "--warn: skipping IPLOCATION.NET/COM as $(uname -n 2>/dev/null) doesn't have \`links', \`lynx' or \`w3m' text-only browser installed!" >&2
     fi
@@ -136,12 +136,12 @@ else
     # - when getting current IP (no params)
     if [ -z "$1" ]; then
       echo && echo "--> WTFMYIP.COM:"
-      OUT1=$(timeout 5 curl -k -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g')
+      OUT1=$(timeout 5 curl -k -sSL http://wtfismyip.com/json | grep -E -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g')
       [ -z "$OUT1" ] && $CLI_BROWSER -dump http://wtfismyip.com/json 2>/dev/null
       [ -n "$OUT1" ] && echo "$OUT1"
 
       echo && echo "--> IPAPI.CO:"
-      OUT2=$(timeout 5 curl -k -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": ')
+      OUT2=$(timeout 5 curl -k -sSL http://ipapi.co/json | grep -E -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": ')
       [ -z "$OUT2" ] && $CLI_BROWSER -dump http://ipapi.co/json 2>/dev/null
       [ -n "$OUT2" ] && echo "$OUT2"
     else
@@ -153,12 +153,12 @@ else
     echo && echo "--BACKUP MODE: will try to geo-code using \`curl' and external websites:" >&2
 
     echo && echo "--> WTFISMYIP.COM:"
-    OUT1=$(timeout 5 curl -k -sSL http://wtfismyip.com/json | egrep -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g')
+    OUT1=$(timeout 5 curl -k -sSL http://wtfismyip.com/json | grep -E -v '^{|^}|TorExit":|CountryCode":|IPAddress":' | sed 's/.ucking//g')
     [ -z "$OUT1" ] && $CLI_BROWSER -dump http://wtfismyip.com/json 2>/dev/null
     [ -n "$OUT1" ] && echo "$OUT1"
 
     echo && echo "--> IPAPI.CO:"
-    OUT2=$(timeout 5 curl -k -sSL http://ipapi.co/json | egrep -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": ')
+    OUT2=$(timeout 5 curl -k -sSL http://ipapi.co/json | grep -E -v '^{|^}|"ip":|"version":|_code":|code_iso3":|capital":|tld":|"in_eu":|"latitude":|"longitude":|"utc_offset":|"country_calling_code":|"currency":|"currency_name":|"languages":|"country_area":|"country_population":|"asn":|"country": ')
     [ -z "$OUT2" ] && $CLI_BROWSER -dump http://ipapi.co/json 2>/dev/null
     [ -n "$OUT2" ] && echo "$OUT2"
 
@@ -184,10 +184,10 @@ else
       fi
 
       echo && echo "--> IPLOCATION.NET:"
-      timeout 5 $CLI_BROWSER -dump http://iplocation.net | egrep 'IP Location .*Details|Host Name |ISP  '
+      timeout 5 $CLI_BROWSER -dump http://iplocation.net | grep -E 'IP Location .*Details|Host Name |ISP  '
 
       echo && echo "--> IPLOCATION.COM:"
-      timeout 5 $CLI_BROWSER -dump https://iplocation.com | egrep 'Country  |Region  |City  |Organization  '
+      timeout 5 $CLI_BROWSER -dump https://iplocation.com | grep -E 'Country  |Region  |City  |Organization  '
     else
       echo && echo "--warn: skipping IPLOCATION.NET/COM as $(uname -n 2>/dev/null) doesn't have \`links', \`lynx' or \`w3m' text-only browser installed!" >&2
     fi

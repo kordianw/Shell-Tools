@@ -276,6 +276,9 @@ function install_general_packages {
     echo && echo "* GENPKG: storing a backup of all installed packages..."
     DIR=$(dirname "$0")
     dpkg -l >$DIR/pkg-installed-list.txt
+
+    # remove data/collection
+    $SUDO apt remove popularity-contest
   fi
 
   # GENPKG: show end time
@@ -349,11 +352,11 @@ function change_timezone() {
   [ "$CHECK_TZ" = "America/New_York" -o "$CHECK_TZ" = "US/Eastern" ] && CHECK_TZ="America/New_York|US/Eastern"
 
   # do we need to do anything???
-  if ls -l /etc/localtime | egrep -q "$CHECK_TZ"; then
+  if ls -l /etc/localtime | grep -E -q "$CHECK_TZ"; then
     echo -e "\n$PROG: check 1: according to /etc/localtime (#1), this system TZ is already set to $TZ - good, nothing to do:" >&2
     ls -l /etc/localtime || exit 1
 
-    if egrep -q "$CHECK_TZ" /etc/timezone; then
+    if grep -E -q "$CHECK_TZ" /etc/timezone; then
       echo -e "\n$PROG: check 2: according to /etc/timezone (#2), this system TZ is already set to $TZ - good, nothing to do:" >&2
       cat /etc/timezone || exit 2
     fi
@@ -368,7 +371,7 @@ function change_timezone() {
 
   # fall-back
   if [ -e /etc/timezone ]; then
-    if egrep -q "$CHECK_TZ" /etc/timezone; then
+    if grep -E -q "$CHECK_TZ" /etc/timezone; then
       echo -e "\n$PROG: according to /etc/timezone, this system TZ is already set to $TZ - nothing to do:" >&2
       cat /etc/timezone || exit 1
       ls -l /etc/localtime || exit 2
@@ -583,7 +586,7 @@ function enable_setup_zsh() {
     OS=$(awk -F= '/^NAME=/{print $NF}' /etc/os-release)
 
     # various Linux -> installs csh
-    if egrep -q "Amazon Linux|Fedora|CentOS|RHEL|Rocky" <<<$OS; then
+    if grep -E -q "Amazon Linux|Fedora|CentOS|RHEL|Rocky" <<<$OS; then
       $SUDO yum -y -qq install util-linux-user
     elif [ -x /usr/bin/yum ]; then
       $SUDO yum -y -qq install util-linux-user
@@ -1065,7 +1068,7 @@ function create_user() {
       ZSHRC_OK=$($SUDO ls /home/$USER/.zshrc 2>/dev/null)
 
       if [ -n "$ZSHRC_OK" ]; then
-        if egrep -q "$USER:.*zsh" /etc/passwd; then
+        if grep -E -q "$USER:.*zsh" /etc/passwd; then
           echo "*** user << $USER >> arlaedy has ZSH as shell"
         else
           # is chsh available? (not available on Amazon Linux)
@@ -1075,7 +1078,7 @@ function create_user() {
             OS=$(awk -F= '/^NAME=/{print $NF}' /etc/os-release)
 
             # various Linux -> installs csh
-            if egrep -q "Amazon Linux|Fedora|CentOS|RHEL|Rocky" <<<$OS; then
+            if grep -E -q "Amazon Linux|Fedora|CentOS|RHEL|Rocky" <<<$OS; then
               $SUDO yum -y install util-linux-user
             elif [ -x /usr/bin/yum ]; then
               $SUDO yum -y -qq install util-linux-user
@@ -1168,9 +1171,9 @@ function ssh_conf() {
 
   echo && echo "* [$(date +%H:%M)] current SSHD_CONFIG:"
   echo "- ACTIVE settings:"
-  egrep '^#?(Port|PermitRootLogin|PubkeyAuthentication|PermitEmptyPasswords|PasswordAuthentication|AllowUsers)' /etc/ssh/sshd_config | grep -v '^#'
+  grep -E '^#?(Port|PermitRootLogin|PubkeyAuthentication|PermitEmptyPasswords|PasswordAuthentication|AllowUsers)' /etc/ssh/sshd_config | grep -v '^#'
   echo "- COMMENTED OUT:"
-  egrep '^#?(Port |PermitRootLogin|PubkeyAuthentication|PermitEmptyPasswords|PasswordAuthentication|AllowUsers)' /etc/ssh/sshd_config | grep '^#'
+  grep -E '^#?(Port |PermitRootLogin|PubkeyAuthentication|PermitEmptyPasswords|PasswordAuthentication|AllowUsers)' /etc/ssh/sshd_config | grep '^#'
   sleep 1
 
   # To directly modify sshd_config.
@@ -1226,19 +1229,19 @@ function change_hostname() {
   elif echo "$(uname -n)" | grep -q "^ip-[0-9][0-9-]*[0-9]$"; then
     AWS=1
     HOSTNAME="ec2-$HOSTNAME"
-  elif echo "$(uname -r)" | egrep -q ".(-aws|-amazon)$"; then
+  elif echo "$(uname -r)" | grep -E -q ".(-aws|-amazon)$"; then
     AWS=1
     HOSTNAME="ec2-$HOSTNAME"
   fi
 
   # is this GCP?
-  if echo "$(uname -r)" | egrep -q ".(-gcp|-google)$"; then
+  if echo "$(uname -r)" | grep -E -q ".(-gcp|-google)$"; then
     GCP=1
     HOSTNAME="gcp-$HOSTNAME"
   fi
 
   # is this AZURE?
-  if echo "$(uname -r)" | egrep -q ".(-azure)$"; then
+  if echo "$(uname -r)" | grep -E -q ".(-azure)$"; then
     AZURE=1
     HOSTNAME="az-$HOSTNAME"
   fi

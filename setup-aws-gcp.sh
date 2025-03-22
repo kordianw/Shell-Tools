@@ -130,7 +130,7 @@ function connect_gcp_cloudshell()
     #
     # REQUEST GCP CLOUD SHELL
     #
-    $GCLOUD cloud-shell ssh --dry-run | egrep -v 'Automatic authentication with GCP CLI tools in Cloud Shell is disabled. To enable, please rerun command with' | tee -a $TMP
+    $GCLOUD cloud-shell ssh --dry-run | grep -E -v 'Automatic authentication with GCP CLI tools in Cloud Shell is disabled. To enable, please rerun command with' | tee -a $TMP
 
     if [ $? -ne 0 ]; then
       echo "--FATAL: error requesting GCP Cloud Shell - \`gcloud' returned RC=$?!" 1>&2
@@ -153,7 +153,7 @@ function connect_gcp_cloudshell()
 
     # connect via IP while we wait for the DNS to change
     IP_MASK=$(echo $IP | sed 's/^\([0-9][0-9][0-9]*\.[0-9][0-9]*\)\..*/\1/')
-    if egrep -q "^Host.*shell.* $IP_MASK\.*" ~/.ssh/config; then
+    if grep -E -q "^Host.*shell.* $IP_MASK\.*" ~/.ssh/config; then
       echo -e "\n* [$(date +%H:%M)] IP $IP is in ~/.ssh/config via $IP_MASK.*, waiting 5 secs to connect..." 1>&2
       sleep 5 # 5-6 secs seems reasonable as the time it takes to install zsh - tweaked based on experience
       GCP_DNS_ALIAS=$IP
@@ -341,7 +341,7 @@ function backup_cloud_home()
 
   if [ -n $HOST_ADDRESS ]; then
     # use-cases
-    if echo "$HOST_ADDRESS" | egrep -q 'gcp-shell|^[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$'; then
+    if echo "$HOST_ADDRESS" | grep -E -q 'gcp-shell|^[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$'; then
       SERVICE="gcp-cloudshell"
     else
       SERVICE=$(echo $HOST_ADDRESS | awk -F. '{print $1}')
@@ -506,7 +506,7 @@ function update_dyn_dns()
       echo "* [$HOST] ALREADY WAS DONE! DNS for \`$conf_nexus_dns' was already set to $IP"
     fi
   # ->>> GCP-SHELL
-  elif echo $HOST | egrep -q "^cs-.*default$"; then
+  elif echo $HOST | grep -E -q "^cs-.*default$"; then
     # is the IP already what it should be?
     DNS=$(host $conf_gcp_shell_dns | awk '{print $NF}')
     if [ "$DNS" != "$IP" ]; then
@@ -575,7 +575,7 @@ function gcloud_login()
   echo "* GCP: initializing, using \`$GCLOUD' ..." >&2
 
   # are we logged in?
-  GCP_ACCOUNT=$($GCLOUD auth list 2>&1 | egrep "\*" | awk '/@gmail.com/{print $2}')
+  GCP_ACCOUNT=$($GCLOUD auth list 2>&1 | grep -E "\*" | awk '/@gmail.com/{print $2}')
   if [ -n "$GCP_ACCOUNT" ]; then
     echo "* GCP: using account: << $GCP_ACCOUNT >>" >&2
   else

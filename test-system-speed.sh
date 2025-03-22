@@ -44,6 +44,8 @@ if [ $# -eq 0 ]; then
   echo " -cpumark  <- CPU MARK MODE: tries to download and use CPU Mark tests (best option)" >&2
   echo " -sysbench <- SYSBENCH MODE: uses sysbench" >&2
   echo " -ssd      <- SSD? MODE: crude way to work out if current disk is SSD or not" >&2
+  echo >&2
+  echo "... once sysbench is installed (via -install), use: -cpu, or -mem to start the test" >&2
   exit 1
 fi
 
@@ -64,7 +66,7 @@ if [ "$1" = "-ssd" -o "$1" = "--ssd" ]; then
   echo "  - if it takes ~2 secs to read disk, most likely it's an SSD"
   echo "  - if it takes >5 secs to read disk, most likely it's an HDD"
 
-  DF_CMD=$(df -lTh -x tmpfs -x devtmpfs -x squashfs -x fuse.sshfs | egrep -v '/boot/efi')
+  DF_CMD=$(df -lTh -x tmpfs -x devtmpfs -x squashfs -x fuse.sshfs | grep -E -v '/boot/efi')
 
   echo && echo "* df output:"
   echo "$DF_CMD"
@@ -76,8 +78,8 @@ if [ "$1" = "-ssd" -o "$1" = "--ssd" ]; then
   fi
 
   echo && echo "* lsblk output:"
-  lsblk | grep "/" | egrep -v 'loop|/boot/efi' | grep '[0-9]'
-  lsblk -d -e 1,7 -o NAME,MAJ:MIN,TYPE,FSTYPE,SIZE,RO,VENDOR,MODEL,ROTA,MOUNTPOINT,GROUP,MODE | egrep -v 'CD.ROM'
+  lsblk | grep "/" | grep -E -v 'loop|/boot/efi' | grep '[0-9]'
+  lsblk -d -e 1,7 -o NAME,MAJ:MIN,TYPE,FSTYPE,SIZE,RO,VENDOR,MODEL,ROTA,MOUNTPOINT,GROUP,MODE | grep -E -v 'CD.ROM'
 
   # can we use sudo?
   if [ "$EUID" -ne 0 ]; then
@@ -235,7 +237,7 @@ elif [ "$1" = "-cpumark" ]; then
   [ -r ~/results_all.yml ] && RESULTS=~/results_all.yml
   if [ -r $RESULTS ]; then
     echo "*** RESULTS:" >&2
-    egrep "SUMM|Process|Memory|SINGLETHREAD" $RESULTS
+    grep -E "SUMM|Process|Memory|SINGLETHREAD" $RESULTS
     mv -f $RESULTS ~/bin/cpumark
   fi
 
@@ -362,11 +364,11 @@ if [ "$1" = "-cpu" -o "$1" = "-CPU" -o "$1" = "--cpu" -o -z "$1" ]; then
   fi
 
   echo "* [$HOST] CPU Benchmark: running sysbench ${SYSBENCH_TEST}cpu --cpu-max-prime=$MAX_PRIME, --${THREADS_PARAM}threads=1+$THREADS"
-  sysbench ${SYSBENCH_TEST}cpu --cpu-max-prime=$MAX_PRIME --${THREADS_PARAM}threads=1 run | egrep "total time|events per second" | sed "s/$/		--> single core CPU test/"
+  sysbench ${SYSBENCH_TEST}cpu --cpu-max-prime=$MAX_PRIME --${THREADS_PARAM}threads=1 run | grep -E "total time|events per second" | sed "s/$/		--> single core CPU test/"
   if [ "$THREADS" -gt 1 ]; then
-    sysbench ${SYSBENCH_TEST}cpu --cpu-max-prime=$MAX_PRIME --${THREADS_PARAM}threads=$THREADS run | egrep "total time|events per second" | sed "s/$/		--> $THREADS threads CPU test/"
+    sysbench ${SYSBENCH_TEST}cpu --cpu-max-prime=$MAX_PRIME --${THREADS_PARAM}threads=$THREADS run | grep -E "total time|events per second" | sed "s/$/		--> $THREADS threads CPU test/"
   fi
-  #sysbench --test=cpu --cpu-max-prime=$MAX_PRIME --num-threads=$THREADS run | egrep "total time|events per second"
+  #sysbench --test=cpu --cpu-max-prime=$MAX_PRIME --num-threads=$THREADS run | grep -E "total time|events per second"
 fi
 
 #
@@ -376,10 +378,10 @@ if [ "$1" = "-memory" -o "$1" = "--memory" -o -z "$1" ]; then
   echo && echo "* [$HOST] Memory Benchmark: 2GB (read & write)"
   sleep 2
 
-  #sysbench ${SYSBENCH_TEST}memory --memory-total-size=2G --memory-oper=read run | egrep "total time|transferred"                 # read test
-  sysbench ${SYSBENCH_TEST}memory --memory-total-size=2G run | egrep "total time|transferred" | sed "s/$/		--> RAM write (2GB-data) speed/" # write test
-  #sysbench --test=memory --memory-total-size=2G --memory-oper=read run | egrep "total time|transferred"
-  #sysbench --test=memory --memory-total-size=2G run | egrep "total time|transferred"
+  #sysbench ${SYSBENCH_TEST}memory --memory-total-size=2G --memory-oper=read run | grep -E "total time|transferred"                 # read test
+  sysbench ${SYSBENCH_TEST}memory --memory-total-size=2G run | grep -E "total time|transferred" | sed "s/$/		--> RAM write (2GB-data) speed/" # write test
+  #sysbench --test=memory --memory-total-size=2G --memory-oper=read run | grep -E "total time|transferred"
+  #sysbench --test=memory --memory-total-size=2G run | grep -E "total time|transferred"
 fi
 
 #
@@ -411,19 +413,19 @@ if [ -n "$SPACE_LEFT" -o "$1" = "-io" ]; then
     echo "  - running sysbench fileio suite with $SIZE_TO_TEST of test files:"
 
     sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST prepare --verbosity=2
-    sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST --file-test-mode=rndrw run | egrep 'read, MiB|written, MiB|Operations performed:|Total transferred' | sed "s/$/		--> disk $SIZE_TO_TEST << random >> read+write speed/"
+    sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST --file-test-mode=rndrw run | grep -E 'read, MiB|written, MiB|Operations performed:|Total transferred' | sed "s/$/		--> disk $SIZE_TO_TEST << random >> read+write speed/"
     sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST cleanup --verbosity=2
 
     sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST prepare --verbosity=2
-    sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST --file-test-mode=seqrewr run | egrep 'read, MiB|written, MiB|Operations performed:|Total transferred' | sed "s/$/		--> disk $SIZE_TO_TEST << sequential >> read+write speed/"
+    sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST --file-test-mode=seqrewr run | grep -E 'read, MiB|written, MiB|Operations performed:|Total transferred' | sed "s/$/		--> disk $SIZE_TO_TEST << sequential >> read+write speed/"
     sysbench ${SYSBENCH_TEST}fileio --file-total-size=$SIZE_TO_TEST cleanup --verbosity=2
 
     echo "  - dd: $SIZE_TO_TEST_COUNT x 1M write test:"
     if echo "$OSTYPE" | grep -q darwin; then
-      dd if=/dev/zero of=./tempfile bs=1048576 count=$SIZE_TO_TEST_COUNT conv=notrunc 2>&1 | egrep -v 'records in|records out' | sed "s/$/		--> dd disk $SIZE_TO_TEST write speed/"
+      dd if=/dev/zero of=./tempfile bs=1048576 count=$SIZE_TO_TEST_COUNT conv=notrunc 2>&1 | grep -E -v 'records in|records out' | sed "s/$/		--> dd disk $SIZE_TO_TEST write speed/"
     else
       # dd if=/dev/zero of=/tmp/test bs=64k count=16k conv=fdatasync
-      dd if=/dev/zero of=./tempfile bs=1M count=$SIZE_TO_TEST_COUNT conv=fdatasync,notrunc 2>&1 | egrep -v 'records in|records out' | sed "s/$/		--> dd disk $SIZE_TO_TEST write speed/"
+      dd if=/dev/zero of=./tempfile bs=1M count=$SIZE_TO_TEST_COUNT conv=fdatasync,notrunc 2>&1 | grep -E -v 'records in|records out' | sed "s/$/		--> dd disk $SIZE_TO_TEST write speed/"
     fi
 
     # clean-up
